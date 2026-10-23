@@ -43,6 +43,7 @@ def optional(url):
         return request(url)
     except urllib.error.HTTPError as error:
         if error.code == 404:
+            error.close()
             return None
         raise
 
@@ -79,7 +80,11 @@ def mirror(tag):
     if target is None:
         target = request(f'{api}/releases', 'POST', body={'tag_name': tag, 'name': tag,
             'draft': True, 'prerelease': False, 'body': release.get('body', '')})
+    if target.get('tag_name', tag) != tag or target.get('prerelease', False):
+        raise ValueError('Existing mirror has a different tag or prerelease policy')
     existing = {asset['name']: asset for asset in request(f"{api}/releases/{target['id']}/assets")}
+    if set(existing) - set(files) or not target['draft'] and set(existing) != set(files):
+        raise ValueError('Existing formal mirror has an incomplete or unexpected asset inventory')
     for name, data in files.items():
         if name in existing:
             if request(existing[name]['browser_download_url'], raw=True) != data:
