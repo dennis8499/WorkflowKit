@@ -1,0 +1,14 @@
+{
+  "schema": "gitlab-workspace-bmad-source/v1",
+  "id": "bmad-method",
+  "version": "6.12.4",
+  "repository": "https://github.com/bmad-code-org/BMAD-METHOD",
+  "commit": "bab9082c3e884e0d72c759bcd1a6d90bcc01be84",
+  "license": "MIT",
+  "sourceUrl": "https://github.com/bmad-code-org/BMAD-METHOD/tree/bab9082c3e884e0d72c759bcd1a6d90bcc01be84",
+  "sourceKind": "official-release-catalog",
+  "releaseUrl": "https://github.com/bmad-code-org/BMAD-METHOD/releases/tag/v6.12.4",
+  "documentationUrl": "https://github.com/bmad-code-org/BMAD-METHOD/blob/v6.12.4/docs/start/install-bmad.md",
+  "catalogSha256": "fc9c206d394e72d18a051b0de6eb18e2f1b3abae8f585927496cbf8f7a8ac365",
+  "verifiedAt": "2026-10-18"
+}

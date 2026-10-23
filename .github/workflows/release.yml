@@ -1,0 +1,108 @@
+name: Verify and release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: release-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  select:
+    name: Select exact main CI proof
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    outputs:
+      reuse_run_id: ${{ steps.proof.outputs.reuse_run_id }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - name: Reuse only complete trusted main proof within seven days
+        id: proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -X utf8 -B scripts/release_ci.py select --output "$GITHUB_OUTPUT"
+
+  build:
+    needs: select
+    if: ${{ always() && (needs.select.result == 'skipped' || (needs.select.result == 'success' && needs.select.outputs.reuse_run_id == '')) }}
+    name: Validate [${{ matrix.cell }}]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cell: linux-py3.11
+            os: ubuntu-latest
+            python: '3.11'
+          - cell: linux-py3.14
+            os: ubuntu-latest
+            python: '3.14'
+          - cell: windows-py3.11
+            os: windows-2022
+            python: '3.11'
+          - cell: windows-py3.14
+            os: windows-2022
+            python: '3.14'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Validate, build, and test standalone package
+        run: python -X utf8 -B scripts/test.py
+      - name: Record exact validated artifacts
+        run: python -X utf8 -B scripts/release_ci.py record --cell "${{ matrix.cell }}" --artifact-dir ".release-ci/${{ matrix.cell }}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-ci-${{ github.sha }}-${{ matrix.cell }}-${{ github.run_attempt }}
+          path: .release-ci/${{ matrix.cell }}/*
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
+
+  publish:
+    name: Promote verified bytes to formal Release
+    needs: [select, build]
+    if: ${{ always() && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && needs.select.result == 'success' && (needs.build.result == 'success' || (needs.build.result == 'skipped' && needs.select.outputs.reuse_run_id != '')) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - name: Verify proof and publish idempotently without rebuilding
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REUSE_RUN_ID: ${{ needs.select.outputs.reuse_run_id }}
+        run: python -X utf8 -B scripts/release_ci.py publish --run-id "$REUSE_RUN_ID" --fallback-current-run --output release-publication.json
+      - name: Save verified formal asset digests
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-publication-${{ github.sha }}-${{ github.run_attempt }}
+          path: release-publication.json
+          retention-days: 14
+          if-no-files-found: error
