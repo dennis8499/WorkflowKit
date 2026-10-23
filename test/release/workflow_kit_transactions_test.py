@@ -80,8 +80,8 @@ class TransactionTests(unittest.TestCase):
                 if source.is_file():
                     raw = source.read_bytes()
                 else:
-                    name = "merge-reviewer-0.7.0.zip" if path.startswith(".agents/skills/merge-reviewer/") else "megin-skills.zip"
-                    with zipfile.ZipFile(ROOT / "test/fixtures/legacy-megin-skills.zip" if name == "megin-skills.zip" else ROOT / "resources/offline-tools/sources" / name) as archive:
+                    name = "legacy-merge-reviewer-0.7.0.zip" if path.startswith(".agents/skills/merge-reviewer/") else "legacy-megin-skills.zip"
+                    with zipfile.ZipFile(ROOT / "test/fixtures" / name) as archive:
                         raw = archive.read(path.removeprefix(".agents/skills/"))
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(raw)
