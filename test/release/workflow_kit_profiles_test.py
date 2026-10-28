@@ -111,8 +111,11 @@ class ProfileTests(unittest.TestCase):
     def test_frozen_0243_profiles_upgrade_and_rollback_preserve_original_bytes(self):
         self.assert_frozen_profiles_upgrade_and_rollback('0.24.3')
 
+    def test_frozen_100_profiles_upgrade_and_rollback_preserve_original_bytes(self):
+        self.assert_frozen_profiles_upgrade_and_rollback('1.0.0')
+
     def test_additional_frozen_profiles_upgrade_and_rollback_preserve_original_bytes(self):
-        covered = {'0.23.0', '0.24.0', '0.24.1', '0.24.2', '0.24.3'}
+        covered = {'0.23.0', '0.24.0', '0.24.1', '0.24.2', '0.24.3', '1.0.0'}
         candidates = []
         for fixture in (ROOT / 'test/fixtures').glob('workflow-kit-*'):
             version = fixture.name.removeprefix('workflow-kit-')

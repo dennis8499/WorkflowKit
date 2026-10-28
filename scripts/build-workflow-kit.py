@@ -446,7 +446,7 @@ def build() -> dict[str, object]:
         atomic_write(DIST / installer_name, installer_bytes)
         release = {
             'schema': 'workflowkit-release/v1', 'package': PACKAGE_ID,
-            'version': KIT_VERSION, 'workspaceContract': 2, 'installerApi': 1,
+            'version': KIT_VERSION, 'workspaceContract': 2, 'installerApi': 1, 'statusApi': 1,
             'minimumExtensionVersion': '0.33.0',
             'profiles': ['group', 'repository'], 'skills': skill_names,
             'assets': {

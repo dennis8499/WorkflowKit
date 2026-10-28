@@ -333,8 +333,12 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                 self.assertFalse((repo / ".git/megin/workspace.lock.json").exists())
                 observed.append(True)
                 return recover(*args)
+            before_status = self.snapshot(group)
+            self.assertEqual('error', installer.inspect_status(group, VERSION)['status'])
+            self.assertEqual(before_status, self.snapshot(group))
             with mock.patch.object(installer, '_recover_transaction', side_effect=writer_during_restore):
-                self.assertEqual('missing', installer.inspect_status(group, VERSION)['status'])
+                with installer.KitInstallLock(group / installer.INSTALL_LOCK):
+                    installer.recover_incomplete(group)
             self.assertTrue(observed, 'crash recovery uses installer ownership without development locks')
             self.assertEqual("missing", self.status(group)["status"])
             self.assertEqual(before, self.snapshot(group))

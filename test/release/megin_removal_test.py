@@ -81,6 +81,14 @@ class MeginRemovalTests(unittest.TestCase):
                     before = self.snapshot(root)
                     result, _ = self.update(root, 'group', env={'GITLAB_WORKSPACE_KIT_TESTING': '1', variable: 'last'})
                     self.assertNotEqual(0, result.returncode)
+                    if variable == 'GITLAB_WORKSPACE_KIT_TEST_CRASH_AFTER':
+                        interrupted = self.snapshot(root)
+                        self.assertEqual('error', self.status(root)['status'])
+                        self.assertEqual(interrupted, self.snapshot(root))
+                        result, installed = self.update(root, 'group')
+                        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                        result, _ = self.execute('rollback', root, installed['transaction'])
+                        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
                     self.assertEqual('update-available', self.status(root)['status'])
                     self.assertEqual(before, self.snapshot(root))
 

@@ -394,8 +394,10 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual({p: hashlib.sha256(v).hexdigest() for p, v in before.items()},
                          {p: hashlib.sha256(v).hexdigest() for p, v in self.snapshot(self.group).items()})
         target.write_bytes(original)
-        self.assertEqual("missing", self.status(self.group)["status"])
-        self.assertFalse(path.exists())
+        self.assertEqual("error", self.status(self.group)["status"])
+        result, _ = self.install(self.group)
+        self.assertEqual(0, result.returncode, result.stderr or result.stdout)
+        self.assertEqual("installed", self.status(self.group)["status"])
 
     def test_changed_archive_rejected_even_when_caller_rehashes_it(self):
         from workflow_kit_installer_test import RELEASE_ZIP
