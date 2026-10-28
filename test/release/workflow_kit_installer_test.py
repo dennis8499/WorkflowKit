@@ -314,7 +314,10 @@ class WorkflowKitInstallerTests(unittest.TestCase):
             self.assertEqual("installed", self.status(group)["status"])
 
         with tempfile.TemporaryDirectory(prefix="kit-crash-") as temporary:
-            group = self.create_group(Path(temporary))
+            # The CLI records the resolved target in the transaction owner. Use
+            # that same identity when calling the internal recovery helper; on
+            # Windows the temporary path may differ in case or alias spelling.
+            group = self.create_group(Path(temporary)).resolve()
             repo = group / 'consumer'; repo.mkdir()
             subprocess.run(['git', '-C', str(repo), 'init', '-q', '-b', 'master'], check=True)
             subprocess.run(['git', '-C', str(repo), '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',

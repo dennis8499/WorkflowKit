@@ -67,6 +67,15 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
+      - name: Check Windows crash-recovery fixture identity
+        if: runner.os == 'Windows'
+        env:
+          PYTHONPATH: test/release
+        run: |
+          python -X utf8 -B scripts/build-workflow-kit.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -X utf8 -B -m unittest workflow_kit_installer_test.WorkflowKitInstallerTests.test_failed_update_and_process_crash_restore_the_previous_install -v
+          exit $LASTEXITCODE
       - name: Validate, build, and test standalone package
         run: python -X utf8 -B scripts/test.py
       - name: Record exact validated artifacts
