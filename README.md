@@ -17,7 +17,7 @@ python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.1
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易識別>
 ```
 
-安裝會驗證固定上游、逐檔摘要與目標環境，保留其他 Skills、Wiki、審查報告、人工 Checklist 及工作紀錄。衝突或未完成工作會阻擋覆寫；已支援的歷史版本可以交易升級與回復。BMAD 請使用其官方 CLI 另行安裝，Megin 可獨立使用。
+安裝會驗證固定上游、逐檔摘要與目標環境，保留其他 Skills、Wiki、審查報告、人工 Checklist 及工作紀錄。衝突或未完成工作會阻擋覆寫；已支援的歷史版本可以交易升級與回復。BMAD 請使用其官方 CLI 另行安裝。
 
 GitLab Workspace 0.33.0+ 也能從 GitHub 或公司內網的 WorkflowKit Gitea 鏡像線上下載安裝。
 

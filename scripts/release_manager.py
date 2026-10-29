@@ -39,7 +39,6 @@ WORKSPACE = Path(__file__).resolve().parents[3]
 SPECS = {
     'WorkflowKit': {'version': 'VERSION', 'workflow': 'release.yml', 'tool': 'workflowkit'},
     'code-base-llm-wiki': {'version': 'VERSION', 'workflow': 'release.yml', 'tool': 'codebase-wiki'},
-    'Megin': {'version': 'VERSION', 'workflow': 'knowledge-portability.yml', 'tool': 'megin'},
     'MergeReviewer': {'version': 'skills/merge-reviewer/VERSION', 'workflow': 'ci.yml', 'tool': 'merge-reviewer'},
     'ReleaseReviewer': {'version': 'skills/release-reviewer/VERSION', 'workflow': 'ci.yml', 'tool': 'release-reviewer'},
     'GitlabWorkSpace': {'version': 'package.json', 'workflow': 'release.yml'},
@@ -289,8 +288,6 @@ def expected_assets(name, version):
         return {f'gitlab-workspace-{version}.vsix', 'SHA256SUMS'}
     if name == 'WorkflowKit':
         return {f'gitlab-workspace-kit-{version}.zip', f'workflowkit-installer-{version}.py', 'release.json', 'SHA256SUMS'}
-    if name == 'Megin':
-        return {'megin-skills.zip'}
     if name == 'code-base-llm-wiki':
         return {'codebase-llm-wiki-codex.zip', 'codebase-llm-wiki-copilot.zip', 'update-manifest.json', 'SHA256SUMS'}
     tool = SPECS[name]['tool']
@@ -316,9 +313,6 @@ def verify_checksums(files):
 
 
 def source_entries(root, name):
-    if name == 'Megin':
-        module = load_module(root / '.agents/skills/megin/scripts/validate_skills.py', '_release_megin')
-        return module.package_files(root / '.agents/skills')
     if name == 'code-base-llm-wiki':
         module = load_module(root / 'tools/release.py', '_release_wiki')
         version = module.read_version(root)
@@ -338,8 +332,6 @@ def verify_source_archive(root, name, version, data):
     entries = safe_entries(data)
     if name == 'code-base-llm-wiki':
         prefix = f'codebase-llm-wiki-codex-{version}/'
-    elif name == 'Megin':
-        prefix = ''
     else:
         prefix = SPECS[name]['tool'] + '/'
     if prefix and any(not key.startswith(prefix) for key in entries):
@@ -351,8 +343,6 @@ def verify_source_archive(root, name, version, data):
 
 
 def asset_name(name, version):
-    if name == 'Megin':
-        return 'megin-skills.zip'
     if name == 'code-base-llm-wiki':
         return 'codebase-llm-wiki-codex.zip'
     return SPECS[name]['tool'] + '-' + version + '.zip'
@@ -785,9 +775,6 @@ class Runner:
         if name == 'WorkflowKit':
             self.sync_workflowkit()
             self.command(name, 'assemble-kit', [sys.executable, '-X', 'utf8', '-B', 'scripts/build-workflow-kit.py'])
-        if name == 'Megin':
-            self.command(name, 'assemble-skills', [sys.executable, '-X', 'utf8', '-B',
-                '.agents/skills/megin/scripts/validate_skills.py', '--build-archive', 'megin-skills.zip', '--archive', 'megin-skills.zip'])
         notes = {'schema': SCHEMA, 'runId': self.plan['id'], 'repository': name, 'targetVersion': row['targetVersion'],
                  'candidate': row['candidate'], 'previousTag': row['baselineTag'],
                  'dependencies': {dep: self.journal.state['repositories'][dep]['releaseSha'] for dep in row['dependencies']}}

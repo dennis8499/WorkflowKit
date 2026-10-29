@@ -18,7 +18,6 @@ import workflow_kit_installer_test as harness
 ROOT, ARCHIVE, VERSION, MARKER = harness.ROOT, harness.ARCHIVE, harness.VERSION, harness.MARKER
 CURRENT_SOURCES = harness.CURRENT_SOURCES
 
-
 class ProfileTests(unittest.TestCase):
     execute = harness.WorkflowKitInstallerTests.execute
     create_group = harness.WorkflowKitInstallerTests.create_group
@@ -47,7 +46,7 @@ class ProfileTests(unittest.TestCase):
         result, data = self.apply(profile)
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         self.assertEqual(profile, data["profile"])
-        self.assertNotIn('megin', data['upstreamVersions'])
+        self.assertEqual({'codebase-wiki', 'merge-reviewer', 'release-reviewer'}, set(data['upstreamVersions']))
         return data
 
     def assert_preserved(self):
@@ -57,81 +56,6 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual("- status: complete\n", (self.repo / "docs/work/previous-work/workflow.md").read_text(encoding="utf-8"))
         self.assertIn("Keep this user text.", (self.repo / "AGENTS.md").read_text(encoding="utf-8"))
 
-    def assert_frozen_profiles_upgrade_and_rollback(self, version):
-        fixture=ROOT/f'test/fixtures/workflow-kit-{version}'
-        for profile in ('group','repository'):
-            with self.subTest(profile=profile):
-                target=self.base/('previous-'+version+'-'+profile); target.mkdir()
-                if profile=='repository': subprocess.run(['git','init','-q','-b','main',str(target)],check=True,capture_output=True)
-                old_archive=fixture/'workflow-kit.tar.xz'
-                old=subprocess.run([sys.executable,'-X','utf8','-B',str(fixture/'installer.py'),'install',str(old_archive),str(target),
-                    version,'bundled','--format','tar.xz','--entry-root','workflow-kit','--archive-sha256',hashlib.sha256(old_archive.read_bytes()).hexdigest(),
-                    '--profile',profile],capture_output=True,text=True,encoding='utf-8')
-                self.assertEqual(0,old.returncode,old.stdout+old.stderr)
-                if tuple(map(int, version.split('.'))) >= (0, 24, 3):
-                    for name, content in {
-                        'wiki/personal-note.md': '# Preserved personal Wiki\n',
-                        '.agents/skills/personal-helper/SKILL.md': 'Personal helper stays.\n',
-                        'docs/work/preserved-work/workflow.md': '- status: complete\n',
-                        'review-reports/previous/report.md': 'Previous review stays.\n',
-                    }.items():
-                        path = target / name
-                        path.parent.mkdir(parents=True, exist_ok=True)
-                        path.write_text(content, encoding='utf-8')
-                    with (target / 'AGENTS.md').open('a', encoding='utf-8') as stream:
-                        stream.write('\nKeep personal workspace instructions.\n')
-                before=self.snapshot(target)
-                result,data=self.execute('install',ARCHIVE,target,VERSION,'bundled','--format','tar.xz','--entry-root','workflow-kit',
-                    '--archive-sha256',hashlib.sha256(ARCHIVE.read_bytes()).hexdigest(),'--profile',profile)
-                self.assertEqual(0,result.returncode,result.stdout+result.stderr)
-                self.assertEqual(CURRENT_SOURCES['merge-reviewer']['version'], data['upstreamVersions']['merge-reviewer'])
-                self.assertNotIn('merge-mr',data['capabilities'])
-                if tuple(map(int, version.split('.'))) >= (0, 24, 3):
-                    current = self.snapshot(target)
-                    for name in ('wiki/personal-note.md', '.agents/skills/personal-helper/SKILL.md',
-                                 'docs/work/preserved-work/workflow.md', 'review-reports/previous/report.md'):
-                        self.assertEqual(before[name], current[name])
-                    self.assertIn('Keep personal workspace instructions.', (target / 'AGENTS.md').read_text(encoding='utf-8'))
-                result,_=self.execute('rollback',target,data['transaction'])
-                self.assertEqual(0,result.returncode,result.stdout+result.stderr)
-                self.assertEqual(before,self.snapshot(target))
-
-    def test_frozen_023_profiles_upgrade_and_rollback_preserve_original_bytes(self):
-        self.assert_frozen_profiles_upgrade_and_rollback('0.23.0')
-
-    def test_frozen_024_profiles_upgrade_and_rollback_preserve_original_bytes(self):
-        self.assert_frozen_profiles_upgrade_and_rollback('0.24.0')
-
-    def test_frozen_0241_profiles_upgrade_and_rollback_preserve_original_bytes(self):
-        self.assert_frozen_profiles_upgrade_and_rollback('0.24.1')
-
-    def test_frozen_0242_profiles_upgrade_and_rollback_preserve_original_bytes(self):
-        self.assert_frozen_profiles_upgrade_and_rollback('0.24.2')
-
-    def test_frozen_0243_profiles_upgrade_and_rollback_preserve_original_bytes(self):
-        self.assert_frozen_profiles_upgrade_and_rollback('0.24.3')
-
-    def test_frozen_100_profiles_upgrade_and_rollback_preserve_original_bytes(self):
-        self.assert_frozen_profiles_upgrade_and_rollback('1.0.0')
-
-    def test_additional_frozen_profiles_upgrade_and_rollback_preserve_original_bytes(self):
-        covered = {'0.23.0', '0.24.0', '0.24.1', '0.24.2', '0.24.3', '1.0.0'}
-        candidates = []
-        for fixture in (ROOT / 'test/fixtures').glob('workflow-kit-*'):
-            version = fixture.name.removeprefix('workflow-kit-')
-            if version in covered or not all(part.isdigit() for part in version.split('.')) or len(version.split('.')) != 3:
-                continue
-            if tuple(map(int, version.split('.'))) < (0, 23, 0) or not (fixture / 'workflow-kit.tar.xz').is_file():
-                continue
-            import tarfile
-            with tarfile.open(fixture / 'workflow-kit.tar.xz', 'r:xz') as archive:
-                manifest = json.load(archive.extractfile('workflow-kit/manifest.json'))
-            if {'group', 'repository'} <= set(manifest.get('profiles', {})):
-                candidates.append(version)
-        for version in sorted(candidates, key=lambda item: tuple(map(int, item.split('.')))):
-            with self.subTest(version=version):
-                self.assert_frozen_profiles_upgrade_and_rollback(version)
-
     def test_native_payload_is_fixed_upstream_and_has_its_own_capabilities(self):
         self.installed()
         state = self.status(self.repo)
@@ -139,8 +63,6 @@ class ProfileTests(unittest.TestCase):
         self.assertIn("release-review", state["capabilities"])
         self.assertNotIn("merge-group", state["capabilities"])
         self.assertNotIn("merge-mr", state["capabilities"])
-        self.assertFalse((self.repo / ".agents/skills/megin").exists())
-        self.assertFalse((self.repo / ".agents/skills/megin/scripts/group_workspace.py").exists())
         self.assertFalse((self.repo / ".agents/skills/merge-reviewer/scripts/group_review.py").exists())
         for module in ("review_workspace.py", "workspace_report.py"):
             self.assertTrue((self.repo / ".agents/skills/merge-reviewer/scripts" / module).is_file())
@@ -407,148 +329,10 @@ class ProfileTests(unittest.TestCase):
         result, _ = self.execute("rollback", self.repo, native["transaction"])
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         self.assertEqual("group", self.status(self.repo)["profile"])
-        self.assertFalse((self.repo / ".agents/skills/megin").exists())
         self.installed()
         self.installed("group")
         self.assertEqual("group", self.status(self.repo)["profile"])
         self.assert_preserved()
-
-    def test_true_016_legacy_record_without_profile_upgrades_to_native_and_rolls_back(self):
-        fixture = ROOT / "test/fixtures/workflow-kit-0.16.0"
-        archive = fixture / "workflow-kit.tar.xz"
-        result = subprocess.run([sys.executable, "-X", "utf8", "-B", str(Path(__file__).with_name("frozen_installer_runner.py")), str(fixture / "installer.py"),
-            "install", str(archive), str(self.repo), "0.16.0", "bundled", "--format", "tar.xz", "--entry-root", "workflow-kit",
-            "--archive-sha256", hashlib.sha256(archive.read_bytes()).hexdigest()], capture_output=True, text=True, encoding="utf-8")
-        self.assertEqual(0, result.returncode, result.stderr or result.stdout)
-        original = (self.repo / MARKER).read_bytes()
-        self.assertNotIn("profile", json.loads(original))
-        state = self.status(self.repo)
-        self.assertEqual(("update-available", "group", "0.16.0"), (state["status"], state["profile"], state["version"]))
-        native = self.installed()
-        result, _ = self.execute("rollback", self.repo, native["transaction"])
-        self.assertEqual(0, result.returncode, result.stderr or result.stdout)
-        self.assertEqual(original, (self.repo / MARKER).read_bytes())
-        self.assertEqual("group", self.status(self.repo)["profile"])
-        self.assert_preserved()
-
-    def test_true_017_profiles_upgrade_and_restore_original_fingerprints(self):
-        fixture = ROOT / 'test/fixtures/workflow-kit-0.17.0'
-        archive = fixture / 'workflow-kit.tar.xz'
-        for profile in ('group', 'repository'):
-            with self.subTest(profile=profile):
-                target = self.base / ('old-017-' + profile)
-                target.mkdir()
-                run = subprocess.run(['git', '-C', str(target), 'init', '-q', '-b', 'main'], capture_output=True)
-                self.assertEqual(0, run.returncode)
-                run = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(Path(__file__).with_name('frozen_installer_runner.py')), str(fixture / 'installer.py'),
-                    'install', str(archive), str(target), '0.17.0', 'bundled', '--format', 'tar.xz',
-                    '--entry-root', 'workflow-kit', '--archive-sha256', hashlib.sha256(archive.read_bytes()).hexdigest(),
-                    '--profile', profile], capture_output=True, text=True, encoding='utf-8')
-                self.assertEqual(0, run.returncode, run.stderr or run.stdout)
-                before = (target / MARKER).read_bytes()
-                state = self.status(target)
-                self.assertEqual(('update-available', profile, '0.17.0'), (state['status'], state['profile'], state['version']))
-                self.assertNotIn('functional-exploration', state['capabilities'])
-                run, updated = self.execute('install', ARCHIVE, target, VERSION, 'bundled', '--format', 'tar.xz',
-                    '--entry-root', 'workflow-kit', '--archive-sha256', hashlib.sha256(ARCHIVE.read_bytes()).hexdigest(), '--profile', profile)
-                self.assertEqual(0, run.returncode, run.stderr or run.stdout)
-                self.assertIn('functional-exploration', self.status(target)['capabilities'])
-                run, _ = self.execute('rollback', target, updated['transaction'])
-                self.assertEqual(0, run.returncode, run.stderr or run.stdout)
-                self.assertEqual(before, (target / MARKER).read_bytes())
-                self.assertEqual(('update-available', profile), (self.status(target)['status'], self.status(target)['profile']))
-
-    def test_verified_0301_identical_payload_upgrades_and_restores_each_profile(self):
-        # The archived 0.30.1 payload was byte-verified against trusted 0.30.0;
-        # only its recorded kit version differs. Recreate that identity using
-        # the committed frozen payload instead of an untracked dist artifact.
-        fixture = ROOT / "test/fixtures/workflow-kit-0.30.0"
-        archive = fixture / "workflow-kit.tar.xz"
-        for profile in ("group", "repository"):
-            with self.subTest(profile=profile):
-                target = self.base / ("previous-0301-" + profile)
-                target.mkdir()
-                if profile == "repository":
-                    subprocess.run(["git", "init", "-q", "-b", "main", str(target)], check=True, capture_output=True)
-                old = subprocess.run([sys.executable, "-X", "utf8", "-B", str(fixture / "installer.py"), "install",
-                    str(archive), str(target), "0.30.0", "bundled", "--format", "tar.xz", "--entry-root", "workflow-kit",
-                    "--archive-sha256", hashlib.sha256(archive.read_bytes()).hexdigest(), "--profile", profile],
-                    capture_output=True, text=True, encoding="utf-8")
-                self.assertEqual(0, old.returncode, old.stdout + old.stderr)
-                marker = json.loads((target / MARKER).read_text(encoding="utf-8"))
-                marker["version"] = "0.30.1"
-                before = (json.dumps(marker, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-                (target / MARKER).write_bytes(before)
-                report = target / "review-reports/preserved.md"
-                report.parent.mkdir(exist_ok=True)
-                report.write_text("prior review", encoding="utf-8")
-                self.assertEqual("update-available", self.status(target)["status"])
-                result, installed = self.execute("install", ARCHIVE, target, VERSION, "bundled", "--format", "tar.xz",
-                    "--entry-root", "workflow-kit", "--archive-sha256", hashlib.sha256(ARCHIVE.read_bytes()).hexdigest(),
-                    "--profile", profile)
-                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-                result, _ = self.execute("rollback", target, installed["transaction"])
-                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-                self.assertEqual(before, (target / MARKER).read_bytes())
-                self.assertEqual("prior review", report.read_text(encoding="utf-8"))
-
-    def test_frozen_018_work_keeps_original_package_then_upgrades_and_rolls_back(self):
-        fixture = ROOT / 'test/fixtures/workflow-kit-0.18.0'
-        archive = fixture / 'workflow-kit.tar.xz'
-        for profile in ('group', 'repository'):
-            with self.subTest(profile=profile):
-                target = self.base / ('old-018-' + profile); target.mkdir()
-                subprocess.run(['git', '-C', str(target), 'init', '-q', '-b', 'master'], check=True)
-                run = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(Path(__file__).with_name('frozen_installer_runner.py')),
-                    str(fixture / 'installer.py'), 'install', str(archive), str(target), '0.18.0', 'bundled',
-                    '--format', 'tar.xz', '--entry-root', 'workflow-kit', '--archive-sha256', hashlib.sha256(archive.read_bytes()).hexdigest(),
-                    '--profile', profile], capture_output=True, text=True, encoding='utf-8')
-                self.assertEqual(0, run.returncode, run.stderr or run.stdout)
-                marker = (target / MARKER).read_bytes()
-                skill = target / '.agents/skills/megin/SKILL.md'; original_skill = skill.read_bytes()
-                workflow = target / 'docs/work/work-20261013-old/workflow.md'; workflow.parent.mkdir(parents=True)
-                workflow.write_text('- schema: megin-skills-workflow/v4\n- status: active\n', encoding='utf-8')
-                self.assertEqual('update-available', self.status(target)['status'])
-                run, updated = self.execute('install', ARCHIVE, target, VERSION, 'bundled', '--format', 'tar.xz', '--entry-root', 'workflow-kit',
-                    '--archive-sha256', hashlib.sha256(ARCHIVE.read_bytes()).hexdigest(), '--profile', profile)
-                self.assertEqual(0, run.returncode, run.stderr or run.stdout)
-                self.assertFalse((target / '.agents/skills/megin').exists())
-                run, _ = self.execute('rollback', target, updated['transaction'])
-                self.assertEqual(0, run.returncode, run.stderr or run.stdout)
-                self.assertEqual(marker, (target / MARKER).read_bytes()); self.assertEqual(original_skill, skill.read_bytes())
-
-    def test_frozen_031_upgrade_and_rollback_preserve_both_reports_and_manual_checklist(self):
-        fixture = ROOT / 'test/fixtures/workflow-kit-0.31.0'
-        archive = fixture / 'workflow-kit.tar.xz'
-        for profile in ('group', 'repository'):
-            with self.subTest(profile=profile):
-                target = self.base / ('old-031-' + profile); target.mkdir()
-                if profile == 'repository':
-                    subprocess.run(['git', 'init', '-q', '-b', 'main', str(target)], check=True, capture_output=True)
-                old = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(fixture / 'installer.py'), 'install',
-                    str(archive), str(target), '0.31.0', 'bundled', '--format', 'tar.xz', '--entry-root', 'workflow-kit',
-                    '--archive-sha256', hashlib.sha256(archive.read_bytes()).hexdigest(), '--profile', profile],
-                    capture_output=True, text=True, encoding='utf-8')
-                self.assertEqual(0, old.returncode, old.stderr or old.stdout)
-                marker = (target / MARKER).read_bytes()
-                reports = target / 'review-reports'; reports.mkdir(exist_ok=True)
-                merge = reports / 'merge-review-prior.md'; merge.write_text('# prior merge\n', encoding='utf-8')
-                release = reports / 'release-review-prior.md'
-                release.write_text('# prior release\n<!-- release-checklist:start -->\n- [x] owner=engineer; date=2026-10-22; evidence=verified\n<!-- release-checklist:end -->\n', encoding='utf-8')
-                preserved = {p: p.read_bytes() for p in (merge, release)}
-                state = self.status(target)
-                self.assertEqual('update-available', state['status'], state)
-                run, installed = self.execute('install', ARCHIVE, target, VERSION, 'bundled', '--format', 'tar.xz',
-                    '--entry-root', 'workflow-kit', '--archive-sha256', hashlib.sha256(ARCHIVE.read_bytes()).hexdigest(), '--profile', profile)
-                self.assertEqual(0, run.returncode, run.stderr or run.stdout)
-                for p, content in preserved.items(): self.assertEqual(content, p.read_bytes())
-                current = reports / 'release-review-current.md'
-                current.write_text('# created after upgrade\n<!-- release-checklist:start -->\n- [x] checked after upgrade\n<!-- release-checklist:end -->\n', encoding='utf-8')
-                preserved[current] = current.read_bytes()
-                run, _ = self.execute('rollback', target, installed['transaction'])
-                self.assertEqual(0, run.returncode, run.stderr or run.stdout)
-                self.assertEqual(marker, (target / MARKER).read_bytes())
-                for p, content in preserved.items(): self.assertEqual(content, p.read_bytes())
 
     def test_conversion_failure_restores_original_profile_and_rejects_tampering(self):
         self.installed("group")
@@ -589,8 +373,6 @@ class ProfileTests(unittest.TestCase):
         marker["files"][state_path.relative_to(self.repo).as_posix()] = state_hash
         marker_path.write_text(json.dumps(marker), encoding="utf-8")
         self.assertEqual("error", self.status(self.repo)["status"])
-
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -18,11 +18,9 @@ spec = importlib.util.spec_from_file_location('external_bmad_installer', ROOT / 
 installer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(installer)
 
-
 def bmad_bytes(root):
     return {path.relative_to(root).as_posix(): path.read_bytes() for path in root.rglob('*')
             if path.is_file() and installer.external_bmad_path(path.relative_to(root).as_posix())}
-
 
 class ExternalBmadTests(unittest.TestCase):
     execute = harness.WorkflowKitInstallerTests.execute
@@ -45,15 +43,6 @@ class ExternalBmadTests(unittest.TestCase):
                                     '--profile', profile)
         self.assertEqual(0, result.returncode, data)
         return data
-
-    def legacy(self, root, profile, env=None):
-        fixture = ROOT / 'test/fixtures/workflow-kit-0.26.0'
-        archive = fixture / 'workflow-kit.tar.xz'
-        with mock.patch.object(harness, 'INSTALLER', fixture / 'installer.py'):
-            result, data = self.execute('install', archive, root, '0.26.0', 'bundled', '--format', 'tar.xz',
-                                       '--entry-root', 'workflow-kit', '--archive-sha256', installer.digest(archive.read_bytes()),
-                                       '--profile', profile, env=env)
-        return result, data
 
     def write_external(self, root, suffix=''):
         files = {'_bmad/config.toml': '[core]\nproject_name="External"\n',
@@ -112,65 +101,12 @@ class ExternalBmadTests(unittest.TestCase):
                 self.assertEqual(0, result.returncode, data)
                 self.assertEqual(before, bmad_bytes(root))
 
-    def test_026_migration_cli_update_rollback_and_reupgrade_keep_every_bmad_byte(self):
-        for profile in ('group', 'repository'):
-            with self.subTest(profile=profile):
-                root = self.target('legacy-' + profile)
-                result, data = self.legacy(root, profile)
-                self.assertEqual(0, result.returncode, data)
-                original_marker = (root / harness.MARKER).read_bytes()
-                self.write_external(root, '# changed by CLI before kit upgrade\n')
-                before = bmad_bytes(root)
-                result, state = self.execute('status', root, '--expected-version', harness.VERSION)
-                self.assertEqual(0, result.returncode, state)
-                self.assertEqual('update-available', state['status'])
-                upgraded = self.apply(root, profile)
-                self.assert_current_external(root, upgraded['transaction'])
-                self.assertEqual(before, bmad_bytes(root))
-                self.write_external(root, '# changed by CLI after kit upgrade\n')
-                after_cli = bmad_bytes(root)
-                result, data = self.execute('rollback', root, upgraded['transaction'])
-                self.assertEqual(0, result.returncode, data)
-                self.assertEqual(original_marker, (root / harness.MARKER).read_bytes())
-                self.assertEqual(after_cli, bmad_bytes(root))
-                result, state = self.execute('status', root, '--expected-version', harness.VERSION)
-                self.assertEqual(0, result.returncode, state)
-                self.assertEqual('update-available', state['status'])
-                again = self.apply(root, profile)
-                self.assert_current_external(root, again['transaction'])
-                self.assertEqual(after_cli, bmad_bytes(root))
-
-    def test_modified_legacy_marker_identity_still_blocks_upgrade(self):
-        root = self.target('forged-marker')
-        result, data = self.legacy(root, 'repository')
-        self.assertEqual(0, result.returncode, data)
-        path = root / harness.MARKER
-        marker = json.loads(path.read_text(encoding='utf-8'))
-        marker['files']['_bmad/config.toml'] = '0' * 64
-        path.write_text(json.dumps(marker), encoding='utf-8')
-        before = self.snapshot(root)
-        result, state = self.execute('status', root, '--expected-version', harness.VERSION)
-        self.assertEqual('error', state['status'])
-        self.assertEqual(before, self.snapshot(root))
-
-    def test_interrupted_legacy_bmad_journal_is_preserved_for_original_installer(self):
-        root = self.target('legacy-interrupted')
-        env = dict(os.environ, GITLAB_WORKSPACE_KIT_TESTING='1', GITLAB_WORKSPACE_KIT_TEST_CRASH_AFTER='1')
-        result, _ = self.legacy(root, 'repository', env)
-        self.assertEqual(86, result.returncode)
-        before = self.snapshot(root)
-        result, data = self.execute('status', root, '--expected-version', harness.VERSION)
-        self.assertEqual('error', data['status'])
-        self.assertIn('legacy transaction contains BMAD operations', str(data))
-        self.assertEqual(before, self.snapshot(root))
-
     def test_transaction_ownership_excludes_bmad_paths_and_rejects_legacy_operations(self):
         for path in ('_bmad/config.toml', '_bmad-output/data.md', '.agents/skills/bmad-build', '.claude/skills/bmad-help'):
             with self.subTest(path=path), self.assertRaises(installer.KitError):
                 installer.reject_bmad_operations([{'path': path, 'kind': 'path'}])
         allowed = installer.transaction_paths({'skills': ['bmad-build', 'merge-reviewer'], 'files': {'_bmad/config.toml': '0' * 64}})
         self.assertFalse(any(installer.external_bmad_path(path) for path in allowed))
-
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

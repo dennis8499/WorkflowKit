@@ -114,16 +114,10 @@ class PlanningTests(GitFixture):
         self.assertFalse(plan['repositories']['GitlabWorkSpace']['selected'])
         release.Runner(release.Journal(self.root / 'evidence', plan=plan), api).verify_inputs()
 
-    def test_megin_release_remains_independent_of_workspace(self):
-        plan, _ = self.plan(changed=('Megin',), versions={'Megin': '1.0.1'})
-        self.assertEqual([['Megin']], plan['order'])
-        self.assertFalse(plan['repositories']['GitlabWorkSpace']['selected'])
-        self.assertEqual([], plan['repositories']['GitlabWorkSpace']['dependencies'])
-
-    def test_simultaneous_megin_release_is_not_a_workspace_dependency(self):
-        plan, _ = self.plan(changed=('Megin', 'MergeReviewer'),
-                            versions={'Megin': '1.0.1', 'MergeReviewer': '1.0.1', 'WorkflowKit': '1.0.1'})
-        self.assertEqual(['MergeReviewer'], plan['repositories']['WorkflowKit']['dependencies'])
+    def test_simultaneous_upstream_releases_keep_only_selected_dependencies(self):
+        plan, _ = self.plan(changed=('MergeReviewer', 'ReleaseReviewer'),
+                            versions={'MergeReviewer': '1.0.1', 'ReleaseReviewer': '1.0.1', 'WorkflowKit': '1.0.1'})
+        self.assertEqual(['MergeReviewer', 'ReleaseReviewer'], plan['repositories']['WorkflowKit']['dependencies'])
 
     def test_no_changes_has_no_release_work(self):
         plan, api = self.plan(changed=(), versions={})
@@ -148,10 +142,10 @@ class PlanningTests(GitFixture):
 
     def test_unchanged_repo_cannot_be_accidentally_released(self):
         with self.assertRaisesRegex(release.ReleaseError, 'unchanged'):
-            self.plan(versions={'MergeReviewer': '1.0.1', 'GitlabWorkSpace': '1.0.1', 'Megin': '1.0.1'})
+            self.plan(versions={'MergeReviewer': '1.0.1', 'GitlabWorkSpace': '1.0.1', 'ReleaseReviewer': '1.0.1'})
 
     def test_dirty_candidate_is_rejected(self):
-        (self.workspace / 'Megin' / 'uncommitted.txt').write_text('personal')
+        (self.workspace / 'MergeReviewer' / 'uncommitted.txt').write_text('personal')
         with self.assertRaisesRegex(release.ReleaseError, 'uncommitted'):
             self.plan()
 
@@ -185,11 +179,11 @@ class PlanningTests(GitFixture):
 
     def test_workspace_current_versions_and_upgrade_list_follow_pins(self):
         root = self.workspace / 'GitlabWorkSpace'
-        (root / 'README.md').write_text('# Workspace\n\n## 使用\nWorkspace v1.0.0, Wiki 0.6.1, Megin 0.8.1\n1.0.0 支援固定摘要驗證過的 0.9.0 升級與交易回復；保留內容。\n\n## 1.0.0 更新\nWiki 0.6.1\n', encoding='utf-8')
+        (root / 'README.md').write_text('# Workspace\n\n## 使用\nWorkspace v1.0.0, Wiki 0.6.1\n1.0.0 支援固定摘要驗證過的 0.9.0 升級與交易回復；保留內容。\n\n## 1.0.0 更新\nWiki 0.6.1\n', encoding='utf-8')
         release.bump_version(root, 'GitlabWorkSpace', '1.0.1')
-        release.refresh_workspace_readme(root, [('Wiki', '0.6.1', '0.6.2'), ('Megin', '0.8.1', '0.8.2')], ['0.9.0', '1.0.0', '0.9.0'])
+        release.refresh_workspace_readme(root, [('Wiki', '0.6.1', '0.6.2')], ['0.9.0', '1.0.0', '0.9.0'])
         text = (root / 'README.md').read_text(encoding='utf-8')
-        self.assertIn('Workspace v1.0.1, Wiki 0.6.2, Megin 0.8.2', text)
+        self.assertIn('Workspace v1.0.1, Wiki 0.6.2', text)
         self.assertIn('1.0.1 支援固定摘要驗證過的 0.9.0、1.0.0 升級與交易回復；保留內容。', text)
         self.assertIn('## 1.0.0 更新\nWiki 0.6.1', text)
 
@@ -441,10 +435,10 @@ class WorkspaceDeliveryTests(unittest.TestCase):
 
 
 class ResumeTests(GitFixture):
-    def test_old_workspace_megin_dependency_requires_a_new_plan_before_api_calls(self):
-        plan, api = self.plan(changed=('Megin', 'MergeReviewer'),
-                             versions={'Megin': '1.0.1', 'MergeReviewer': '1.0.1', 'WorkflowKit': '1.0.1'})
-        plan['repositories']['GitlabWorkSpace']['dependencies'].append('Megin')
+    def test_unrecognized_dependency_requires_a_new_plan_before_api_calls(self):
+        plan, api = self.plan(changed=('MergeReviewer',),
+                             versions={'MergeReviewer': '1.0.1', 'WorkflowKit': '1.0.1'})
+        plan['repositories']['GitlabWorkSpace']['dependencies'].append('unlisted-component')
         journal = release.Journal(self.root / 'evidence', plan=plan)
         api.calls.clear()
         with self.assertRaisesRegex(release.ReleaseError, 'create a new release plan'):
@@ -719,7 +713,7 @@ class ResumeTests(GitFixture):
         trusted_path.parent.mkdir(parents=True)
         trusted_path.write_text('{"packages": []}')
         fields = {'agentBlockSha256': 'a', 'capabilities': [], 'payloadSha256': 'b', 'profileHashes': {},
-                  'skills': [], 'overlays': {}, 'files': {'.agents/skills/megin/x': 'c'}}
+                  'skills': [], 'overlays': {}, 'files': {'.agents/skills/retired/x': 'c'}}
         manifest = {'version': '1.0.0', 'upstream': {}, 'wikiInstalledVersionSha256': 'd',
                     'profiles': {'group': fields, 'repository': fields}}
         files = {'gitlab-workspace-kit-1.0.0.zip': zip_bytes({'workflow-kit/manifest.json': release.encoded(manifest)})}

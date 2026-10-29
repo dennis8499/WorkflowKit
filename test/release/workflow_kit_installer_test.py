@@ -62,8 +62,8 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         (group / ".codex").mkdir()
         (group / ".codex/preferences.toml").write_text("theme = 'user'\n", encoding="utf-8")
         (group / "AGENTS.md").write_text("# Group instructions\nKeep this user text.\n", encoding="utf-8")
-        (group / ".megin").mkdir()
-        (group / ".megin/config.json").write_text('{"local": true}\n', encoding="utf-8")
+        (group / ".local-work").mkdir()
+        (group / ".local-work/config.json").write_text('{"local": true}\n', encoding="utf-8")
         (group / "docs/work/previous-work").mkdir(parents=True)
         (group / "docs/work/previous-work/workflow.md").write_text("- status: complete\n", encoding="utf-8")
         (group / "review-reports/previous").mkdir(parents=True)
@@ -92,7 +92,6 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         for path in (reviewer / "scripts/review_workspace.py", reviewer / "scripts/review_session.py"):
             with self.subTest(path=path):
                 self.assertTrue(path.is_file())
-        self.assertFalse((group / '.agents/skills/megin').exists())
         self.assertFalse((reviewer / 'scripts/group_review.py').exists())
         self.assertFalse((reviewer / 'scripts/legacy_receipt_runtime/verify.py').exists())
         self.assertFalse((reviewer / 'scripts/mr_contract.py').exists())
@@ -263,7 +262,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
             self.assertIn("Keep this user text.", (group / "AGENTS.md").read_text(encoding="utf-8"))
             self.assertTrue((group / ".agents/skills/personal-helper/SKILL.md").is_file())
             self.assertEqual("theme = 'user'\n", (group / ".codex/preferences.toml").read_text(encoding="utf-8"))
-            self.assertEqual('{"local": true}\n', (group / ".megin/config.json").read_text(encoding="utf-8"))
+            self.assertEqual('{"local": true}\n', (group / ".local-work/config.json").read_text(encoding="utf-8"))
             self.assertEqual("- status: complete\n", (group / "docs/work/previous-work/workflow.md").read_text(encoding="utf-8"))
             self.assertEqual("old report\n", (group / "review-reports/previous/report.md").read_text(encoding="utf-8"))
             self.assertEqual("installed", self.status(group)["status"])
@@ -332,8 +331,8 @@ class WorkflowKitInstallerTests(unittest.TestCase):
             recover = installer._recover_transaction
             observed = []
             def writer_during_restore(*args):
-                self.assertFalse((group / ".megin/workspace.lock.json").exists())
-                self.assertFalse((repo / ".git/megin/workspace.lock.json").exists())
+                self.assertFalse((group / ".local-work/workspace.lock.json").exists())
+                self.assertFalse((repo / ".git/local-work/workspace.lock.json").exists())
                 observed.append(True)
                 return recover(*args)
             before_status = self.snapshot(group)

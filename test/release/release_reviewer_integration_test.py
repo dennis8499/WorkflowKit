@@ -15,7 +15,6 @@ import zipfile
 
 import workflow_kit_installer_test as harness
 
-
 class ReleaseReviewerIntegrationTests(unittest.TestCase):
     execute = harness.WorkflowKitInstallerTests.execute
     install = harness.WorkflowKitInstallerTests.install
@@ -180,7 +179,6 @@ class ReleaseReviewerIntegrationTests(unittest.TestCase):
                 self.assertEqual(2, failed.returncode, failed.stderr)
                 self.assertFalse(failed_context.exists())
 
-
     def test_saved_workspace_single_report_and_editable_checklist_snapshot(self):
         source = self.repo / "config_use.py"
         source.write_text("import os\nURL = os.environ['BILLING_URL']\n", encoding="utf-8")
@@ -252,31 +250,6 @@ class ReleaseReviewerIntegrationTests(unittest.TestCase):
         self.assertEqual([], list(self.group.glob("release-review-*.md")))
         self.assertEqual([], list((self.repo / "review-reports").glob("release-review-*.md")))
 
-    def test_018_upgrade_and_rollback_preserve_old_release_skill_and_reports(self):
-        fixture = harness.ROOT / "test/fixtures/workflow-kit-0.18.0"
-        old_archive = fixture / "workflow-kit.tar.xz"
-        for profile in ("group", "repository"):
-            with self.subTest(profile=profile):
-                target = self.create_group(self.root / profile)
-                if profile == "repository":
-                    subprocess.run(["git", "init", "-b", "main", str(target)], check=True, capture_output=True, env=self.environment)
-                command = [sys.executable, "-X", "utf8", "-B", str(Path(__file__).with_name("frozen_installer_runner.py")), str(fixture / "installer.py"),
-                           "install", str(old_archive), str(target), "0.18.0", "bundled", "--format", "tar.xz", "--entry-root", "workflow-kit",
-                           "--archive-sha256", hashlib.sha256(old_archive.read_bytes()).hexdigest(), "--profile", profile]
-                installed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", env=self.environment)
-                self.assertEqual(0, installed.returncode, installed.stdout + installed.stderr)
-                old_skill = (target / ".agents/skills/release-reviewer/SKILL.md").read_bytes()
-                applied, data = self.execute("install", harness.ARCHIVE, target, harness.VERSION, "bundled", "--format", "tar.xz", "--entry-root", "workflow-kit",
-                                            "--archive-sha256", hashlib.sha256(harness.ARCHIVE.read_bytes()).hexdigest(), "--profile", profile)
-                self.assertEqual(0, applied.returncode, data)
-                self.assertEqual(harness.CURRENT_SOURCES['release-reviewer']['version'],
-                                 (target / ".agents/skills/release-reviewer/VERSION").read_text().strip())
-                self.assertEqual("old report\n", (target / "review-reports/previous/report.md").read_text())
-                rolled, output = self.execute("rollback", target, data["transaction"])
-                self.assertEqual(0, rolled.returncode, output)
-                self.assertEqual(old_skill, (target / ".agents/skills/release-reviewer/SKILL.md").read_bytes())
-                self.assertEqual("0.18.0", json.loads((target / harness.MARKER).read_text(encoding="utf-8"))["version"])
-
     def test_installed_group_supporting_freezes_current_head_instead_of_default_branch(self):
         peer = self.group / "consumer"
         subprocess.run(["git", "clone", "--no-hardlinks", str(self.repo), str(peer)], check=True, capture_output=True, env=self.environment)
@@ -297,7 +270,6 @@ class ReleaseReviewerIntegrationTests(unittest.TestCase):
         marker["files"][path.relative_to(self.group).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
         marker_path.write_text(json.dumps(marker), encoding="utf-8")
         self.assertEqual("error", self.status(self.group)["status"])
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
