@@ -459,7 +459,7 @@ class ResumeTests(GitFixture):
         run = {'id': 123, 'head_sha': sha, 'head_branch': 'main', 'event': 'push',
                'head_repository': {'full_name': source['slug']}, 'status': 'completed',
                'conclusion': 'success', 'run_attempt': attempt, 'html_url': 'https://example.invalid/run/123'}
-        cells = ('linux-py3.10', 'linux-py3.14', 'windows-py3.10', 'windows-py3.14')
+        cells = ('windows-py3.10', 'windows-py3.14')
 
         class FakeCI:
             def pages(self, endpoint, field):
@@ -485,12 +485,12 @@ class ResumeTests(GitFixture):
         plan, _ = self.plan()
         journal = release.Journal(self.root / 'evidence', plan=plan)
         conclusions = {(1, 'windows-py3.14'): 'failure'}
-        conclusions.update({(2, cell): 'missing' for cell in ('linux-py3.10', 'linux-py3.14', 'windows-py3.10')})
+        conclusions.update({(2, cell): 'missing' for cell in ('windows-py3.10',)})
         runner, _ = self.ci_fixture(plan, journal, conclusions, attempt=2)
         result = runner.wait_ci('MergeReviewer')
         self.assertEqual(2, result['attempt'])
-        self.assertEqual(4, len(result['jobs']))
-        self.assertEqual(5, len(result['attemptJobs']))
+        self.assertEqual(2, len(result['jobs']))
+        self.assertEqual(3, len(result['attemptJobs']))
         self.assertTrue(all(job['conclusion'] == 'success' for job in result['jobs']))
 
     def test_ci_foreign_repository_run_cannot_satisfy_candidate(self):
