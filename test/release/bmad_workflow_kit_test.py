@@ -256,13 +256,13 @@ class BmadWorkflowKitTests(unittest.TestCase):
                 root = self.target("legacy " + version)
                 self.write_external(root)
                 before = bmad_bytes(root)
-                old_zip = ROOT / f"dist/gitlab-workspace-kit-{version}.zip"
+                old_archive = ROOT / f"test/fixtures/workflow-kit-{version}/workflow-kit.tar.xz"
                 old_installer = ROOT / f"test/fixtures/workflow-kit-{version}/installer.py"
                 command = [
                     sys.executable, "-X", "utf8", "-B", str(runner), str(old_installer),
-                    "install", str(old_zip), str(root), version, "bundled", "--format", "zip",
+                    "install", str(old_archive), str(root), version, "bundled", "--format", "tar.xz",
                     "--entry-root", "workflow-kit",
-                    "--archive-sha256", installer.digest(old_zip.read_bytes()), "--profile", "group",
+                    "--archive-sha256", installer.digest(old_archive.read_bytes()), "--profile", "group",
                 ]
                 legacy = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", check=False)
                 self.assertEqual(0, legacy.returncode, legacy.stderr or legacy.stdout)
@@ -275,12 +275,12 @@ class BmadWorkflowKitTests(unittest.TestCase):
     def test_1_1_baseline_without_external_bmad_upgrades_to_the_bundle(self):
         version = "1.1.1"
         root = self.target("upgrade default bundle")
-        old_zip = ROOT / f"dist/gitlab-workspace-kit-{version}.zip"
+        old_archive = ROOT / f"test/fixtures/workflow-kit-{version}/workflow-kit.tar.xz"
         old_installer = ROOT / f"test/fixtures/workflow-kit-{version}/installer.py"
         command = [
             sys.executable, "-X", "utf8", "-B", str(ROOT / "test/release/frozen_installer_runner.py"),
-            str(old_installer), "install", str(old_zip), str(root), version, "bundled", "--format", "zip",
-            "--entry-root", "workflow-kit", "--archive-sha256", installer.digest(old_zip.read_bytes()),
+            str(old_installer), "install", str(old_archive), str(root), version, "bundled", "--format", "tar.xz",
+            "--entry-root", "workflow-kit", "--archive-sha256", installer.digest(old_archive.read_bytes()),
             "--profile", "group",
         ]
         legacy = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", check=False)

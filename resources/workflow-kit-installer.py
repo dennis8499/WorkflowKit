@@ -28,7 +28,7 @@ from typing import Any
 PACKAGE = "gitlab-workspace-kit"
 BUNDLE_SCHEMA = "gitlab-workspace-kit/v1"
 INDEX_SCHEMA = "gitlab-workspace-kit-bundle/v1"
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 KIT_EXTENSION_FILES = {}
 BMAD_RUNTIME_FILES = {'_bmad/_config/bmad-help.csv': '4fbd05b07ddd6e8a170d6c511c17ab3232e98f7c90ad8bfedef9a363dbb5f9a0',
  '_bmad/_config/files-manifest.csv': 'c380bab3cd663543c4ff639c552396ded7db735f3362c7bf1394c4e1c0d31624',
