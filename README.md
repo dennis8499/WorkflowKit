@@ -13,7 +13,7 @@ python -X utf8 -B install.py --target C:\projects\MyProject
 需要 Python 3.11+ 和 Git。安裝器會依目標是否為 Git 根目錄選擇 Repository 或 Group profile。`--profile repository` 或 `--profile group` 可明確指定；`--dry-run` 預檢而不變更目標。
 
 ```powershell
-python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.1.0
+python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.1.1
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易識別>
 ```
 
@@ -36,6 +36,6 @@ python -X utf8 -B scripts/workflow-kit-sources.py --archives-only
 
 `status` 為唯讀檢查，回報 `statusContract` 與完整性；發現未完成交易時保留現場並顯示原因。重新執行明確的安裝操作會在安裝器鎖定下先處理可安全復原的交易；包含歷史 BMAD 操作的交易須使用其原安裝器處理。
 
-公司內網可執行 `scripts/mirror-release.py --tag v1.1.0`，將 GitHub 的正式附件逐位元鏡像至 `01002903/WorkflowKit`。發布權限由環境變數 `GITEA_TOKEN` 提供；下載者不需要 Token。
+公司內網可執行 `scripts/mirror-release.py --tag v1.1.1`，將 GitHub 的正式附件逐位元鏡像至 `01002903/WorkflowKit`。發布權限由環境變數 `GITEA_TOKEN` 提供；下載者不需要 Token。
 
 本 Repo 從 GitlabWorkSpace `7475cb09fb98851a5867422279d4635aeb49a0cd` 的整合包來源拆出。內部套件識別及既有安裝標記沿用 `gitlab-workspace-kit`，以維持歷史升級與 rollback 相容性。

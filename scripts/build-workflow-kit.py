@@ -34,16 +34,16 @@ PINNED_SOURCES = ({'id': 'codebase-wiki',
   'root': 'codebase-llm-wiki-codex-0.6.4'},
  {'id': 'merge-reviewer',
   'repository': 'MergeReviewer',
-  'asset': 'merge-reviewer-0.20.1.zip',
-  'filename': 'merge-reviewer-0.20.1.zip',
-  'version': '0.20.1',
-  'sha256': '490e39a56f83e24db62d462fc3860455f2cc41a623fce8e410660fc366a36440'},
+  'asset': 'merge-reviewer-0.20.2.zip',
+  'filename': 'merge-reviewer-0.20.2.zip',
+  'version': '0.20.2',
+  'sha256': 'd388ede2cefc8abba50d720c6d068acdf9ebec0c943c4798c94b1254c0c3133b'},
  {'id': 'release-reviewer',
   'repository': 'ReleaseReviewer',
-  'asset': 'release-reviewer-0.8.0.zip',
-  'filename': 'release-reviewer-0.8.0.zip',
-  'version': '0.8.0',
-  'sha256': 'b6ba140cd12db38fbe0ff2a43c142515197826b69891785f16e34e5012294a72'})
+  'asset': 'release-reviewer-0.10.0.zip',
+  'filename': 'release-reviewer-0.10.0.zip',
+  'version': '0.10.0',
+  'sha256': 'b6532ffbf14b3597a237b6a552e0bdeff594a834c570a7f4809ce459b57f4c9c'})
 
 
 def digest(data: bytes) -> str:
