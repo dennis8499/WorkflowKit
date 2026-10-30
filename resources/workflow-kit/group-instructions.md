@@ -9,10 +9,15 @@ For human-readable output, use the installed `$output-style` at
 Preserve required artifact structure, evidence and completion gates. If absent,
 keep the selected Skill's original output style.
 
-Choose the development workflow requested by the user. BMAD is an optional,
-separate CLI installation; use the BMAD page for setup and capability guidance.
-When selected, run installed BMAD skills from their project root and use explicit
-artifact statuses as evidence of progress. Preserve its runtime, skills and outputs.
+Choose the development workflow requested by the user. When BMAD is selected, start
+with `$bmad-help`, then invoke the chosen Skill; `$bmad-build` is the implementation
+entry point. The bundled runtime and 29 Codex Skills live at this Group root, so a
+Group has one shared installation. For work in a child Repo, pass its explicit path
+to the BMAD workflow. BMAD uses `wiki/` as project knowledge and `_bmad-output/` for
+planning and implementation artifacts. Preserve user configuration, memory, render
+snapshots and generated output. If status reports `bmadMode: external`, use the
+pre-existing BMAD and do not claim the kit's `bmad-workflow` capability. Ensure the
+user-provided `uv` runtime is available before running bundled BMAD workflows.
 
 Use `$codebase-wiki` for Wiki maintenance, queries, functional exploration,
 static code audit, ADR, Synthesis, BA/SA/SD, NotebookLM export and archaeology.

@@ -1,19 +1,26 @@
 # GitLab Workspace Group profile
 
 The versioned kit installs Codebase LLM Wiki, MergeReviewer,
-ReleaseReviewer and Output Style. Install and update the complete package transactionally; use only
+ReleaseReviewer, Output Style and the 29 Codex Skills from BMAD Method v6.12.4 Core+BMM. Install and update the complete package transactionally; use only
 its verified manifest and source snapshots. This profile applies to the matched
 non-Git Group root and its actual direct-child Git repositories, including local
 Repos not yet mapped to GitLab. Repository names alone are not matching evidence.
 
 ## Development
 
-Choose the development workflow requested by the user. BMAD is optional and
-installed independently by the user with its official CLI. The BMAD page explains
-installation, capability selection and the current state recorded in project files.
-When BMAD is installed and selected, invoke its installed skills in the project root.
-The kit owns its Wiki, Reviewers and Output Style; BMAD runtime, skills, configuration
-and generated output remain owned by the user and its CLI across upgrades and rollback.
+Choose the development workflow requested by the user. The kit bundles BMAD Method
+Core+BMM for Codex. Use `$bmad-help` to choose a workflow, then invoke the selected
+BMAD Skill; use `$bmad-build` for implementation work when the user selects BMAD.
+The shared `_bmad/` runtime is installed once at the selected Group root. In a child
+Repo, pass the explicit project path to BMAD workflows. Configuration defaults use
+the root folder name, Traditional Chinese for communication and documents, `wiki/`
+for project knowledge, and `_bmad-output/` for planning and implementation artifacts.
+Put local overrides in `_bmad/config.user.toml` or `_bmad/custom/`; keep user memory,
+render snapshots and generated output. If an external BMAD runtime or Skill already
+exists at the selected root, the installer preserves it and skips the bundled BMAD
+component while continuing to install the other tools. Check `bmadMode` before
+assuming the `bmad-workflow` capability. Before running bundled workflows, prepare the
+user-provided `uv` runtime; installation itself works offline and does not need Node.js.
 
 ## Knowledge
 

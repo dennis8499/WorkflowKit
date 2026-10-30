@@ -170,6 +170,8 @@ class TransactionTests(unittest.TestCase):
                      if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc")
         paths.extend(p for p in (ROOT / "resources/bmad").rglob("*") if p.is_file())
         sources = {record['filename'] for record in harness.CURRENT_SOURCES.values()}
+        bmad_provenance = json.loads((ROOT / "resources/bmad/source.json").read_text(encoding="utf-8"))
+        sources.add(bmad_provenance["officialArchive"])
         paths.extend(ROOT / 'resources/offline-tools/sources' / name for name in sorted(sources))
         paths.extend((ROOT / "scripts/workflow-kit-sources.py", ROOT / "resources/offline-tools/source-snapshots.json"))
         for path in paths:

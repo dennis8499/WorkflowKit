@@ -5,6 +5,7 @@ import argparse
 import ast
 import hashlib
 import importlib.util
+import io
 import json
 import pprint
 import subprocess
@@ -17,7 +18,8 @@ sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOTS = ROOT / 'resources/offline-tools/source-snapshots.json'
 REPOS = {'codebase-wiki': 'code-base-llm-wiki',
-         'merge-reviewer': 'MergeReviewer', 'release-reviewer': 'ReleaseReviewer'}
+         'merge-reviewer': 'MergeReviewer', 'release-reviewer': 'ReleaseReviewer',
+         'bmad-method': 'BMAD-METHOD'}
 
 
 def digest(data: bytes) -> str:
@@ -39,6 +41,30 @@ def load_module(name: str, path: Path):
 
 
 def local_entries(tool: str) -> tuple[str, dict[str, bytes]]:
+    if tool == 'bmad-method':
+        metadata = json.loads((ROOT / 'resources/bmad/source.json').read_text(encoding='utf-8'))
+        candidates = (ROOT.parent / REPOS[tool], ROOT / '.tmp' / f"bmad-method-v{metadata['version']}")
+        repo = next((candidate for candidate in candidates if candidate.is_dir()), None)
+        if repo is None:
+            raise ValueError(f'Missing local source: {candidates[0]}')
+        info = git_info(repo)
+        if info['commit'] != metadata['commit'] or info['dirty']:
+            raise ValueError('Pinned BMAD source checkout must match its official commit and have no tracked edits')
+        source_archive_path = ROOT / 'resources/offline-tools/sources' / metadata['officialArchive']
+        if digest(source_archive_path.read_bytes()) != metadata['officialArchiveSha256']:
+            raise ValueError('Official BMAD source archive SHA-256 differs from provenance metadata')
+        raw = subprocess.check_output(['git', '-c', f'safe.directory={repo.resolve()}', '-C', str(repo),
+                                       'archive', '--format=zip', '--prefix=BMAD-METHOD-6.12.4/', 'HEAD'])
+        if raw != source_archive_path.read_bytes():
+            raise ValueError('Official BMAD source archive differs from the exact pinned Git tree')
+        payload_path = ROOT / 'resources/offline-tools/sources' / metadata['codexArchive']
+        if digest(payload_path.read_bytes()) != metadata['codexArchiveSha256']:
+            raise ValueError('Official BMAD Codex payload SHA-256 differs from provenance metadata')
+        with zipfile.ZipFile(payload_path) as archive:
+            payload = {info.filename[len(f"{metadata['codexArchive'][:-4]}/"):]: archive.read(info)
+                       for info in archive.infolist() if not info.is_dir() and
+                       info.filename.startswith(f"{metadata['codexArchive'][:-4]}/")}
+        return metadata['version'], payload
     repo = ROOT.parent / REPOS[tool]
     if tool == 'codebase-wiki':
         release = load_module('wiki_release_sources', repo / 'tools/release.py')
@@ -81,6 +107,51 @@ def archive_entries(record: dict) -> dict[str, bytes]:
                 if not info.is_dir() and info.filename.startswith(prefix)}
 
 
+def verify_bmad_source(record: dict) -> dict[str, str]:
+    metadata = json.loads((ROOT / 'resources/bmad/source.json').read_text(encoding='utf-8'))
+    if ((metadata.get('commit'), metadata.get('version'), metadata.get('codexArchive'), metadata.get('codexArchiveSha256'))
+            != (record['commit'], record['version'], record['filename'], record['archiveSha256'])):
+        raise ValueError('BMAD upstream pin differs from its official provenance record')
+    archive_path = ROOT / 'resources/offline-tools/sources' / metadata['officialArchive']
+    raw = archive_path.read_bytes()
+    if digest(raw) != metadata['officialArchiveSha256']:
+        raise ValueError('Official BMAD source archive hash differs from its pin')
+    prefix = 'BMAD-METHOD-6.12.4/'
+    rows: dict[str, str] = {}
+    links = []
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        for info in archive.infolist():
+            if info.is_dir():
+                continue
+            if not info.filename.startswith(prefix):
+                raise ValueError('Official BMAD source contains an entry outside its pinned root')
+            relative = info.filename[len(prefix):]
+            if not relative or relative in rows:
+                raise ValueError('Official BMAD source contains duplicate or empty paths')
+            mode = info.external_attr >> 16
+            if mode & 0o170000 == 0o120000:
+                links.append(relative)
+            rows[relative] = digest(archive.read(info))
+    if sorted(links) != metadata.get('sourceSymlinks'):
+        raise ValueError('Official BMAD source link inventory differs from its pin')
+    tree_sha = digest(json.dumps(rows, sort_keys=True, separators=(',', ':')).encode())
+    if (tree_sha, len(rows), rows.get('package-lock.json')) != (
+            metadata['sourceTreeSha256'], metadata['sourceFileCount'], metadata['lockfileSha256']):
+        raise ValueError('Official BMAD source tree or lockfile digest differs from its pin')
+    payload_path = ROOT / 'resources/offline-tools/sources' / metadata['codexArchive']
+    if digest(payload_path.read_bytes()) != metadata['codexArchiveSha256']:
+        raise ValueError('Official BMAD derived Codex archive hash differs from its pin')
+    with zipfile.ZipFile(payload_path) as archive:
+        payload = {info.filename[len(f"{metadata['codexArchive'][:-4]}/"):]: digest(archive.read(info))
+                   for info in archive.infolist() if not info.is_dir() and
+                   info.filename.startswith(f"{metadata['codexArchive'][:-4]}/")}
+    if (digest(json.dumps(payload, sort_keys=True, separators=(',', ':')).encode()) != metadata['codexTreeSha256']
+            or len(payload) != metadata['codexFileCount']):
+        raise ValueError('Official BMAD derived Codex file manifest differs from its pin')
+    return {'sourceArchiveSha256': metadata['officialArchiveSha256'],
+            'sourceTreeSha256': metadata['sourceTreeSha256'], 'lockfileSha256': metadata['lockfileSha256']}
+
+
 def check(compare_local: bool = True) -> dict:
     snapshot = json.loads(SNAPSHOTS.read_text(encoding='utf-8'))
     tree = ast.parse((ROOT / 'scripts/build-workflow-kit.py').read_text(encoding='utf-8'))
@@ -98,6 +169,9 @@ def check(compare_local: bool = True) -> dict:
             raise ValueError(f'{tool}: archive payload differs from frozen source snapshot')
         if digest(json.dumps(hashes, sort_keys=True, separators=(',', ':')).encode()) != record['treeSha256']:
             raise ValueError(f'{tool}: source tree digest differs')
+        bmad_metadata = verify_bmad_source(record) if tool == 'bmad-method' else {}
+        if tool == 'bmad-method' and any(record.get(key) != value for key, value in bmad_metadata.items()):
+            raise ValueError('BMAD source archive, source tree or package lockfile differs from the snapshot')
         if (pins[tool]['version'], pins[tool]['sha256'], pins[tool]['filename']) != (record['version'], record['archiveSha256'], record['filename']):
             raise ValueError(f'{tool}: builder pins differ from reviewed source snapshot')
         if compare_local:
@@ -106,7 +180,8 @@ def check(compare_local: bool = True) -> dict:
             if version != record['version'] or differences:
                 raise ValueError(f'{tool}: local source drift (version={version}, files={differences})')
         results.append({'tool': tool, 'version': record['version'], 'files': len(hashes),
-                        'sourceDirty': record['dirty'], 'archiveSha256': record['archiveSha256'], 'status': 'PASS'})
+                        'sourceDirty': record['dirty'], 'archiveSha256': record['archiveSha256'],
+                        **bmad_metadata, 'status': 'PASS'})
     for name, expected in snapshot.get('workspaceFiles', {}).items():
         if digest((ROOT / name).read_bytes()) != expected:
             raise ValueError(f'Workspace overlay or profile drift: {name}')
@@ -132,7 +207,7 @@ def freeze(selected_tools: list[str] | None = None) -> dict:
         pin = pins[tool]
         filename = pin['filename'] if pin['version'] == version else (
             f'codebase-llm-wiki-codex-{version}.zip' if tool == 'codebase-wiki' else f'{tool}-{version}.zip')
-        prefix = f'codebase-llm-wiki-codex-{version}' if tool == 'codebase-wiki' else tool
+        prefix = pin.get('root', f'codebase-llm-wiki-codex-{version}' if tool == 'codebase-wiki' else tool)
         archive = ROOT / 'resources/offline-tools/sources' / filename
         # Keep an existing archive byte-for-byte when its reviewed contents match.
         same = False
@@ -145,9 +220,14 @@ def freeze(selected_tools: list[str] | None = None) -> dict:
         if not same:
             builder.make_zip({(prefix + '/' if prefix else '') + name: data for name, data in entries.items()}, archive)
         hashes = {name: digest(data) for name, data in sorted(entries.items())}
+        repo = next((candidate for candidate in (ROOT.parent / repo_name, ROOT / '.tmp' / f"bmad-method-v{version}")
+                     if candidate.is_dir()), ROOT.parent / repo_name)
+        provenance = verify_bmad_source({'commit': 'bab9082c3e884e0d72c759bcd1a6d90bcc01be84',
+                                        'version': version, 'filename': filename,
+                                        'archiveSha256': digest(archive.read_bytes())}) if tool == 'bmad-method' else {}
         records[tool] = {'repository': repo_name, 'version': version, 'filename': filename, 'entryRoot': prefix,
-                         'sourceKind': 'local-snapshot', **git_info(ROOT.parent / repo_name),
-                         'archiveSha256': digest(archive.read_bytes()),
+                         'sourceKind': 'official-cli-snapshot' if tool == 'bmad-method' else 'local-snapshot',
+                         **git_info(repo), 'archiveSha256': digest(archive.read_bytes()), **provenance,
                          'treeSha256': digest(json.dumps(hashes, sort_keys=True, separators=(',', ':')).encode()), 'files': hashes}
         pin.update(version=version, filename=filename, sha256=records[tool]['archiveSha256'],
                    asset='codebase-llm-wiki-codex.zip' if tool == 'codebase-wiki' else filename)

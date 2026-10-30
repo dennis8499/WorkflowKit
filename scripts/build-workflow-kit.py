@@ -43,7 +43,14 @@ PINNED_SOURCES = ({'id': 'codebase-wiki',
   'asset': 'release-reviewer-0.10.0.zip',
   'filename': 'release-reviewer-0.10.0.zip',
   'version': '0.10.0',
-  'sha256': 'b6532ffbf14b3597a237b6a552e0bdeff594a834c570a7f4809ce459b57f4c9c'})
+  'sha256': 'b6532ffbf14b3597a237b6a552e0bdeff594a834c570a7f4809ce459b57f4c9c'},
+ {'id': 'bmad-method',
+  'repository': 'bmad-code-org/BMAD-METHOD',
+  'asset': 'bmad-method-6.12.4-codex.zip',
+  'filename': 'bmad-method-6.12.4-codex.zip',
+  'version': '6.12.4',
+  'sha256': '2df571533da6b8938c08abbdb1b4d208a7f4586e404e4c74e40027b126d4f057',
+  'root': 'bmad-method-6.12.4-codex'})
 
 
 def digest(data: bytes) -> str:
@@ -56,6 +63,7 @@ def source_summary(upstream: dict[str, dict[str, str]]) -> list[str]:
         f"Native Codebase LLM Wiki {upstream['codebase-wiki']['version']} is single-codebase; GitlabWorkSpace overlay restores Group-relative specifications and shared-Wiki rules.",
         f"Native MergeReviewer {upstream['merge-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps MergeReviewSession/v1 jobs. The Skill agent applies Code Review defect criteria to the diff and evidence-linked consumers after start freezes base/head and all peer Repos' current local HEADs. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout under the selected Repo's review-reports/ with 8-character commit IDs in the filename and full evidence validation. No Workspace overlay or MR-specific report adapter is applied.",
         f"Native ReleaseReviewer {upstream['release-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps ReleaseReviewSession/v1 jobs in an independent runtime. The Skill agent reviews diff-linked blockers and deployment dependencies using base/head and all peer Repos' current local HEADs frozen by start. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout with an editable manual checklist under the selected Repo's review-reports/ without an overlay.",
+        f"Official BMAD Method {upstream['bmad-method']['version']} includes the pinned Codex Core and BMM Skills, shared runtime and manifests. Its native `_bmad` runtime and `.agents/skills/bmad-*` entries are a separately verifiable workflow component with a bundled or external installation mode.",
     ]
 
 
@@ -150,7 +158,7 @@ def atomic_write(target: Path, content: bytes) -> None:
         temporary.unlink(missing_ok=True)
 
 
-def sync_installer_metadata(manifest: dict) -> None:
+def sync_installer_metadata(manifest: dict, payload_files: dict[str, bytes]) -> None:
     """Freeze current and reviewed predecessor hashes into the shipped installer."""
     import ast
     import pprint
@@ -168,6 +176,9 @@ def sync_installer_metadata(manifest: dict) -> None:
         "VERSION": KIT_VERSION,
         "UPSTREAM": {item["id"]: {**manifest["upstream"][item["id"]], "root": item.get("root", "")} for item in PINNED_SOURCES},
         "PROFILE_HASHES": manifest["customProfile"]["files"],
+        "BMAD_RUNTIME_FILES": manifest["profiles"]["group"]["bmadFiles"],
+        "BMAD_CONFIG_TEMPLATE": payload_files["payload/_bmad/config.toml"].decode("utf-8"),
+        "BMAD_FILES_MANIFEST_TEMPLATE": payload_files["payload/_bmad/_config/files-manifest.csv"].decode("utf-8"),
         "SOURCE_SUMMARY": manifest["sourceSummary"],
         "SPECIAL_RULES": manifest["customProfile"]["specialRules"],
         "AGENT_BLOCK_SHA256": digest((PROFILE / "group-instructions.md").read_text(encoding="utf-8").strip().encode("utf-8")),
@@ -308,6 +319,22 @@ def build() -> dict[str, object]:
                 files[f"payload/.agents/skills/codebase-wiki/{name}"] = data
             for name, data in selected.items():
                 files[f"framework/{name}"] = data
+        elif source["id"] == "bmad-method":
+            skill_files = {name: data for name, data in selected.items()
+                           if name.startswith(".agents/skills/bmad-")}
+            runtime_files = {name: data for name, data in selected.items()
+                             if name.startswith("_bmad/")}
+            expected = set(skill_files) | set(runtime_files)
+            skill_names = {PurePosixPath(name).parts[2] for name in skill_files}
+            if (len(skill_names) != 29 or "_bmad/config.toml" not in runtime_files
+                    or expected != set(selected)):
+                raise ValueError("Pinned BMAD release must contain 29 Codex Skills and its shared runtime only.")
+            for name, data in selected.items():
+                relative = name
+                if relative.startswith((".agents/skills/bmad-", "_bmad/")):
+                    files[f"payload/{relative}"] = data
+                else:
+                    raise ValueError(f"BMAD archive contains an unexpected installation path: {relative}")
         else:
             prefix = source["id"] + "/"
             skill_files = {name[len(prefix):]: data for name, data in selected.items() if name.startswith(prefix)}
@@ -382,29 +409,61 @@ def build() -> dict[str, object]:
     ).encode("utf-8"))
     capabilities = sorted(["functional-exploration", "ingest", "query", "lint", "audit", "adr", "synthesis",
                            "business-analysis", "system-analysis", "system-design", "notebooklm-export", "archaeology",
-                           "merge-repo", "release-review"])
+                           "merge-repo", "release-review", "bmad-workflow"])
     native_hashes = {name: digest(data) for name, data in sorted(native_payload.items())}
     manifest["capabilities"] = capabilities
     manifest["wikiInstalledVersionSha256"] = digest(files["framework/VERSION"])
-    manifest["profiles"] = {
-        "group": {"files": manifest["files"], "payloadSha256": manifest["payloadSha256"], "overlays": overlays,
-                  "profileHashes": manifest["customProfile"]["files"], "skills": skill_names, "capabilities": capabilities,
-                  "agentBlockSha256": digest((PROFILE / "group-instructions.md").read_text(encoding="utf-8").strip().encode("utf-8"))},
-        "repository": {"files": native_hashes, "payloadSha256": digest(json.dumps(native_hashes, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")),
-                       "overlays": {}, "skills": skill_names, "capabilities": capabilities,
-                       "profileHashes": {name: native_hashes[".agents/gitlab-workspace-kit/" + name] for name in ("profile.md", "group-instructions.md", "legacy-cleanup.md")},
-                       "agentBlockSha256": digest(native_payload[".agents/gitlab-workspace-kit/group-instructions.md"].decode("utf-8").replace('\r\n', '\n').replace('\r', '\n').strip().encode("utf-8"))}
+    base_profile_metadata = {
+        "profileHashes": manifest["customProfile"]["files"], "skills": skill_names,
+        "capabilities": capabilities,
     }
+    bmad_files = {name: value for name, value in manifest["files"].items() if name.startswith("_bmad/")}
+    group_profile = {"files": manifest["files"], "payloadSha256": manifest["payloadSha256"], "overlays": overlays,
+                     **base_profile_metadata, "bmadFiles": bmad_files,
+                     "agentBlockSha256": digest((PROFILE / "group-instructions.md").read_text(encoding="utf-8").strip().encode("utf-8"))}
+    repository_profile = {"files": native_hashes,
+                          "payloadSha256": digest(json.dumps(native_hashes, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")),
+                          "overlays": {}, **base_profile_metadata,
+                          "profileHashes": {name: native_hashes[".agents/gitlab-workspace-kit/" + name] for name in ("profile.md", "group-instructions.md", "legacy-cleanup.md")},
+                          "bmadFiles": bmad_files,
+                          "agentBlockSha256": digest(native_payload[".agents/gitlab-workspace-kit/group-instructions.md"].decode("utf-8").replace('\r\n', '\n').replace('\r', '\n').strip().encode("utf-8"))}
+    for profile in (group_profile, repository_profile):
+        if profile["overlays"]:
+            external_files = {name: value for name, value in profile["files"].items()
+                              if not name.startswith(("_bmad/", ".agents/skills/bmad-"))}
+            external_skills = [name for name in profile["skills"] if not name.startswith("bmad-")]
+            external_capabilities = [name for name in profile["capabilities"] if name != "bmad-workflow"]
+            profile["variants"] = {"external": {
+                "files": external_files,
+                "payloadSha256": digest(json.dumps(external_files, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")),
+                "overlays": profile["overlays"], "profileHashes": profile["profileHashes"],
+                "skills": external_skills, "capabilities": external_capabilities,
+                "agentBlockSha256": profile["agentBlockSha256"],
+            }}
+        else:
+            external_files = {name: value for name, value in profile["files"].items()
+                              if not name.startswith(("_bmad/", ".agents/skills/bmad-"))}
+            external_skills = [name for name in profile["skills"] if not name.startswith("bmad-")]
+            external_capabilities = [name for name in profile["capabilities"] if name != "bmad-workflow"]
+            profile["variants"] = {"external": {
+                "files": external_files,
+                "payloadSha256": digest(json.dumps(external_files, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")),
+                "overlays": {}, "profileHashes": profile["profileHashes"],
+                "skills": external_skills, "capabilities": external_capabilities,
+                "agentBlockSha256": profile["agentBlockSha256"],
+            }}
+    manifest["profiles"] = {"group": group_profile, "repository": repository_profile}
     for name, content in native_payload.items():
         files["repository-payload/" + name] = content
     if len(files) > MAX_FILES or sum(len(value) for value in files.values()) > MAX_EXPANDED_BYTES:
         raise ValueError("Combined workflow profiles exceed archive limits.")
-    sync_installer_metadata(manifest)
+    sync_installer_metadata(manifest, files)
     entries = {f"{ROOT_NAME}/{name}": data for name, data in files.items()}
     entries[f"{ROOT_NAME}/manifest.json"] = (json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
     installer_bytes = (ROOT / 'resources/workflow-kit-installer.py').read_bytes()
     entries[f'{ROOT_NAME}/install.py'] = installer_bytes
-    entries[f'{ROOT_NAME}/README.md'] = (ROOT / 'README.md').read_bytes()
+    readme_bytes = (ROOT / 'README.md').read_bytes()
+    entries[f'{ROOT_NAME}/README.md'] = readme_bytes.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
     OUTPUT.mkdir(parents=True, exist_ok=True)
     DIST.mkdir(parents=True, exist_ok=True)
     archive = OUTPUT / "workflow-kit.tar.xz"

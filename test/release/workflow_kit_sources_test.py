@@ -23,11 +23,13 @@ class SourceSummaryTests(unittest.TestCase):
         builder = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(builder)
         versions = {'codebase-wiki': '91.2.3',
-                    'merge-reviewer': '93.4.5', 'release-reviewer': '94.5.6'}
+                    'merge-reviewer': '93.4.5', 'release-reviewer': '94.5.6',
+                    'bmad-method': '96.7.8'}
         notes = builder.source_summary({tool: {'version': version} for tool, version in versions.items()})
-        self.assertEqual(3, len(notes))
-        for note, tool, label in zip(notes, versions, ('Codebase LLM Wiki', 'MergeReviewer', 'ReleaseReviewer')):
-            self.assertTrue(note.startswith(f'Native {label} {versions[tool]} '), note)
+        self.assertEqual(4, len(notes))
+        for note, tool, label in zip(notes, versions, ('Codebase LLM Wiki', 'MergeReviewer', 'ReleaseReviewer', 'BMAD Method')):
+            prefix = f'Official {label} {versions[tool]} ' if tool == 'bmad-method' else f'Native {label} {versions[tool]} '
+            self.assertTrue(note.startswith(prefix), note)
 
 
 class SourcePackageTests(unittest.TestCase):

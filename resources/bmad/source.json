@@ -1,14 +1,35 @@
 {
-  "schema": "gitlab-workspace-bmad-source/v1",
-  "id": "bmad-method",
-  "version": "6.12.4",
-  "repository": "https://github.com/bmad-code-org/BMAD-METHOD",
-  "commit": "bab9082c3e884e0d72c759bcd1a6d90bcc01be84",
-  "license": "MIT",
-  "sourceUrl": "https://github.com/bmad-code-org/BMAD-METHOD/tree/bab9082c3e884e0d72c759bcd1a6d90bcc01be84",
-  "sourceKind": "official-release-catalog",
-  "releaseUrl": "https://github.com/bmad-code-org/BMAD-METHOD/releases/tag/v6.12.4",
-  "documentationUrl": "https://github.com/bmad-code-org/BMAD-METHOD/blob/v6.12.4/docs/start/install-bmad.md",
   "catalogSha256": "fc9c206d394e72d18a051b0de6eb18e2f1b3abae8f585927496cbf8f7a8ac365",
-  "verifiedAt": "2026-10-18"
+  "codexArchive": "bmad-method-6.12.4-codex.zip",
+  "codexArchiveSha256": "2df571533da6b8938c08abbdb1b4d208a7f4586e404e4c74e40027b126d4f057",
+  "codexFileCount": 234,
+  "codexTreeSha256": "70fa41d696eaddb37f5d22b64e1710be869f4962d03e63d050d8ccf9a5d5c11a",
+  "commit": "bab9082c3e884e0d72c759bcd1a6d90bcc01be84",
+  "compatibilityPatches": [
+    "windows-extended-path-config-utils/v1"
+  ],
+  "defaultCommunicationLanguage": "Traditional Chinese",
+  "defaultDocumentLanguage": "Traditional Chinese",
+  "defaultKnowledgeRoot": "wiki",
+  "documentationUrl": "https://github.com/bmad-code-org/BMAD-METHOD/blob/v6.12.4/docs/start/install-bmad.md",
+  "id": "bmad-method",
+  "license": "MIT",
+  "lockfileSha256": "0c117524dd915dd7aa4534bd3a0059ef98ca48b6110573640ba9d6cc707ce453",
+  "normalization": "workflowkit-bmad-codex/v2",
+  "normalizedInstallTime": "2026-10-14T21:19:19.000Z",
+  "officialArchive": "bmad-method-6.12.4-source.zip",
+  "officialArchiveSha256": "7d61676d2e978cd81419ec415adaa7ee8374c0d84451459a878089a0855f12d9",
+  "releaseUrl": "https://github.com/bmad-code-org/BMAD-METHOD/releases/tag/v6.12.4",
+  "repository": "https://github.com/bmad-code-org/BMAD-METHOD",
+  "schema": "gitlab-workspace-bmad-source/v1",
+  "skillCount": 29,
+  "sourceFileCount": 641,
+  "sourceKind": "official-git-archive",
+  "sourceSymlinks": [
+    "website/src/content/docs"
+  ],
+  "sourceTreeSha256": "1ec47a47204e480ec3a3d6f542654ea09a4588d4df9336d99ad729dd18a9a72e",
+  "sourceUrl": "https://github.com/bmad-code-org/BMAD-METHOD/tree/bab9082c3e884e0d72c759bcd1a6d90bcc01be84",
+  "verifiedAt": "2026-10-18",
+  "version": "6.12.4"
 }

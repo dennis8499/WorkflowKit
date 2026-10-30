@@ -46,7 +46,10 @@ class ProfileTests(unittest.TestCase):
         result, data = self.apply(profile)
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         self.assertEqual(profile, data["profile"])
-        self.assertEqual({'codebase-wiki', 'merge-reviewer', 'release-reviewer'}, set(data['upstreamVersions']))
+        expected = {'codebase-wiki', 'merge-reviewer', 'release-reviewer'}
+        if data.get('bmadMode') == 'bundled':
+            expected.add('bmad-method')
+        self.assertEqual(expected, set(data['upstreamVersions']))
         return data
 
     def assert_preserved(self):
