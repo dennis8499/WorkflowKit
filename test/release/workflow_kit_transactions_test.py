@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -21,6 +22,10 @@ import workflow_kit_installer_test as harness
 ROOT, ARCHIVE, MARKER = harness.ROOT, harness.ARCHIVE, harness.MARKER
 
 TRUST = json.loads((ROOT / "resources/workflow-kit/trusted-predecessors.json").read_text(encoding="utf-8"))
+installer_spec = importlib.util.spec_from_file_location("workflow_kit_predecessor_installer", ROOT / "resources/workflow-kit-installer.py")
+installer = importlib.util.module_from_spec(installer_spec)
+assert installer_spec and installer_spec.loader
+installer_spec.loader.exec_module(installer)
 
 class TransactionTests(unittest.TestCase):
     # Reuse the real CLI harness without inheriting/rerunning its tests.
@@ -35,6 +40,96 @@ class TransactionTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name).resolve()
         self.group = self.create_group(self.root, wiki="# User Wiki\n")
+
+    def test_1_2_predecessors_are_trusted_for_each_profile_and_bmad_mode(self):
+        rows = [row for row in TRUST["packages"] if row["version"] in ("1.2.0", "1.2.1")]
+        self.assertEqual(8, len(rows))
+        identities = set()
+        for row in rows:
+            with self.subTest(version=row["version"], profile=row["profile"], bmadMode=row["bmadMode"]):
+                raw = {
+                    "version": row["version"],
+                    "profile": row["profile"],
+                    "bmadMode": row["bmadMode"],
+                    "installedRoot": str(self.group.resolve()),
+                    "payloadSha256": row["payloadSha256"],
+                    "upstream": row["upstream"],
+                    "overlays": row["overlays"],
+                    "skills": row["skills"],
+                    "files": {**row["files"], **row["wikiFiles"]},
+                }
+                if row["bmadMode"] == "bundled":
+                    raw["files"].update(installer.legacy_bmad_identity(raw, row))
+                selected = installer.trusted_package(raw)
+                self.assertEqual(row["payloadSha256"], selected["payloadSha256"])
+                self.assertEqual(row["capabilities"], selected["capabilities"])
+                identities.add((row["version"], row["profile"], row["bmadMode"]))
+        self.assertEqual(8, len(identities))
+
+    def test_real_1_2_predecessors_upgrade_repeat_and_rollback(self):
+        cases = (("1.2.0", "group", "bundled"), ("1.2.1", "repository", "external"))
+        for version, profile, bmad_mode in cases:
+            with self.subTest(version=version, profile=profile, bmad_mode=bmad_mode):
+                target = self.create_group(self.root / f"{version}-{profile}", wiki="# User Wiki\n")
+                prior_diagram = target / "wiki/visualizations/prior-run/diagram.html"
+                prior_diagram.parent.mkdir(parents=True)
+                prior_diagram.write_bytes(b"user-owned earlier visualization\n")
+                if profile == "repository":
+                    initialized = subprocess.run(
+                        ["git", "init", "--quiet", "-b", "main", str(target)],
+                        capture_output=True, text=True, encoding="utf-8", check=False,
+                    )
+                    self.assertEqual(0, initialized.returncode, initialized.stderr)
+                if bmad_mode == "external":
+                    custom = target / "_bmad/custom/external.md"
+                    custom.parent.mkdir(parents=True, exist_ok=True)
+                    custom.write_text("External BMAD configuration stays.\n", encoding="utf-8")
+
+                package = ROOT / f"dist/gitlab-workspace-kit-{version}.zip"
+                old_installer = ROOT / f"dist/workflowkit-installer-{version}.py"
+                archive_hash = hashlib.sha256(package.read_bytes()).hexdigest()
+                legacy = subprocess.run(
+                    [sys.executable, "-X", "utf8", "-B", str(old_installer), "install", str(package), str(target),
+                     version, "bundled", "--format", "zip", "--entry-root", "workflow-kit",
+                     "--archive-sha256", archive_hash, "--profile", profile],
+                    capture_output=True, text=True, encoding="utf-8", check=False,
+                )
+                self.assertEqual(0, legacy.returncode, legacy.stderr or legacy.stdout)
+                legacy_manifest = json.loads((target / MARKER).read_text(encoding="utf-8"))
+                self.assertEqual((version, profile, bmad_mode),
+                                 (legacy_manifest["version"], legacy_manifest["profile"], legacy_manifest["bmadMode"]))
+                self.assertEqual("0.6.4", legacy_manifest["upstream"]["codebase-wiki"]["version"])
+                previous = self.snapshot(target)
+
+                upgraded, data = self.install(target, profile=profile)
+                self.assertEqual(0, upgraded.returncode, upgraded.stderr or upgraded.stdout)
+                self.assertEqual("1.3.0", data["version"])
+                self.assertEqual(bmad_mode, data["bmadMode"])
+                status = self.status(target)
+                self.assertEqual("0.7.0", status["upstreamVersions"]["codebase-wiki"])
+                self.assertIn("visualize", status["capabilities"])
+                self.assertEqual(b"user-owned earlier visualization\n", prior_diagram.read_bytes())
+                if bmad_mode == "external":
+                    self.assertEqual("External BMAD configuration stays.\n",
+                                     (target / "_bmad/custom/external.md").read_text(encoding="utf-8"))
+
+                after_upgrade = self.snapshot(target)
+                repeated, repeated_data = self.install(target, profile=profile)
+                self.assertEqual(0, repeated.returncode, repeated.stderr or repeated.stdout)
+                self.assertFalse(repeated_data["applied"])
+                self.assertEqual("unchanged", repeated_data["status"])
+                self.assertEqual(after_upgrade, self.snapshot(target))
+
+                rolled_back, rollback_data = self.execute("rollback", target, data["transaction"])
+                self.assertEqual(0, rolled_back.returncode, rollback_data)
+                self.assertEqual(previous, self.snapshot(target))
+                restored = self.status(target, expected_version=version)
+                self.assertEqual(version, restored["version"])
+                self.assertEqual("0.6.4", restored["upstreamVersions"]["codebase-wiki"])
+                self.assertEqual("# User Wiki\n", (target / "wiki/index.md").read_text(encoding="utf-8"))
+                if bmad_mode == "external":
+                    self.assertEqual("External BMAD configuration stays.\n",
+                                     (target / "_bmad/custom/external.md").read_text(encoding="utf-8"))
 
     def preview(self):
         return self.execute("install", ARCHIVE, self.group, harness.VERSION, "bundled",

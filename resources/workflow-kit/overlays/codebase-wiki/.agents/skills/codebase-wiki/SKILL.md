@@ -3,7 +3,7 @@ name: codebase-wiki
 description: >
   Build and maintain an evidence-backed codebase Wiki. Use for install/upgrade,
   ingest, Wiki queries or lint, functional exploration, static Codebase audit,
-  ADR/synthesis, business analysis, system analysis/design,
+    ADR/synthesis, visualization, business analysis, system analysis/design,
   NotebookLM export, and Git archaeology. Implementation and branch-to-branch
   merge/release reviews follow their own workflows.
 ---
@@ -57,6 +57,8 @@ to progress, answers, and new or updated human-readable artifacts on both hosts:
   Query follow-up carries its bounded authorization through Ingest/Synthesis and checks;
   read [follow-up-actions.md](references/follow-up-actions.md) when offering those choices.
   Other branches use their routed workflow's preview, confirmation or explicit-request rule.
+  Explicit visualization requests follow [visualization-workflow.md](references/visualization-workflow.md)
+  and save the evidence-bound artifact and companion page under the shared Group Wiki.
 - **Coverage:** Full Ingest, functional exploration and audit use their own complete
   inventories and ledgers. Retain unread paths, exclusions and source drift as gaps.
   Codebase audit stays static; findings distinguish `BUG-*`, `RISK-*` and `BIZ-*`.
@@ -87,3 +89,6 @@ narrows both scans. Keep the per-file ledger at the shared Group Wiki root.
 Missing dispositions, blockers or source drift retain partial completion.
 Functional exploration uses current sources of the selected direct-child Repos
 and the upstream coverage/completion rules.
+
+Visualization follows the upstream explicit-request and publication gates. Source
+evidence uses `Repo/path` citations and the result stays in the shared Group Wiki.

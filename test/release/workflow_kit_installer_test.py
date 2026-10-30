@@ -1,6 +1,7 @@
 """Release tests for the all-in-one GitLab Workspace workflow kit."""
 from __future__ import annotations
 
+import argparse
 import hashlib
 import importlib.util
 import json
@@ -44,9 +45,11 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         return result, data
 
     def install(self, group: Path, *, env: dict[str, str] | None = None, archive: Path = ARCHIVE,
-                archive_format: str = "tar.xz", version: str = VERSION, source: str = "bundled") -> tuple[subprocess.CompletedProcess[str], dict[str, object]]:
+                archive_format: str = "tar.xz", version: str = VERSION, source: str = "bundled",
+                profile: str = "group") -> tuple[subprocess.CompletedProcess[str], dict[str, object]]:
         args: list[object] = ["install", archive, group, version, source, "--format", archive_format,
-                              "--entry-root", "workflow-kit", "--archive-sha256", hashlib.sha256(archive.read_bytes()).hexdigest()]
+                              "--entry-root", "workflow-kit", "--archive-sha256", hashlib.sha256(archive.read_bytes()).hexdigest(),
+                              "--profile", profile]
         return self.execute(*args, env=env)
 
     def status(self, group: Path, expected_version: str = VERSION) -> dict[str, object]:
@@ -230,12 +233,15 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         self.assertEqual(list(SKILLS), manifest["skills"])
         self.assertEqual({name: item['version'] for name, item in CURRENT_SOURCES.items()},
                          {name: item["version"] for name, item in manifest["upstream"].items()})
+        self.assertEqual("0.7.0", manifest["upstream"]["codebase-wiki"]["version"])
         self.assertEqual(2, manifest["workspaceContract"])
         self.assertEqual({"codebase-wiki"}, set(manifest["overlays"]))
         self.assertTrue(all(overlay["added"] or overlay["replaced"]
                             for overlay in manifest["overlays"].values()))
         self.assertEqual(64, len(manifest["payloadSha256"]))
         self.assertEqual(64, len(manifest["customProfile"]["files"]["profile.md"]))
+        for profile_name in ("group", "repository"):
+            self.assertIn("visualize", manifest["profiles"][profile_name]["capabilities"])
         labels = {'codebase-wiki': 'Codebase LLM Wiki',
                   'merge-reviewer': 'MergeReviewer', 'release-reviewer': 'ReleaseReviewer',
                   'bmad-method': 'BMAD Method'}
@@ -252,6 +258,147 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                 self.assertIn("output-style", manifest["profiles"][profile]["skills"])
                 self.assertEqual(expected, manifest["profiles"][profile]["files"][resource])
         self.assertEqual(len(SKILLS), data["skills"])
+
+    def test_visualization_capability_is_installed_for_group_and_repository_profiles(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="kit-visualization-") as temporary:
+            base = Path(temporary)
+            targets = [(self.create_group(base, wiki="# Group Wiki\n"), "group")]
+            repository_parent = base / "repository"
+            repository_parent.mkdir()
+            repository = self.create_group(repository_parent, wiki="# Repository Wiki\n")
+            initialized = subprocess.run(["git", "init", "--quiet", "-b", "main", str(repository)],
+                                         capture_output=True, text=True, encoding="utf-8", check=False)
+            self.assertEqual(0, initialized.returncode, initialized.stderr)
+            targets.append((repository, "repository"))
+
+            for target, expected_profile in targets:
+                with self.subTest(profile=expected_profile):
+                    source = target / "src/evidence.md"
+                    source.parent.mkdir(parents=True, exist_ok=True)
+                    source.write_text("The root node appears in this fixture.\n", encoding="utf-8")
+                    (target / "wiki/overview.md").write_text("# Evidence page\nThe root node is documented here.\n", encoding="utf-8")
+                    installed, result = self.install(target, profile=expected_profile)
+                    self.assertEqual(0, installed.returncode, installed.stderr or installed.stdout)
+                    self.assertEqual(expected_profile, result["profile"])
+                    status = self.status(target)
+                    self.assertEqual("0.7.0", status["upstreamVersions"]["codebase-wiki"])
+                    self.assertIn("visualize", status["capabilities"])
+                    wiki_capabilities = json.loads(
+                        (target / ".agents/skills/codebase-wiki/capabilities.json").read_text(encoding="utf-8")
+                    )
+                    self.assertEqual(7, wiki_capabilities["contract_version"])
+
+                    script = target / ".agents/skills/codebase-wiki/scripts/wiki-visualize.py"
+                    verify = subprocess.run(
+                        [sys.executable, "-X", "utf8", "-B", str(script), "verify", "--bundle", "--root", str(target), "--format", "json"],
+                        cwd=target, capture_output=True, text=True, encoding="utf-8", check=False,
+                    )
+                    self.assertEqual(0, verify.returncode, verify.stderr or verify.stdout)
+                    archify = json.loads(verify.stdout)["bundle"]
+                    self.assertEqual("3.2.0", archify["version"])
+                    self.assertEqual(200, archify["files"])
+                    archify_manifest = json.loads(
+                        (target / ".agents/skills/codebase-wiki/vendor/archify-manifest.json").read_text(encoding="utf-8")
+                    )
+                    self.assertEqual("MIT", archify_manifest["license"])
+                    self.assertFalse((target / ".agents/skills/archify").exists())
+
+                    def complete_candidate(plan: dict[str, object]) -> None:
+                        candidate_path = Path(plan["candidate"])
+                        candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+                        candidate["nodes"] = [{"id": "root", "label": "Root"}]
+                        candidate_path.write_text(json.dumps(candidate, ensure_ascii=False, indent=2), encoding="utf-8")
+                        source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+                        mapping = {
+                            "schema": "codebase-wiki-visualization-evidence/v1",
+                            "claims": [{"element_id": "nodes:root", "evidence": [
+                                {"path": "src/evidence.md", "sha256": source_hash},
+                            ]}],
+                            "gaps": [],
+                        }
+                        Path(plan["evidence_map"]).write_text(
+                            json.dumps(mapping, ensure_ascii=False, indent=2), encoding="utf-8"
+                        )
+
+                    def publish(plan: dict[str, object], *, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+                        return subprocess.run(
+                            [sys.executable, "-X", "utf8", "-B", str(script), "publish", "--root", str(target),
+                             "--plan", str(plan["plan"]), "--format", "json"],
+                            cwd=target, capture_output=True, text=True, encoding="utf-8", env=env, check=False,
+                        )
+
+                    visual_spec = importlib.util.spec_from_file_location(
+                        f"workflow_kit_visualize_{expected_profile}", script
+                    )
+                    self.assertIsNotNone(visual_spec)
+                    visualize = importlib.util.module_from_spec(visual_spec)
+                    assert visual_spec and visual_spec.loader
+                    sys.path.insert(0, str(script.parent))
+                    try:
+                        visual_spec.loader.exec_module(visualize)
+                    finally:
+                        sys.path.remove(str(script.parent))
+
+                    before = self.snapshot(target)
+                    prepared_result = subprocess.run(
+                        [sys.executable, "-X", "utf8", "-B", str(script), "prepare", "--root", str(target),
+                         "--type", "tree", "--slug", "kit-fixture", "--title", "Kit Fixture",
+                         "--wiki-page", "wiki/overview.md", "--source", "src/evidence.md", "--format", "json"],
+                        cwd=target, capture_output=True, text=True, encoding="utf-8", check=False,
+                    )
+                    self.assertEqual(0, prepared_result.returncode, prepared_result.stderr or prepared_result.stdout)
+                    prepared = json.loads(prepared_result.stdout)
+                    workdir = Path(json.loads(Path(prepared["plan"]).read_text(encoding="utf-8"))["workdir"])
+                    self.addCleanup(shutil.rmtree, workdir, ignore_errors=True)
+                    self.assertEqual(before, self.snapshot(target))
+                    complete_candidate(prepared)
+
+                    def wiki_snapshot() -> dict[str, bytes]:
+                        wiki = target / "wiki"
+                        return {path.relative_to(wiki).as_posix(): path.read_bytes()
+                                for path in wiki.rglob("*") if path.is_file() and not path.is_symlink()}
+
+                    plan_args = argparse.Namespace(root=target, plan=Path(prepared["plan"]))
+                    failure_snapshot = wiki_snapshot()
+                    bundle = json.loads(verify.stdout)["bundle"]
+                    original_source = source.read_bytes()
+                    try:
+                        source.write_text("Changed after visualization preparation.\n", encoding="utf-8")
+                        with mock.patch.object(visualize, "validate_bundle", return_value=bundle):
+                            with self.assertRaisesRegex(visualize.VisualizeError, "evidence changed after prepare"):
+                                visualize.publish(plan_args)
+                        self.assertEqual(failure_snapshot, wiki_snapshot())
+                    finally:
+                        source.write_bytes(original_source)
+
+                    with mock.patch.object(visualize, "validate_bundle", return_value=bundle), \
+                         mock.patch.object(visualize.shutil, "which", return_value=None):
+                        with self.assertRaisesRegex(visualize.VisualizeError, "Node.js is unavailable"):
+                            visualize.publish(plan_args)
+                    self.assertEqual(failure_snapshot, wiki_snapshot())
+
+                    candidate_path = Path(prepared["candidate"])
+                    candidate_before = candidate_path.read_bytes()
+                    candidate_path.write_text("{broken", encoding="utf-8")
+                    with mock.patch.object(visualize, "validate_bundle", return_value=bundle):
+                        with self.assertRaisesRegex(visualize.VisualizeError, "not valid UTF-8 JSON"):
+                            visualize.publish(plan_args)
+                    self.assertEqual(failure_snapshot, wiki_snapshot())
+                    candidate_path.write_bytes(candidate_before)
+
+                    published = publish(prepared)
+                    self.assertEqual(0, published.returncode, published.stderr or published.stdout)
+                    publication = json.loads(published.stdout)
+                    self.assertTrue(publication["ok"])
+                    self.assertEqual({"validate", "deliver", "check", "browser-check"}, set(publication["gates"]))
+                    self.assertTrue((target / publication["artifact"]).is_file())
+                    verify_run = subprocess.run(
+                        [sys.executable, "-X", "utf8", "-B", str(script), "verify", "--root", str(target),
+                         "--run", publication["artifact"].removesuffix("/diagram.html"), "--format", "json"],
+                        cwd=target, capture_output=True, text=True, encoding="utf-8", check=False,
+                    )
+                    self.assertEqual(0, verify_run.returncode, verify_run.stderr or verify_run.stdout)
+                    self.assertTrue(json.loads(verify_run.stdout)["evidence_fresh"])
 
     def test_fresh_and_existing_wiki_installations_preserve_user_state(self) -> None:
         with tempfile.TemporaryDirectory(prefix="kit-fresh-") as temporary:

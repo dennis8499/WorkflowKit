@@ -28,10 +28,10 @@ KIT_SKILLS = ("output-style",)
 PINNED_SOURCES = ({'id': 'codebase-wiki',
   'repository': 'code-base-llm-wiki',
   'asset': 'codebase-llm-wiki-codex.zip',
-  'filename': 'codebase-llm-wiki-codex-0.6.4.zip',
-  'version': '0.6.4',
-  'sha256': '6e953a391962ae2ba3e70072b22a9df1cc2cf7c6a2dd756ac8fab24ddbd8bd6f',
-  'root': 'codebase-llm-wiki-codex-0.6.4'},
+  'filename': 'codebase-llm-wiki-codex-0.7.0.zip',
+  'version': '0.7.0',
+  'sha256': 'a8d676c63d2df065fb5a63dca305f89c8394c0d276284fd1ba68aa8a675f4b7f',
+  'root': 'codebase-llm-wiki-codex-0.7.0'},
  {'id': 'merge-reviewer',
   'repository': 'MergeReviewer',
   'asset': 'merge-reviewer-0.20.2.zip',
@@ -60,7 +60,7 @@ def digest(data: bytes) -> str:
 def source_summary(upstream: dict[str, dict[str, str]]) -> list[str]:
     """Keep human-readable source notes bound to the same pins as the payload."""
     return [
-        f"Native Codebase LLM Wiki {upstream['codebase-wiki']['version']} is single-codebase; GitlabWorkSpace overlay restores Group-relative specifications and shared-Wiki rules.",
+        f"Native Codebase LLM Wiki {upstream['codebase-wiki']['version']} adds evidence-bound Archify visualizations. Node.js 18+ and a local browser are required to publish diagrams; installation remains offline. The Group overlay applies shared-Wiki and Repo/path evidence rules.",
         f"Native MergeReviewer {upstream['merge-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps MergeReviewSession/v1 jobs. The Skill agent applies Code Review defect criteria to the diff and evidence-linked consumers after start freezes base/head and all peer Repos' current local HEADs. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout under the selected Repo's review-reports/ with 8-character commit IDs in the filename and full evidence validation. No Workspace overlay or MR-specific report adapter is applied.",
         f"Native ReleaseReviewer {upstream['release-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps ReleaseReviewSession/v1 jobs in an independent runtime. The Skill agent reviews diff-linked blockers and deployment dependencies using base/head and all peer Repos' current local HEADs frozen by start. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout with an editable manual checklist under the selected Repo's review-reports/ without an overlay.",
         f"Official BMAD Method {upstream['bmad-method']['version']} includes the pinned Codex Core and BMM Skills, shared runtime and manifests. Its native `_bmad` runtime and `.agents/skills/bmad-*` entries are a separately verifiable workflow component with a bundled or external installation mode.",
@@ -409,7 +409,7 @@ def build() -> dict[str, object]:
     ).encode("utf-8"))
     capabilities = sorted(["functional-exploration", "ingest", "query", "lint", "audit", "adr", "synthesis",
                            "business-analysis", "system-analysis", "system-design", "notebooklm-export", "archaeology",
-                           "merge-repo", "release-review", "bmad-workflow"])
+                           "merge-repo", "release-review", "bmad-workflow", "visualize"])
     native_hashes = {name: digest(data) for name, data in sorted(native_payload.items())}
     manifest["capabilities"] = capabilities
     manifest["wikiInstalledVersionSha256"] = digest(files["framework/VERSION"])

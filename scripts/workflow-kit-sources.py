@@ -26,6 +26,24 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def normalize_source_text(tool: str, name: str, data: bytes) -> bytes:
+    """Normalize checkout line endings except for hash-pinned bundled files."""
+    if tool == 'codebase-wiki' and (
+        name.startswith('.agents/skills/codebase-wiki/vendor/archify/')
+        or name == '.agents/skills/codebase-wiki/vendor/archify-manifest.json'
+    ):
+        return data
+    is_text = Path(name).suffix.lower() in ('.md', '.py', '.yaml', '.yml', '.json', '.txt', '.toml') or Path(name).name == 'VERSION'
+    return data.replace(b'\r\n', b'\n') if is_text else data
+
+
+def archive_root(tool: str, version: str, pin: dict) -> str:
+    """Keep the Wiki archive root in step with its upstream version."""
+    if tool == 'codebase-wiki':
+        return f'codebase-llm-wiki-codex-{version}'
+    return pin.get('root', '')
+
+
 def builder_capabilities(tree: ast.Module) -> list[str]:
     assignment = next(node for node in ast.walk(tree) if isinstance(node, ast.Assign)
                       and any(isinstance(target, ast.Name) and target.id == 'capabilities' for target in node.targets))
@@ -81,9 +99,8 @@ def local_entries(tool: str) -> tuple[str, dict[str, bytes]]:
             continue
         name = path.relative_to(directory).as_posix()
         data = path.read_bytes()
-        # Match release source text across Windows and Linux checkouts; archive hashes remain exact.
-        if path.suffix.lower() in ('.md', '.py', '.yaml', '.yml', '.json', '.txt', '.toml') or name == 'VERSION':
-            data = data.replace(b'\r\n', b'\n')
+        # Match release source text across platforms while preserving pinned bundle bytes.
+        data = normalize_source_text(tool, name, data)
         entries[name] = data
     version_path = repo / f'skills/{tool}/VERSION'
     version = version_path.read_text(encoding='utf-8').strip()
@@ -207,7 +224,7 @@ def freeze(selected_tools: list[str] | None = None) -> dict:
         pin = pins[tool]
         filename = pin['filename'] if pin['version'] == version else (
             f'codebase-llm-wiki-codex-{version}.zip' if tool == 'codebase-wiki' else f'{tool}-{version}.zip')
-        prefix = pin.get('root', f'codebase-llm-wiki-codex-{version}' if tool == 'codebase-wiki' else tool)
+        prefix = archive_root(tool, version, pin) or tool
         archive = ROOT / 'resources/offline-tools/sources' / filename
         # Keep an existing archive byte-for-byte when its reviewed contents match.
         same = False

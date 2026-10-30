@@ -6,3 +6,7 @@
 VERSION text eol=lf
 *.zip binary !eol
 *.tar.xz binary !eol
+
+# The pinned Archify bundle is byte-verified; preserve its upstream line endings.
+.agents/skills/codebase-wiki/vendor/archify/** -text
+.agents/skills/codebase-wiki/vendor/archify-manifest.json -text
