@@ -39,7 +39,9 @@ class BmadWorkflowKitTests(unittest.TestCase):
 
     def setUp(self):
         self.original_tempdir = tempfile.tempdir
-        tempfile.tempdir = str((ROOT / ".tmp").resolve())
+        temp_root = (ROOT / ".tmp").resolve()
+        temp_root.mkdir(parents=True, exist_ok=True)
+        tempfile.tempdir = str(temp_root)
         self.addCleanup(setattr, tempfile, "tempdir", self.original_tempdir)
         temporary = tempfile.TemporaryDirectory(prefix="bmad workflow kit ")
         self.addCleanup(temporary.cleanup)
