@@ -260,7 +260,9 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         self.assertEqual(len(SKILLS), data["skills"])
 
     def test_visualization_capability_is_installed_for_group_and_repository_profiles(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="kit-visualization-") as temporary:
+        fixture_parent = ROOT / ".tmp"
+        fixture_parent.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix="kit-visualization-", dir=fixture_parent) as temporary:
             base = Path(temporary)
             targets = [(self.create_group(base, wiki="# Group Wiki\n"), "group")]
             repository_parent = base / "repository"
