@@ -419,6 +419,10 @@ def freeze_predecessor(root, version, source_sha, files, installer):
         raise ReleaseError('Predecessor must contain both exact-version profiles')
     fixture = root / f'test/fixtures/workflow-kit-{version}'
     fixture.mkdir(parents=True, exist_ok=True)
+    package_path = fixture / f'gitlab-workspace-kit-{version}.zip'
+    if package_path.exists() and package_path.read_bytes() != files[f'gitlab-workspace-kit-{version}.zip']:
+        raise ReleaseError('Existing predecessor package conflicts with official release')
+    atomic_write(package_path, files[f'gitlab-workspace-kit-{version}.zip'])
     installer_path = fixture / 'installer.py'
     if installer_path.exists() and installer_path.read_bytes() != installer:
         raise ReleaseError('Existing predecessor installer conflicts with official source')
@@ -447,22 +451,43 @@ def freeze_predecessor(root, version, source_sha, files, installer):
             raise ReleaseError('Predecessor lacks exact legacy BMAD marker identity')
     trusted_path = root / 'resources/workflow-kit/trusted-predecessors.json'
     trusted = json.loads(trusted_path.read_text(encoding='utf-8'))
-    for profile, fields in manifest['profiles'].items():
-        record = {'version': version, 'profile': profile, 'upstream': manifest['upstream'],
-                  'wikiInstalledVersionSha256': manifest['wikiInstalledVersionSha256']}
-        for key in ('agentBlockSha256', 'capabilities', 'payloadSha256', 'profileHashes', 'skills', 'overlays'):
-            record[key] = fields[key]
-        record['files'] = {key: value for key, value in fields['files'].items()
-                           if key.startswith('.agents/skills/') and not key.startswith('.agents/skills/codebase-wiki/')}
-        record['wikiFiles'] = {key: value for key, value in fields['files'].items() if key.startswith('.agents/skills/codebase-wiki/')}
-        record['extensionFiles'] = {key: value for key, value in fields['files'].items()
-                                    if key.startswith(('.agents/gitlab-workspace-kit/scripts/', '.agents/gitlab-workspace-kit/references/'))}
-        record.update(legacy_bmad)
-        old = next((item for item in trusted['packages'] if item.get('version') == version and item.get('profile') == profile), None)
-        if old and old != record:
-            raise ReleaseError('Existing trusted predecessor conflicts with official manifest')
-        if not old:
-            trusted['packages'].append(record)
+    for profile, bundled_fields in manifest['profiles'].items():
+        variants = bundled_fields.get('variants')
+        if variants is None:
+            modes = [(None, bundled_fields)]
+        else:
+            external_fields = variants.get('external')
+            if not isinstance(external_fields, dict):
+                raise ReleaseError('Predecessor external BMAD variant is missing')
+            modes = [('bundled', bundled_fields), ('external', external_fields)]
+        for mode, fields in modes:
+            upstream = manifest['upstream']
+            if mode == 'external':
+                upstream = {key: value for key, value in upstream.items() if key != 'bmad-method'}
+            record = {'version': version, 'profile': profile, 'upstream': upstream,
+                      'wikiInstalledVersionSha256': manifest['wikiInstalledVersionSha256']}
+            if mode is not None:
+                record['bmadMode'] = mode
+            for key in ('agentBlockSha256', 'capabilities', 'payloadSha256', 'profileHashes', 'skills', 'overlays'):
+                record[key] = fields[key]
+            all_files = fields['files']
+            record['files'] = {key: value for key, value in all_files.items()
+                               if key.startswith('.agents/skills/') and not key.startswith('.agents/skills/codebase-wiki/')}
+            record['wikiFiles'] = {key: value for key, value in all_files.items()
+                                   if key.startswith('.agents/skills/codebase-wiki/')}
+            record['extensionFiles'] = {key: value for key, value in all_files.items()
+                                        if key.startswith(('.agents/gitlab-workspace-kit/scripts/', '.agents/gitlab-workspace-kit/references/'))}
+            if mode != 'external':
+                record.update(legacy_bmad)
+            else:
+                record['bmadFiles'] = {}
+            old = next((item for item in trusted['packages']
+                        if item.get('version') == version and item.get('profile') == profile
+                        and item.get('bmadMode') == mode), None)
+            if old and old != record:
+                raise ReleaseError('Existing trusted predecessor conflicts with official manifest')
+            if not old:
+                trusted['packages'].append(record)
     atomic_write(trusted_path, encoded(trusted))
     atomic_write(fixture / 'provenance.json', encoded({'version': version, 'sourceSha': source_sha,
                  'archiveSha256': digest(files[f'gitlab-workspace-kit-{version}.zip']), 'profiles': ['group', 'repository']}))

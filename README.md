@@ -6,7 +6,7 @@ WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM
 
 需要 Python 3.11+。安裝器不需要 Node.js 或網路；若環境沒有 `uv`，安裝仍會完成並提示你在執行 BMAD 工作流程前備妥它。
 
-下載 `gitlab-workspace-kit-1.3.0.zip`，解壓後執行：
+下載 `gitlab-workspace-kit-1.3.1.zip`，解壓後執行：
 
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyProject
@@ -17,7 +17,7 @@ python -X utf8 -B install.py --target C:\projects\MyProject
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyGroup --profile group
 python -X utf8 -B install.py --target C:\projects\MyRepo --profile repository
-python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.3.0
+python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.3.1
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易路徑>
 ```
 

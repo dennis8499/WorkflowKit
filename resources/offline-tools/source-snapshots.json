@@ -290,11 +290,11 @@
       "version": "6.12.4"
     },
     "codebase-wiki": {
-      "archiveSha256": "a8d676c63d2df065fb5a63dca305f89c8394c0d276284fd1ba68aa8a675f4b7f",
-      "commit": "ed2c1d709994abbf41044fa10ccbfcf441c735ba",
+      "archiveSha256": "1ac195a075a1ce8d0273a70159cd7d03ffa85bcace5972e217bc557a613e2a06",
+      "commit": "55a26be07b7e27da1de961ef016ff97ce9ac3a17",
       "dirty": false,
-      "entryRoot": "codebase-llm-wiki-codex-0.7.0",
-      "filename": "codebase-llm-wiki-codex-0.7.0.zip",
+      "entryRoot": "codebase-llm-wiki-codex-0.7.1",
+      "filename": "codebase-llm-wiki-codex-0.7.1.zip",
       "files": {
         ".agents/skills/codebase-wiki/SKILL.md": "3d8e93505640b92257b5555970db44628292aaedd405ff1fd344ee12b2bf00db",
         ".agents/skills/codebase-wiki/VERSION": "967d9afb101346667166f2e76e81910bc190488d7d41d50ca0072e9d92f00e32",
@@ -355,7 +355,7 @@
         ".agents/skills/codebase-wiki/references/functional-exploration-workflow.md": "6b1a3264df09daa33df9335be9c142dfe355230d8b91ae75f2417722cbe587a9",
         ".agents/skills/codebase-wiki/references/hooks-specification.md": "05a78a612556112b1ac98b4c22c638428ed5ae8323d8cdaed3c090f7de37d15e",
         ".agents/skills/codebase-wiki/references/ingest-workflow.md": "a8037cf056dbcce983329bb43d8005498c98e63aaa5298df16f7f9b4837a6cfc",
-        ".agents/skills/codebase-wiki/references/install-workflow.md": "c1c32adbbd7abb85e26ad0d8d5df47e62b7e2cb611fc9db8d81e9f35363c20bb",
+        ".agents/skills/codebase-wiki/references/install-workflow.md": "1f39f79f75ed81231660c1e26dd424f24e9154efdf9af39310e190e7c2a606ad",
         ".agents/skills/codebase-wiki/references/intent-routing.md": "7c708ad99b678fc5f277c7144eb8039681e0912dc9ab062a6f3c9609f56aeec9",
         ".agents/skills/codebase-wiki/references/lint-checklist.md": "6593186b1c0eace750576e3293f54e46ce2f324ffba1ad005f4859db297d253e",
         ".agents/skills/codebase-wiki/references/log-operations.md": "4df32921aa21afde949026615d619d7122bebdcf55304989467f920d0bc2b990",
@@ -604,23 +604,23 @@
         "AGENTS.md": "114651f7bbea36880b9530cdee8a73e8484928a400b840db0a10175f7d13b206",
         "Codex.md": "d22e0889e18572bb4b5cc1c3e2b8fad375e6d4d3ffed23b8247a3e43c01b5447",
         "LICENSE": "7be3f03eb9f3cfb406d92a04a472b43f033d6be38b818ecc4a3723f9aef0e14c",
-        "README.md": "1bc526aaddaab159cc36e11ac7331b2182e8108bd915688df0e589eed0d8c189",
-        "VERSION": "967d9afb101346667166f2e76e81910bc190488d7d41d50ca0072e9d92f00e32"
+        "README.md": "bace3724d58621114bb312cb3f508e51cb26efa37950fbdbfc9e7f814cfd8408",
+        "VERSION": "902311c7bb38fa1658ff403def6158ee7378fe9d6e2e284fa1c38735c31bd30b"
       },
       "repository": "code-base-llm-wiki",
       "sourceKind": "local-snapshot",
-      "treeSha256": "916aa7dfc22c8249e8c0444f2dabb898ffbc1230d6c673370e1d0ad309276cef",
-      "version": "0.7.0"
+      "treeSha256": "29d667d32eebeeb5e6b24a539c86d817bc0560d54969ae158ea36e631fe0980a",
+      "version": "0.7.1"
     },
     "merge-reviewer": {
-      "archiveSha256": "d388ede2cefc8abba50d720c6d068acdf9ebec0c943c4798c94b1254c0c3133b",
-      "commit": "f51d2b1c131a066319d975ae77a6945b341e6cb7",
+      "archiveSha256": "5132eaf5733a0b5c659e11c393c5e78c27de8fc56abeb1fd25341c3ef83a22d3",
+      "commit": "7628737f677e1e50e75d4d01fa247cf74eada227",
       "dirty": true,
       "entryRoot": "merge-reviewer",
-      "filename": "merge-reviewer-0.20.2.zip",
+      "filename": "merge-reviewer-0.20.3.zip",
       "files": {
         "SKILL.md": "134493ce481d968a792be3fea8a8a127a8a436b11e2791f1fde1533a78b77c19",
-        "VERSION": "5e497f028c02ff4514914cd91dc27bd43990b16f6408e29909bf9f4a8162e3bc",
+        "VERSION": "3a131783edf467e34fbafa084c794fe4c946f085ee3f8ee7399ce1ef16ae8f26",
         "agents/openai.yaml": "b5ed995d59e34d9d8f555a00f1dd30fc6593dda071f16e0eb8e58e4c5f3495f5",
         "references/authoring.md": "6c88c8bccbd5f9d2132ed5e4134048106c3a0fb4dbd4e77e2b865b70699abb35",
         "references/claude-code-style.md": "f730bd868052261947a6e4ae64abf9b419250f30d04c44637459abf8bcf6219e",
@@ -630,8 +630,8 @@
         "references/review-rules.md": "db76edd3e4d070480b49df4abcca2ce2ea35d2a2a6e30954e80ce3d2f0f99f6c",
         "references/runtime-controls.md": "30f75be67a109ba442f7acde746c9c804bbca9c70f197677c50e28680dd26276",
         "references/session-workflow.md": "55583a3188120c8fac736d0b473647da8645c64742a7ae1fde2881d8e67aa71a",
-        "references/usage.md": "4954602d98d2a1453b3c3718fb5762f797220f3f9731549b2fb95674334d9a84",
-        "references/workspace-review.md": "b157467887d4ad2a732278d90611c21860ab89e578ebed218f9825dac5f69af8",
+        "references/usage.md": "6ffc0298ad1e8b1e3fce54117ffbfb49ecd27c655104aae44f2ae9e96fc6c041",
+        "references/workspace-review.md": "e9d3a0808ea58fce5dd1fa018b2928cdfe1bcf13baac9c8cea93b25e72907350",
         "scripts/contract_boundary.py": "013e9490b1ab1395a7323f10f2841b3d7c2a35d5f6f4bc75ba7c1ac39ae50427",
         "scripts/git_network_lease.py": "1555269f41f711d443b8d107b960824c4836c140624bc461470d07f7a05fda1b",
         "scripts/git_review_context.py": "946c14a129882b6b64658db8f0ac289a4c375b27775546c91eca8e867a44284f",
@@ -649,18 +649,18 @@
       },
       "repository": "MergeReviewer",
       "sourceKind": "local-snapshot",
-      "treeSha256": "fe55a5428220ba1435086321e759ebc6958d77e5a34b09d854b4de73a2add078",
-      "version": "0.20.2"
+      "treeSha256": "c40382c2e75208a1ab88d19b340db8fea79c2b294c4ac3a13e48bf0f85ddb666",
+      "version": "0.20.3"
     },
     "release-reviewer": {
-      "archiveSha256": "b6532ffbf14b3597a237b6a552e0bdeff594a834c570a7f4809ce459b57f4c9c",
-      "commit": "eed259b7856c16d93553048a6d2c352dc08d8743",
+      "archiveSha256": "d527452c2786e91af994d150701a45c8cbb66e895ac3e77ec0217299f225aed1",
+      "commit": "807e98ced3fd670a9599ec856acfb18f66d25d04",
       "dirty": true,
       "entryRoot": "release-reviewer",
-      "filename": "release-reviewer-0.10.0.zip",
+      "filename": "release-reviewer-0.10.1.zip",
       "files": {
         "SKILL.md": "a6fb8c56b60ac2d669522f37ce6ab4161636fc278f4067f6ea82568855747c11",
-        "VERSION": "dc24feb5bd35084d8ae32a4eafbec12352707d4662401fcbcc9bbd696cde77a9",
+        "VERSION": "f4d439e0b523208a09d13862c16820cc3028fd94417310ce1d53a31d14d6a2c4",
         "agents/openai.yaml": "54dcc5409d56c8505df85a9dc63767c5001170acdfd07d42de3a0781786bb105",
         "references/evidence-workflow.md": "76dd51c1b4b876fa8c4fdf29ceba884eb2c30e0a315c891530d966c4c6573824",
         "references/group-review.md": "14d742125d915a130066231c715e3c7fa0834fd1fc85c596b0ef31312f9260fd",
@@ -690,8 +690,8 @@
       },
       "repository": "ReleaseReviewer",
       "sourceKind": "local-snapshot",
-      "treeSha256": "d02fed32c1d380964a84fd662d1daed55c8c5d41e68df06cf0d764a28ac3e329",
-      "version": "0.10.0"
+      "treeSha256": "0f2e1c875981e0fe8b9f11fd13778e4e54e468f6031edb8b6651269900a7b326",
+      "version": "0.10.1"
     }
   },
   "workspaceFiles": {
@@ -704,6 +704,6 @@
     "resources/workflow-kit/skills/output-style/SKILL.md": "e356f9440faadbd20f659a86ebe8ae986150edf065d3098a6c343e0303de4eaf",
     "resources/workflow-kit/skills/output-style/agents/openai.yaml": "9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb",
     "resources/workflow-kit/skills/output-style/references/examples.md": "997eb1deedd5719f733f980161e5e951cbaf69b5878fb855c54cd03ea6badabf",
-    "resources/workflow-kit/trusted-predecessors.json": "009fea38960b9aaae859666d8587340d1c4c6fbdfbd71f3913446874aec86d3e"
+    "resources/workflow-kit/trusted-predecessors.json": "5fa5a931654e5564f28d2554b315da49e1a711371ae44027c39d3c01a7e70fa3"
   }
 }

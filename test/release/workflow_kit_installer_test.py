@@ -233,7 +233,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         self.assertEqual(list(SKILLS), manifest["skills"])
         self.assertEqual({name: item['version'] for name, item in CURRENT_SOURCES.items()},
                          {name: item["version"] for name, item in manifest["upstream"].items()})
-        self.assertEqual("0.7.0", manifest["upstream"]["codebase-wiki"]["version"])
+        self.assertEqual("0.7.1", manifest["upstream"]["codebase-wiki"]["version"])
         self.assertEqual(2, manifest["workspaceContract"])
         self.assertEqual({"codebase-wiki"}, set(manifest["overlays"]))
         self.assertTrue(all(overlay["added"] or overlay["replaced"]
@@ -281,7 +281,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                     self.assertEqual(0, installed.returncode, installed.stderr or installed.stdout)
                     self.assertEqual(expected_profile, result["profile"])
                     status = self.status(target)
-                    self.assertEqual("0.7.0", status["upstreamVersions"]["codebase-wiki"])
+                    self.assertEqual("0.7.1", status["upstreamVersions"]["codebase-wiki"])
                     self.assertIn("visualize", status["capabilities"])
                     wiki_capabilities = json.loads(
                         (target / ".agents/skills/codebase-wiki/capabilities.json").read_text(encoding="utf-8")
@@ -399,6 +399,40 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                     )
                     self.assertEqual(0, verify_run.returncode, verify_run.stderr or verify_run.stdout)
                     self.assertTrue(json.loads(verify_run.stdout)["evidence_fresh"])
+
+    def test_bundled_and_external_profiles_install_with_current_native_versions(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="kit-profile-matrix-") as temporary:
+            base = Path(temporary)
+            for profile in ("group", "repository"):
+                for bmad_mode in ("bundled", "external"):
+                    with self.subTest(profile=profile, bmadMode=bmad_mode):
+                        case_root = base / f"{profile}-{bmad_mode}"
+                        case_root.mkdir()
+                        target = self.create_group(case_root)
+                        if profile == "repository":
+                            initialized = subprocess.run(
+                                ["git", "init", "--quiet", "-b", "main", str(target)],
+                                capture_output=True, text=True, encoding="utf-8", check=False,
+                            )
+                            self.assertEqual(0, initialized.returncode, initialized.stderr)
+                        if bmad_mode == "external":
+                            external_config = target / "_bmad/custom/external.md"
+                            external_config.parent.mkdir(parents=True)
+                            external_config.write_text("Keep the external BMAD runtime.\n", encoding="utf-8")
+
+                        installed, receipt = self.install(target, profile=profile)
+                        self.assertEqual(0, installed.returncode, installed.stderr or installed.stdout)
+                        self.assertEqual((profile, bmad_mode), (receipt["profile"], receipt["bmadMode"]))
+                        status = self.status(target)
+                        self.assertEqual(profile, status["profile"])
+                        expected_versions = {
+                            "codebase-wiki": "0.7.1",
+                            "merge-reviewer": "0.20.3",
+                            "release-reviewer": "0.10.1",
+                        }
+                        for skill, version in expected_versions.items():
+                            self.assertEqual(version, status["upstreamVersions"][skill])
+                        self.assertEqual("bmad-workflow" in status["capabilities"], bmad_mode == "bundled")
 
     def test_fresh_and_existing_wiki_installations_preserve_user_state(self) -> None:
         with tempfile.TemporaryDirectory(prefix="kit-fresh-") as temporary:
