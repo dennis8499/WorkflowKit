@@ -242,10 +242,14 @@ def freeze(selected_tools: list[str] | None = None) -> dict:
         provenance = verify_bmad_source({'commit': 'bab9082c3e884e0d72c759bcd1a6d90bcc01be84',
                                         'version': version, 'filename': filename,
                                         'archiveSha256': digest(archive.read_bytes())}) if tool == 'bmad-method' else {}
+        payload_sha = digest(json.dumps(
+            [[name, hashes[name]] for name in sorted(hashes, key=lambda value: value.encode('utf-8'))],
+            ensure_ascii=False, separators=(',', ':')).encode('utf-8')) if tool == 'release-reviewer' else None
         records[tool] = {'repository': repo_name, 'version': version, 'filename': filename, 'entryRoot': prefix,
                          'sourceKind': 'official-cli-snapshot' if tool == 'bmad-method' else 'local-snapshot',
                          **git_info(repo), 'archiveSha256': digest(archive.read_bytes()), **provenance,
-                         'treeSha256': digest(json.dumps(hashes, sort_keys=True, separators=(',', ':')).encode()), 'files': hashes}
+                         'treeSha256': digest(json.dumps(hashes, sort_keys=True, separators=(',', ':')).encode()),
+                         **({'payloadSha256': payload_sha} if payload_sha else {}), 'files': hashes}
         pin.update(version=version, filename=filename, sha256=records[tool]['archiveSha256'],
                    asset='codebase-llm-wiki-codex.zip' if tool == 'codebase-wiki' else filename)
         if tool == 'codebase-wiki':

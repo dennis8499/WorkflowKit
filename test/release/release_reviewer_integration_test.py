@@ -87,6 +87,15 @@ class ReleaseReviewerIntegrationTests(unittest.TestCase):
                 "next_steps": ["Verify the target environment separately."], "tests_executed": [],
                 "tests_not_executed": ["No product execution or database connection in this fixture."], "limitations": []}
 
+    def test_release_reviewer_minimum_version_and_payload_are_declared_and_verified(self):
+        with zipfile.ZipFile(harness.RELEASE_ZIP) as archive:
+            manifest = json.loads(archive.read("workflow-kit/manifest.json").decode("utf-8"))
+        requirement = manifest["reviewerRequirements"]["release-reviewer"]
+        source = harness.CURRENT_SOURCES["release-reviewer"]
+        self.assertEqual("0.11.0", requirement["minimumVersion"])
+        self.assertEqual(source["payloadSha256"], requirement["payloadSha256"])
+        self.assertEqual("0.11.0", source["version"])
+
     def test_installed_native_payload_matches_pinned_archive(self):
         archive_path = harness.ROOT / "resources/offline-tools/sources" / harness.CURRENT_SOURCES['release-reviewer']['filename']
         with zipfile.ZipFile(archive_path) as archive:

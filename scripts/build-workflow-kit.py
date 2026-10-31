@@ -40,10 +40,12 @@ PINNED_SOURCES = ({'id': 'codebase-wiki',
   'sha256': '5132eaf5733a0b5c659e11c393c5e78c27de8fc56abeb1fd25341c3ef83a22d3'},
  {'id': 'release-reviewer',
   'repository': 'ReleaseReviewer',
-  'asset': 'release-reviewer-0.10.1.zip',
-  'filename': 'release-reviewer-0.10.1.zip',
-  'version': '0.10.1',
-  'sha256': 'd527452c2786e91af994d150701a45c8cbb66e895ac3e77ec0217299f225aed1'},
+  'asset': 'release-reviewer-0.11.0.zip',
+  'filename': 'release-reviewer-0.11.0.zip',
+  'version': '0.11.0',
+  'sha256': '7181892ae3136f320e9aa2b6ac4e88d4837ed979143a13787b8ed07000be2316',
+  'minimum_version': '0.11.0',
+  'payload_sha256': '773484030831ccededa20405c549923008ee2606f29ccf5cebdcbecf6e2151f0'},
  {'id': 'bmad-method',
   'repository': 'bmad-code-org/BMAD-METHOD',
   'asset': 'bmad-method-6.12.4-codex.zip',
@@ -59,7 +61,9 @@ def digest(data: bytes) -> str:
 
 def source_summary(upstream: dict[str, dict[str, str]]) -> list[str]:
     """Keep human-readable source notes bound to the same pins as the payload."""
+    compatibility = f"ReleaseReviewer minimum version {upstream['release-reviewer']['minimumVersion']} with payload SHA-256 {upstream['release-reviewer']['payloadSha256']}."
     return [
+        compatibility,
         f"Native Codebase LLM Wiki {upstream['codebase-wiki']['version']} adds evidence-bound Archify visualizations. Node.js 18+ and a local browser are required to publish diagrams; installation remains offline. The Group overlay applies shared-Wiki and Repo/path evidence rules.",
         f"Native MergeReviewer {upstream['merge-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps MergeReviewSession/v1 jobs. The Skill agent applies Code Review defect criteria to the diff and evidence-linked consumers after start freezes base/head and all peer Repos' current local HEADs. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout under the selected Repo's review-reports/ with 8-character commit IDs in the filename and full evidence validation. No Workspace overlay or MR-specific report adapter is applied.",
         f"Native ReleaseReviewer {upstream['release-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps ReleaseReviewSession/v1 jobs in an independent runtime. The Skill agent reviews diff-linked blockers and deployment dependencies using base/head and all peer Repos' current local HEADs frozen by start. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout with an editable manual checklist under the selected Repo's review-reports/ without an overlay.",
@@ -310,6 +314,8 @@ def build() -> dict[str, object]:
             "version": source["version"],
             "sha256": source["sha256"],
         }
+        if source["id"] == "release-reviewer":
+            upstream[source["id"]].update(minimumVersion=source["minimum_version"], payloadSha256=source["payload_sha256"])
         if source["id"] == "codebase-wiki":
             skill_prefix = ".agents/skills/codebase-wiki/"
             skill_files = {name[len(skill_prefix):]: data for name, data in selected.items() if name.startswith(skill_prefix)}
@@ -340,6 +346,15 @@ def build() -> dict[str, object]:
             skill_files = {name[len(prefix):]: data for name, data in selected.items() if name.startswith(prefix)}
             if len(skill_files) != len(selected) or not skill_files or "SKILL.md" not in skill_files:
                 raise ValueError(f"{source['repository']} Release 結構無效。")
+            if source["id"] == "release-reviewer":
+                actual_version = skill_files.get("VERSION", b"").decode("utf-8").strip()
+                numeric = lambda value: tuple(int(part) for part in value.split("."))
+                if actual_version != source["version"] or numeric(actual_version) < numeric(source["minimum_version"]):
+                    raise ValueError("Pinned ReleaseReviewer does not meet the declared minimum version.")
+                rows = [[name, digest(data)] for name, data in sorted(skill_files.items(), key=lambda item: item[0].encode("utf-8"))]
+                actual_payload = digest(json.dumps(rows, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+                if actual_payload != source["payload_sha256"]:
+                    raise ValueError("Pinned ReleaseReviewer payload hash does not match the declared compatibility hash.")
             for name, data in skill_files.items():
                 files[f"payload/.agents/skills/{source['id']}/{name}"] = data
         files[f"sources/{source['asset']}"] = archive_path.read_bytes()
@@ -389,6 +404,12 @@ def build() -> dict[str, object]:
         "upstream": upstream,
         "sourceSnapshots": {tool: {key: record[key] for key in ('sourceKind', 'commit', 'dirty', 'treeSha256', 'archiveSha256')}
                             for tool, record in snapshots.items()},
+        "reviewerRequirements": {
+            "release-reviewer": {
+                "minimumVersion": upstream["release-reviewer"]["minimumVersion"],
+                "payloadSha256": upstream["release-reviewer"]["payloadSha256"],
+            }
+        },
         "overlays": overlays,
         "sourceSummary": source_summary(upstream),
         "customProfile": {
