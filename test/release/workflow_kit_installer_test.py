@@ -430,7 +430,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                         expected_versions = {
                             "codebase-wiki": "0.7.1",
                             "merge-reviewer": "0.20.3",
-                            "release-reviewer": "0.10.1",
+                            "release-reviewer": CURRENT_SOURCES["release-reviewer"]["version"],
                         }
                         for skill, version in expected_versions.items():
                             self.assertEqual(version, status["upstreamVersions"][skill])

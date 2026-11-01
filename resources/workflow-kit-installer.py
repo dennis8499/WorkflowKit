@@ -28,7 +28,7 @@ from typing import Any
 PACKAGE = "gitlab-workspace-kit"
 BUNDLE_SCHEMA = "gitlab-workspace-kit/v1"
 INDEX_SCHEMA = "gitlab-workspace-kit-bundle/v1"
-VERSION = '1.3.2'
+VERSION = '1.3.3'
 KIT_EXTENSION_FILES = {}
 BMAD_RUNTIME_FILES = {'_bmad/_config/bmad-help.csv': '4fbd05b07ddd6e8a170d6c511c17ab3232e98f7c90ad8bfedef9a363dbb5f9a0',
  '_bmad/_config/files-manifest.csv': 'c380bab3cd663543c4ff639c552396ded7db735f3362c7bf1394c4e1c0d31624',
@@ -1024,7 +1024,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                      '.agents/skills/output-style/agents/openai.yaml': '9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb',
                      '.agents/skills/output-style/references/examples.md': '997eb1deedd5719f733f980161e5e951cbaf69b5878fb855c54cd03ea6badabf',
                      '.agents/skills/release-reviewer/SKILL.md': 'd9718f3395f5b95bf4e3addccc93c61e01ce1a6633e084076a5cdc5cea2379b5',
-                     '.agents/skills/release-reviewer/VERSION': '795d6bc79574d2aec03ad9cfec404bb95083c9dd210e6521e0d4199772d28d44',
+                     '.agents/skills/release-reviewer/VERSION': 'fe8b23410c0d9003e70c141ca726f3c669bbc0bf7e3acb7ba35f23cf7260332b',
                      '.agents/skills/release-reviewer/agents/openai.yaml': '54dcc5409d56c8505df85a9dc63767c5001170acdfd07d42de3a0781786bb105',
                      '.agents/skills/release-reviewer/references/evidence-workflow.md': '59c2c59a3c4d971f00181caa2c8edd7b077d5978db528c3359c60b0704745783',
                      '.agents/skills/release-reviewer/references/fast-session.md': 'd5d958fa9f4b610371f61ec978c07693fefc700ebcf7f466303c58cac878ec2d',
@@ -1038,7 +1038,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                      '.agents/skills/release-reviewer/references/session-workflow.md': 'e89f4b3ee946b3160c38f1572a87fd70abd94a8e19fa9a34619c2c8cd8830d62',
                      '.agents/skills/release-reviewer/scripts/chain_review.py': '40fe910d4c87c19e259e46fe63e33123a8bc9d7d0996eb1346ac28f84b522d88',
                      '.agents/skills/release-reviewer/scripts/coverage_policy.py': 'cc036e79496c88e018befceb407205d75b7cb4bafda71911af2959842982b2d1',
-                     '.agents/skills/release-reviewer/scripts/evidence.py': '18863f33097c9c03fcf9a5c90810c9ecd7a99a93e438aae2086867be6f755236',
+                     '.agents/skills/release-reviewer/scripts/evidence.py': '60ff9bffef0a97905a6be05f3613538f2391e2179943d0c853dbd0b55a6f4364',
                      '.agents/skills/release-reviewer/scripts/frozen_evidence.py': 'd17bfb13d9af2a3b9e7c7da99610deaaf800151b38698f2ad0973bddf6bbafbf',
                      '.agents/skills/release-reviewer/scripts/git_network_lease.py': '233582878f2ff4e5736d13d254f330f0b61a02b6cd9bcafcd0039c66507b61ca',
                      '.agents/skills/release-reviewer/scripts/git_review_context.py': '2351d83dd700d588b5b3350f92958ceeee398e86d34d247113d2c61c5b3ccce7',
@@ -1075,7 +1075,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
            'overlays': {'codebase-wiki': {'added': {},
                                           'replaced': {'.agents/skills/codebase-wiki/SKILL.md': {'overlay_sha256': '1ced07ac751257938a95e05523c9baced9224059d752b9eb99502a8ce5ba4d08',
                                                                                                  'upstream_sha256': '3d8e93505640b92257b5555970db44628292aaedd405ff1fd344ee12b2bf00db'}}}},
-           'payloadSha256': '54a75c0cbfb4ed82d8035565ce7c54f820c88ff77a30d46578e51f0a0e8956e2',
+           'payloadSha256': '3fc9b487fc2c15b903240ac73e2e87017336f6cddd2ce5369c0985f011d60480',
            'profileHashes': {'group-instructions.md': '9edc32a058fd6c28a67d4b67bce36053354af564201bd664e606dba4a031d10f',
                              'legacy-cleanup.md': 'cd9abd025fd748b71bfed3b1179834bac7a956280b62e7ff825810b0894e43ff',
                              'profile.md': '9151f897fefe839b46ca50bea1eab374e4e4923cb1c136e26143ba66aba2cf5d'},
@@ -1465,7 +1465,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                                                '.agents/skills/output-style/agents/openai.yaml': '9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb',
                                                '.agents/skills/output-style/references/examples.md': '997eb1deedd5719f733f980161e5e951cbaf69b5878fb855c54cd03ea6badabf',
                                                '.agents/skills/release-reviewer/SKILL.md': 'd9718f3395f5b95bf4e3addccc93c61e01ce1a6633e084076a5cdc5cea2379b5',
-                                               '.agents/skills/release-reviewer/VERSION': '795d6bc79574d2aec03ad9cfec404bb95083c9dd210e6521e0d4199772d28d44',
+                                               '.agents/skills/release-reviewer/VERSION': 'fe8b23410c0d9003e70c141ca726f3c669bbc0bf7e3acb7ba35f23cf7260332b',
                                                '.agents/skills/release-reviewer/agents/openai.yaml': '54dcc5409d56c8505df85a9dc63767c5001170acdfd07d42de3a0781786bb105',
                                                '.agents/skills/release-reviewer/references/evidence-workflow.md': '59c2c59a3c4d971f00181caa2c8edd7b077d5978db528c3359c60b0704745783',
                                                '.agents/skills/release-reviewer/references/fast-session.md': 'd5d958fa9f4b610371f61ec978c07693fefc700ebcf7f466303c58cac878ec2d',
@@ -1479,7 +1479,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                                                '.agents/skills/release-reviewer/references/session-workflow.md': 'e89f4b3ee946b3160c38f1572a87fd70abd94a8e19fa9a34619c2c8cd8830d62',
                                                '.agents/skills/release-reviewer/scripts/chain_review.py': '40fe910d4c87c19e259e46fe63e33123a8bc9d7d0996eb1346ac28f84b522d88',
                                                '.agents/skills/release-reviewer/scripts/coverage_policy.py': 'cc036e79496c88e018befceb407205d75b7cb4bafda71911af2959842982b2d1',
-                                               '.agents/skills/release-reviewer/scripts/evidence.py': '18863f33097c9c03fcf9a5c90810c9ecd7a99a93e438aae2086867be6f755236',
+                                               '.agents/skills/release-reviewer/scripts/evidence.py': '60ff9bffef0a97905a6be05f3613538f2391e2179943d0c853dbd0b55a6f4364',
                                                '.agents/skills/release-reviewer/scripts/frozen_evidence.py': 'd17bfb13d9af2a3b9e7c7da99610deaaf800151b38698f2ad0973bddf6bbafbf',
                                                '.agents/skills/release-reviewer/scripts/git_network_lease.py': '233582878f2ff4e5736d13d254f330f0b61a02b6cd9bcafcd0039c66507b61ca',
                                                '.agents/skills/release-reviewer/scripts/git_review_context.py': '2351d83dd700d588b5b3350f92958ceeee398e86d34d247113d2c61c5b3ccce7',
@@ -1496,7 +1496,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                                      'overlays': {'codebase-wiki': {'added': {},
                                                                     'replaced': {'.agents/skills/codebase-wiki/SKILL.md': {'overlay_sha256': '1ced07ac751257938a95e05523c9baced9224059d752b9eb99502a8ce5ba4d08',
                                                                                                                            'upstream_sha256': '3d8e93505640b92257b5555970db44628292aaedd405ff1fd344ee12b2bf00db'}}}},
-                                     'payloadSha256': '5d4775ce5cf360f2014b6d4c9c2ed1d6d876e9d550fe331b655772a391242917',
+                                     'payloadSha256': '22f74e6b60dd408494e78eae63769a6475c59d787f7b6c0b9014009dacf33966',
                                      'profileHashes': {'group-instructions.md': '9edc32a058fd6c28a67d4b67bce36053354af564201bd664e606dba4a031d10f',
                                                        'legacy-cleanup.md': 'cd9abd025fd748b71bfed3b1179834bac7a956280b62e7ff825810b0894e43ff',
                                                        'profile.md': '9151f897fefe839b46ca50bea1eab374e4e4923cb1c136e26143ba66aba2cf5d'},
@@ -2092,7 +2092,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                           '.agents/skills/output-style/agents/openai.yaml': '9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb',
                           '.agents/skills/output-style/references/examples.md': '997eb1deedd5719f733f980161e5e951cbaf69b5878fb855c54cd03ea6badabf',
                           '.agents/skills/release-reviewer/SKILL.md': 'd9718f3395f5b95bf4e3addccc93c61e01ce1a6633e084076a5cdc5cea2379b5',
-                          '.agents/skills/release-reviewer/VERSION': '795d6bc79574d2aec03ad9cfec404bb95083c9dd210e6521e0d4199772d28d44',
+                          '.agents/skills/release-reviewer/VERSION': 'fe8b23410c0d9003e70c141ca726f3c669bbc0bf7e3acb7ba35f23cf7260332b',
                           '.agents/skills/release-reviewer/agents/openai.yaml': '54dcc5409d56c8505df85a9dc63767c5001170acdfd07d42de3a0781786bb105',
                           '.agents/skills/release-reviewer/references/evidence-workflow.md': '59c2c59a3c4d971f00181caa2c8edd7b077d5978db528c3359c60b0704745783',
                           '.agents/skills/release-reviewer/references/fast-session.md': 'd5d958fa9f4b610371f61ec978c07693fefc700ebcf7f466303c58cac878ec2d',
@@ -2106,7 +2106,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                           '.agents/skills/release-reviewer/references/session-workflow.md': 'e89f4b3ee946b3160c38f1572a87fd70abd94a8e19fa9a34619c2c8cd8830d62',
                           '.agents/skills/release-reviewer/scripts/chain_review.py': '40fe910d4c87c19e259e46fe63e33123a8bc9d7d0996eb1346ac28f84b522d88',
                           '.agents/skills/release-reviewer/scripts/coverage_policy.py': 'cc036e79496c88e018befceb407205d75b7cb4bafda71911af2959842982b2d1',
-                          '.agents/skills/release-reviewer/scripts/evidence.py': '18863f33097c9c03fcf9a5c90810c9ecd7a99a93e438aae2086867be6f755236',
+                          '.agents/skills/release-reviewer/scripts/evidence.py': '60ff9bffef0a97905a6be05f3613538f2391e2179943d0c853dbd0b55a6f4364',
                           '.agents/skills/release-reviewer/scripts/frozen_evidence.py': 'd17bfb13d9af2a3b9e7c7da99610deaaf800151b38698f2ad0973bddf6bbafbf',
                           '.agents/skills/release-reviewer/scripts/git_network_lease.py': '233582878f2ff4e5736d13d254f330f0b61a02b6cd9bcafcd0039c66507b61ca',
                           '.agents/skills/release-reviewer/scripts/git_review_context.py': '2351d83dd700d588b5b3350f92958ceeee398e86d34d247113d2c61c5b3ccce7',
@@ -2141,7 +2141,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                           '_bmad/scripts/resolve_config.py': '0ed89f66ece987d87942fd6a05e9757f71fa7648929913721bd4a3467c994d7d',
                           '_bmad/scripts/resolve_customization.py': 'a181c9e77ee458bfef3ed72ae0ebaae3399baff592543c655988414ada141ab2'},
                 'overlays': {},
-                'payloadSha256': '4bcc334e5f01b5f7fe17ec33edc1e161d4e85b54b65f3e71aa853955459548e2',
+                'payloadSha256': 'df97310106c194d765623cc0f46b62bd3b49aed2335fecec6b3554213e8a2e37',
                 'profileHashes': {'group-instructions.md': '0fa288a7f9d5455806139ef4e4369ce7d7616f549eddf1c9057210f00bbf5fc5',
                                   'legacy-cleanup.md': 'cd9abd025fd748b71bfed3b1179834bac7a956280b62e7ff825810b0894e43ff',
                                   'profile.md': '4872b40e00deeb2bfe52238a0fbb10b8566aa8f0aec95558bac72f69e32332a7'},
@@ -2531,7 +2531,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                                                     '.agents/skills/output-style/agents/openai.yaml': '9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb',
                                                     '.agents/skills/output-style/references/examples.md': '997eb1deedd5719f733f980161e5e951cbaf69b5878fb855c54cd03ea6badabf',
                                                     '.agents/skills/release-reviewer/SKILL.md': 'd9718f3395f5b95bf4e3addccc93c61e01ce1a6633e084076a5cdc5cea2379b5',
-                                                    '.agents/skills/release-reviewer/VERSION': '795d6bc79574d2aec03ad9cfec404bb95083c9dd210e6521e0d4199772d28d44',
+                                                    '.agents/skills/release-reviewer/VERSION': 'fe8b23410c0d9003e70c141ca726f3c669bbc0bf7e3acb7ba35f23cf7260332b',
                                                     '.agents/skills/release-reviewer/agents/openai.yaml': '54dcc5409d56c8505df85a9dc63767c5001170acdfd07d42de3a0781786bb105',
                                                     '.agents/skills/release-reviewer/references/evidence-workflow.md': '59c2c59a3c4d971f00181caa2c8edd7b077d5978db528c3359c60b0704745783',
                                                     '.agents/skills/release-reviewer/references/fast-session.md': 'd5d958fa9f4b610371f61ec978c07693fefc700ebcf7f466303c58cac878ec2d',
@@ -2545,7 +2545,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                                                     '.agents/skills/release-reviewer/references/session-workflow.md': 'e89f4b3ee946b3160c38f1572a87fd70abd94a8e19fa9a34619c2c8cd8830d62',
                                                     '.agents/skills/release-reviewer/scripts/chain_review.py': '40fe910d4c87c19e259e46fe63e33123a8bc9d7d0996eb1346ac28f84b522d88',
                                                     '.agents/skills/release-reviewer/scripts/coverage_policy.py': 'cc036e79496c88e018befceb407205d75b7cb4bafda71911af2959842982b2d1',
-                                                    '.agents/skills/release-reviewer/scripts/evidence.py': '18863f33097c9c03fcf9a5c90810c9ecd7a99a93e438aae2086867be6f755236',
+                                                    '.agents/skills/release-reviewer/scripts/evidence.py': '60ff9bffef0a97905a6be05f3613538f2391e2179943d0c853dbd0b55a6f4364',
                                                     '.agents/skills/release-reviewer/scripts/frozen_evidence.py': 'd17bfb13d9af2a3b9e7c7da99610deaaf800151b38698f2ad0973bddf6bbafbf',
                                                     '.agents/skills/release-reviewer/scripts/git_network_lease.py': '233582878f2ff4e5736d13d254f330f0b61a02b6cd9bcafcd0039c66507b61ca',
                                                     '.agents/skills/release-reviewer/scripts/git_review_context.py': '2351d83dd700d588b5b3350f92958ceeee398e86d34d247113d2c61c5b3ccce7',
@@ -2560,7 +2560,7 @@ PROFILE_MANIFESTS = {'group': {'agentBlockSha256': 'b4951ba853bc4a1389076d38c77d
                                                     '.agents/skills/release-reviewer/scripts/review_session.py': '64b90cc1e7fafc5535e21a61dcb3707eac6d1552bacc3e35d6c9718f824e9dfd',
                                                     '.agents/skills/release-reviewer/scripts/review_worklist.py': '7d9f75c6716c5017c48fc9145e8653cf0e578a46ea332ec6961794c4481e10f6'},
                                           'overlays': {},
-                                          'payloadSha256': '4055933f873f537742975ae460fce54309b2509998423782196148984afd4e68',
+                                          'payloadSha256': 'b56d63dd739973ea0bf72c4e4560ce9b0e640b6d294863fc229bdfed1a85c21e',
                                           'profileHashes': {'group-instructions.md': '0fa288a7f9d5455806139ef4e4369ce7d7616f549eddf1c9057210f00bbf5fc5',
                                                             'legacy-cleanup.md': 'cd9abd025fd748b71bfed3b1179834bac7a956280b62e7ff825810b0894e43ff',
                                                             'profile.md': '4872b40e00deeb2bfe52238a0fbb10b8566aa8f0aec95558bac72f69e32332a7'},
@@ -2596,18 +2596,18 @@ UPSTREAM = {'bmad-method': {'asset': 'bmad-method-6.12.4-codex.zip',
                     'root': '',
                     'sha256': '5132eaf5733a0b5c659e11c393c5e78c27de8fc56abeb1fd25341c3ef83a22d3',
                     'version': '0.20.3'},
- 'release-reviewer': {'asset': 'release-reviewer-0.11.0.zip',
-                      'minimumVersion': '0.11.0',
-                      'payloadSha256': '773484030831ccededa20405c549923008ee2606f29ccf5cebdcbecf6e2151f0',
+ 'release-reviewer': {'asset': 'release-reviewer-0.11.1.zip',
+                      'minimumVersion': '0.11.1',
+                      'payloadSha256': 'de26b3f7c2a6fcfff039212e6506d9b472867e2fd619f4655e6982bf7e569c2b',
                       'repository': 'ReleaseReviewer',
                       'root': '',
-                      'sha256': '7181892ae3136f320e9aa2b6ac4e88d4837ed979143a13787b8ed07000be2316',
-                      'version': '0.11.0'}}
+                      'sha256': 'cce2d316b83442a9f80e082bba814a3a380178f331096bf206cb88e29762df95',
+                      'version': '0.11.1'}}
 PROFILE_HASHES = {'group-instructions.md': '9edc32a058fd6c28a67d4b67bce36053354af564201bd664e606dba4a031d10f',
  'legacy-cleanup.md': 'cd9abd025fd748b71bfed3b1179834bac7a956280b62e7ff825810b0894e43ff',
  'profile.md': '9151f897fefe839b46ca50bea1eab374e4e4923cb1c136e26143ba66aba2cf5d'}
-SOURCE_SUMMARY = ['ReleaseReviewer minimum version 0.11.0 with payload SHA-256 '
- '773484030831ccededa20405c549923008ee2606f29ccf5cebdcbecf6e2151f0.',
+SOURCE_SUMMARY = ['ReleaseReviewer minimum version 0.11.1 with payload SHA-256 '
+ 'de26b3f7c2a6fcfff039212e6506d9b472867e2fd619f4655e6982bf7e569c2b.',
  'Native Codebase LLM Wiki 0.7.1 adds evidence-bound Archify visualizations. Node.js 18+ and a local browser '
  'are required to publish diagrams; installation remains offline. The Group overlay applies shared-Wiki and '
  'Repo/path evidence rules.',
@@ -2618,7 +2618,7 @@ SOURCE_SUMMARY = ['ReleaseReviewer minimum version 0.11.0 with payload SHA-256 '
  "conclusion and following the native five-section layout under the selected Repo's review-reports/ with "
  '8-character commit IDs in the filename and full evidence validation. No Workspace overlay or MR-specific '
  'report adapter is applied.',
- 'Native ReleaseReviewer 0.11.0 accepts one Repo and explicit base/head branches. Its own '
+ 'Native ReleaseReviewer 0.11.1 accepts one Repo and explicit base/head branches. Its own '
  'start/step/check/finish/status/cancel facade keeps ReleaseReviewSession/v1 jobs in an independent runtime. '
  'The Skill agent reviews diff-linked blockers and deployment dependencies using base/head and all peer '
  "Repos' current local HEADs frozen by start. It writes one Traditional Chinese report beginning with the "
@@ -2629,7 +2629,7 @@ SOURCE_SUMMARY = ['ReleaseReviewer minimum version 0.11.0 with payload SHA-256 '
  'component with a bundled or external installation mode.']
 AGENT_BLOCK_SHA256 = 'b4951ba853bc4a1389076d38c77d78a3842c01a798bc04e5ac1f2f8838ded0f1'
 OVERLAY_HASHES = {'codebase-wiki': '3153ddc81dd1b1968ac9721dfa4fb138694af1f867145ddb863e1d347bc8414b'}
-CURRENT_PAYLOAD_SHA256 = '54a75c0cbfb4ed82d8035565ce7c54f820c88ff77a30d46578e51f0a0e8956e2'
+CURRENT_PAYLOAD_SHA256 = '3fc9b487fc2c15b903240ac73e2e87017336f6cddd2ce5369c0985f011d60480'
 CURRENT_SKILL_FILES = {'.agents/skills/bmad-advanced-elicitation/SKILL.md': '0219f618ea10bd9bd121fb5c27a6a9d378d2ec641b1c872e899e89f303a2f138',
  '.agents/skills/bmad-advanced-elicitation/assets/methods.csv': 'c5647754013ce04b5f225c6083bf49d4418f5fbd3b5ebc818e6323ddbffb863f',
  '.agents/skills/bmad-advanced-elicitation/customize.toml': '480798b227f1316850e5f4bae41d01bda6b7ac83f9f904d0ce3f43ee6cd9b11e',
@@ -2875,7 +2875,7 @@ CURRENT_SKILL_FILES = {'.agents/skills/bmad-advanced-elicitation/SKILL.md': '021
  '.agents/skills/output-style/agents/openai.yaml': '9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb',
  '.agents/skills/output-style/references/examples.md': '997eb1deedd5719f733f980161e5e951cbaf69b5878fb855c54cd03ea6badabf',
  '.agents/skills/release-reviewer/SKILL.md': 'd9718f3395f5b95bf4e3addccc93c61e01ce1a6633e084076a5cdc5cea2379b5',
- '.agents/skills/release-reviewer/VERSION': '795d6bc79574d2aec03ad9cfec404bb95083c9dd210e6521e0d4199772d28d44',
+ '.agents/skills/release-reviewer/VERSION': 'fe8b23410c0d9003e70c141ca726f3c669bbc0bf7e3acb7ba35f23cf7260332b',
  '.agents/skills/release-reviewer/agents/openai.yaml': '54dcc5409d56c8505df85a9dc63767c5001170acdfd07d42de3a0781786bb105',
  '.agents/skills/release-reviewer/references/evidence-workflow.md': '59c2c59a3c4d971f00181caa2c8edd7b077d5978db528c3359c60b0704745783',
  '.agents/skills/release-reviewer/references/fast-session.md': 'd5d958fa9f4b610371f61ec978c07693fefc700ebcf7f466303c58cac878ec2d',
@@ -2889,7 +2889,7 @@ CURRENT_SKILL_FILES = {'.agents/skills/bmad-advanced-elicitation/SKILL.md': '021
  '.agents/skills/release-reviewer/references/session-workflow.md': 'e89f4b3ee946b3160c38f1572a87fd70abd94a8e19fa9a34619c2c8cd8830d62',
  '.agents/skills/release-reviewer/scripts/chain_review.py': '40fe910d4c87c19e259e46fe63e33123a8bc9d7d0996eb1346ac28f84b522d88',
  '.agents/skills/release-reviewer/scripts/coverage_policy.py': 'cc036e79496c88e018befceb407205d75b7cb4bafda71911af2959842982b2d1',
- '.agents/skills/release-reviewer/scripts/evidence.py': '18863f33097c9c03fcf9a5c90810c9ecd7a99a93e438aae2086867be6f755236',
+ '.agents/skills/release-reviewer/scripts/evidence.py': '60ff9bffef0a97905a6be05f3613538f2391e2179943d0c853dbd0b55a6f4364',
  '.agents/skills/release-reviewer/scripts/frozen_evidence.py': 'd17bfb13d9af2a3b9e7c7da99610deaaf800151b38698f2ad0973bddf6bbafbf',
  '.agents/skills/release-reviewer/scripts/git_network_lease.py': '233582878f2ff4e5736d13d254f330f0b61a02b6cd9bcafcd0039c66507b61ca',
  '.agents/skills/release-reviewer/scripts/git_review_context.py': '2351d83dd700d588b5b3350f92958ceeee398e86d34d247113d2c61c5b3ccce7',

@@ -92,9 +92,9 @@ class ReleaseReviewerIntegrationTests(unittest.TestCase):
             manifest = json.loads(archive.read("workflow-kit/manifest.json").decode("utf-8"))
         requirement = manifest["reviewerRequirements"]["release-reviewer"]
         source = harness.CURRENT_SOURCES["release-reviewer"]
-        self.assertEqual("0.11.0", requirement["minimumVersion"])
+        self.assertEqual("0.11.1", requirement["minimumVersion"])
         self.assertEqual(source["payloadSha256"], requirement["payloadSha256"])
-        self.assertEqual("0.11.0", source["version"])
+        self.assertEqual("0.11.1", source["version"])
 
     def test_installed_native_payload_matches_pinned_archive(self):
         archive_path = harness.ROOT / "resources/offline-tools/sources" / harness.CURRENT_SOURCES['release-reviewer']['filename']

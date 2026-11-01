@@ -653,14 +653,14 @@
       "version": "0.20.3"
     },
     "release-reviewer": {
-      "archiveSha256": "7181892ae3136f320e9aa2b6ac4e88d4837ed979143a13787b8ed07000be2316",
-      "commit": "807e98ced3fd670a9599ec856acfb18f66d25d04",
+      "archiveSha256": "cce2d316b83442a9f80e082bba814a3a380178f331096bf206cb88e29762df95",
+      "commit": "3faa6ce34c964dcc7929cef82d6030e5e7a8fa27",
       "dirty": true,
       "entryRoot": "release-reviewer",
-      "filename": "release-reviewer-0.11.0.zip",
+      "filename": "release-reviewer-0.11.1.zip",
       "files": {
         "SKILL.md": "d9718f3395f5b95bf4e3addccc93c61e01ce1a6633e084076a5cdc5cea2379b5",
-        "VERSION": "795d6bc79574d2aec03ad9cfec404bb95083c9dd210e6521e0d4199772d28d44",
+        "VERSION": "fe8b23410c0d9003e70c141ca726f3c669bbc0bf7e3acb7ba35f23cf7260332b",
         "agents/openai.yaml": "54dcc5409d56c8505df85a9dc63767c5001170acdfd07d42de3a0781786bb105",
         "references/evidence-workflow.md": "59c2c59a3c4d971f00181caa2c8edd7b077d5978db528c3359c60b0704745783",
         "references/fast-session.md": "d5d958fa9f4b610371f61ec978c07693fefc700ebcf7f466303c58cac878ec2d",
@@ -674,7 +674,7 @@
         "references/session-workflow.md": "e89f4b3ee946b3160c38f1572a87fd70abd94a8e19fa9a34619c2c8cd8830d62",
         "scripts/chain_review.py": "40fe910d4c87c19e259e46fe63e33123a8bc9d7d0996eb1346ac28f84b522d88",
         "scripts/coverage_policy.py": "cc036e79496c88e018befceb407205d75b7cb4bafda71911af2959842982b2d1",
-        "scripts/evidence.py": "18863f33097c9c03fcf9a5c90810c9ecd7a99a93e438aae2086867be6f755236",
+        "scripts/evidence.py": "60ff9bffef0a97905a6be05f3613538f2391e2179943d0c853dbd0b55a6f4364",
         "scripts/frozen_evidence.py": "d17bfb13d9af2a3b9e7c7da99610deaaf800151b38698f2ad0973bddf6bbafbf",
         "scripts/git_network_lease.py": "233582878f2ff4e5736d13d254f330f0b61a02b6cd9bcafcd0039c66507b61ca",
         "scripts/git_review_context.py": "2351d83dd700d588b5b3350f92958ceeee398e86d34d247113d2c61c5b3ccce7",
@@ -689,11 +689,11 @@
         "scripts/review_session.py": "64b90cc1e7fafc5535e21a61dcb3707eac6d1552bacc3e35d6c9718f824e9dfd",
         "scripts/review_worklist.py": "7d9f75c6716c5017c48fc9145e8653cf0e578a46ea332ec6961794c4481e10f6"
       },
-      "payloadSha256": "773484030831ccededa20405c549923008ee2606f29ccf5cebdcbecf6e2151f0",
+      "payloadSha256": "de26b3f7c2a6fcfff039212e6506d9b472867e2fd619f4655e6982bf7e569c2b",
       "repository": "ReleaseReviewer",
       "sourceKind": "local-snapshot",
-      "treeSha256": "90055adeaf2ab42cd233b905eb99ea84ad155c344412d23987dffa417ed5faad",
-      "version": "0.11.0"
+      "treeSha256": "94bec627ac0918ecfd2ca0043e05794ae47106916c2ffcb59a3e3ea96e149fc0",
+      "version": "0.11.1"
     }
   },
   "workspaceFiles": {
