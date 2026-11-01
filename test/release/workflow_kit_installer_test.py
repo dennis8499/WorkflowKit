@@ -245,8 +245,13 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         labels = {'codebase-wiki': 'Codebase LLM Wiki',
                   'merge-reviewer': 'MergeReviewer', 'release-reviewer': 'ReleaseReviewer',
                   'bmad-method': 'BMAD Method'}
-        self.assertEqual(len(labels), len(manifest['sourceSummary']))
-        for note, (tool, label) in zip(manifest['sourceSummary'], labels.items()):
+        self.assertEqual(len(labels) + 1, len(manifest['sourceSummary']))
+        compatibility = manifest["upstream"]["release-reviewer"]
+        self.assertEqual(
+            f"ReleaseReviewer minimum version {compatibility['minimumVersion']} with payload SHA-256 {compatibility['payloadSha256']}.",
+            manifest["sourceSummary"][0],
+        )
+        for note, (tool, label) in zip(manifest['sourceSummary'][1:], labels.items()):
             prefix = f"Official {label}" if tool == 'bmad-method' else f"Native {label} {CURRENT_SOURCES[tool]['version']} "
             self.assertTrue(note.startswith(prefix), note)
         prefix = ".agents/skills/output-style/"

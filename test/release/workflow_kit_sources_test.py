@@ -43,9 +43,18 @@ class SourceSummaryTests(unittest.TestCase):
         versions = {'codebase-wiki': '91.2.3',
                     'merge-reviewer': '93.4.5', 'release-reviewer': '94.5.6',
                     'bmad-method': '96.7.8'}
-        notes = builder.source_summary({tool: {'version': version} for tool, version in versions.items()})
-        self.assertEqual(4, len(notes))
-        for note, tool, label in zip(notes, versions, ('Codebase LLM Wiki', 'MergeReviewer', 'ReleaseReviewer', 'BMAD Method')):
+        pinned = {tool: {'version': version} for tool, version in versions.items()}
+        pinned['release-reviewer'].update({
+            'minimumVersion': versions['release-reviewer'],
+            'payloadSha256': 'a' * 64,
+        })
+        notes = builder.source_summary(pinned)
+        self.assertEqual(5, len(notes))
+        self.assertEqual(
+            f"ReleaseReviewer minimum version {versions['release-reviewer']} with payload SHA-256 {'a' * 64}.",
+            notes[0],
+        )
+        for note, tool, label in zip(notes[1:], versions, ('Codebase LLM Wiki', 'MergeReviewer', 'ReleaseReviewer', 'BMAD Method')):
             prefix = f'Official {label} {versions[tool]} ' if tool == 'bmad-method' else f'Native {label} {versions[tool]} '
             self.assertTrue(note.startswith(prefix), note)
 
