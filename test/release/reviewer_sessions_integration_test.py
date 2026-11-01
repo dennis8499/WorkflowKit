@@ -1,6 +1,7 @@
 """Installed session facade smoke; authored fixture decisions do not measure model quality."""
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -61,11 +62,21 @@ class InstalledReviewerSessionTests(unittest.TestCase):
         for tool, job_schema in (('merge-reviewer', 'MergeReviewSession/v1'),
                                  ('release-reviewer', 'ReleaseReviewSession/v1')):
             with self.subTest(tool=tool):
+                draft_arguments = []
+                if tool == 'merge-reviewer':
+                    capabilities = self.cli(tool, 'capabilities')
+                    self.assertIn('compact', capabilities['draft_formats'])
+                    self.assertTrue(capabilities['features']['read_only_artifact_view'])
+                    draft_arguments = ['--draft-format', 'compact']
                 runtime = self.root / tool
                 start = self.cli(tool, 'start', '--workspace', self.repo, '--project', self.repo,
-                    '--base', 'main', '--head', 'feature', '--runtime-root', runtime, '--request-id', identifier)
+                    '--base', 'main', '--head', 'feature', '--runtime-root', runtime, '--request-id', identifier,
+                    *draft_arguments)
                 self.assertEqual(0, start['network_activity']['fetch_attempt_count'])
                 context = Path(start['context_dir'])
+                if tool == 'merge-reviewer':
+                    draft = json.loads(Path(start['draft_path']).read_text(encoding='utf-8'))
+                    self.assertEqual('merge-reviewer-authoring/v1', draft['schema'])
                 self.assertEqual(job_schema, json.loads((runtime / 'jobs' / (identifier + '.json')).read_text(encoding='utf-8'))['schema'])
                 manifest = json.loads((context / 'manifest.json').read_text(encoding='utf-8'))
                 arguments = ['--runtime-root', runtime, '--request-id', identifier]
@@ -83,6 +94,27 @@ class InstalledReviewerSessionTests(unittest.TestCase):
                 requests.write_text(json.dumps(operations), encoding='utf-8')
                 first_step = self.cli(tool, 'step', *arguments, '--requests-file', requests)
                 self.assertTrue(first_step['complete'])
+                if tool == 'merge-reviewer':
+                    scripts = self.group / '.agents/skills/merge-reviewer/scripts'
+                    spec = importlib.util.spec_from_file_location(
+                        'workflow_kit_test_merge_runtime', scripts / 'review_runtime.py')
+                    runtime_module = importlib.util.module_from_spec(spec)
+                    sys.path.insert(0, str(scripts))
+                    try:
+                        spec.loader.exec_module(runtime_module)
+                        artifact = runtime_module.store_view(
+                            context, {'operations': [{'id': 'saved-result', 'result': {'text': 'fixed evidence'}}]})
+                    finally:
+                        sys.path.remove(str(scripts))
+                    manifest_path = context / 'manifest.json'
+                    before_view = manifest_path.read_bytes()
+                    viewed = self.cli(tool, 'view', *arguments, '--artifact-scope', 'context',
+                                      '--artifact', artifact, '--pointer', '/operations', '--offset', '0',
+                                      '--page-size', '1')
+                    self.assertEqual('context', viewed['scope'])
+                    self.assertEqual(artifact, viewed['artifact'])
+                    self.assertTrue(viewed['view_complete'])
+                    self.assertEqual(before_view, manifest_path.read_bytes())
                 for malformed in (None, '{broken'):
                     if malformed is None:
                         requests.unlink()

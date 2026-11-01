@@ -233,7 +233,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         self.assertEqual(list(SKILLS), manifest["skills"])
         self.assertEqual({name: item['version'] for name, item in CURRENT_SOURCES.items()},
                          {name: item["version"] for name, item in manifest["upstream"].items()})
-        self.assertEqual("0.7.1", manifest["upstream"]["codebase-wiki"]["version"])
+        self.assertEqual("0.7.2", manifest["upstream"]["codebase-wiki"]["version"])
         self.assertEqual(2, manifest["workspaceContract"])
         self.assertEqual({"codebase-wiki"}, set(manifest["overlays"]))
         self.assertTrue(all(overlay["added"] or overlay["replaced"]
@@ -288,12 +288,18 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                     self.assertEqual(0, installed.returncode, installed.stderr or installed.stdout)
                     self.assertEqual(expected_profile, result["profile"])
                     status = self.status(target)
-                    self.assertEqual("0.7.1", status["upstreamVersions"]["codebase-wiki"])
+                    self.assertEqual("0.7.2", status["upstreamVersions"]["codebase-wiki"])
                     self.assertIn("visualize", status["capabilities"])
                     wiki_capabilities = json.loads(
                         (target / ".agents/skills/codebase-wiki/capabilities.json").read_text(encoding="utf-8")
                     )
                     self.assertEqual(7, wiki_capabilities["contract_version"])
+                    tgrep_manifest = json.loads(
+                        (target / ".agents/skills/codebase-wiki/bin/tgrep-manifest.json").read_text(encoding="utf-8")
+                    )
+                    self.assertEqual("MIT", tgrep_manifest["license"])
+                    license_file = target / ".agents/skills/codebase-wiki" / tgrep_manifest["license_file"]
+                    self.assertEqual(tgrep_manifest["license_sha256"], hashlib.sha256(license_file.read_bytes()).hexdigest())
 
                     script = target / ".agents/skills/codebase-wiki/scripts/wiki-visualize.py"
                     verify = subprocess.run(
@@ -433,8 +439,8 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                         status = self.status(target)
                         self.assertEqual(profile, status["profile"])
                         expected_versions = {
-                            "codebase-wiki": "0.7.1",
-                            "merge-reviewer": "0.20.3",
+                            "codebase-wiki": "0.7.2",
+                            "merge-reviewer": "0.20.4",
                             "release-reviewer": CURRENT_SOURCES["release-reviewer"]["version"],
                         }
                         for skill, version in expected_versions.items():
