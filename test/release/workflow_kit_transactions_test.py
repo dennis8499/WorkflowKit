@@ -40,6 +40,34 @@ class TransactionTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name).resolve()
         self.group = self.create_group(self.root, wiki="# User Wiki\n")
+        self.predecessor_assets = {}
+
+    def assets_for_predecessor(self, version):
+        if version != "1.3.4":
+            fixture = ROOT / f"test/fixtures/workflow-kit-{version}"
+            return fixture / f"gitlab-workspace-kit-{version}.zip", fixture / "installer.py"
+
+        if version not in self.predecessor_assets:
+            source = self.root / "predecessors" / version
+            source.mkdir(parents=True)
+            archive = source / "source.zip"
+            exported = subprocess.run(
+                ["git", "archive", "--format=zip", f"--output={archive}", f"v{version}"],
+                cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=False,
+            )
+            self.assertEqual(0, exported.returncode, exported.stderr or exported.stdout)
+            with zipfile.ZipFile(archive) as bundle:
+                bundle.extractall(source)
+            build = subprocess.run(
+                [sys.executable, "-X", "utf8", "-B", str(source / "scripts/build-workflow-kit.py")],
+                cwd=source, capture_output=True, text=True, encoding="utf-8", check=False,
+            )
+            self.assertEqual(0, build.returncode, build.stderr or build.stdout)
+            self.predecessor_assets[version] = (
+                source / "dist/gitlab-workspace-kit-1.3.4.zip",
+                source / "dist/workflowkit-installer-1.3.4.py",
+            )
+        return self.predecessor_assets[version]
 
     def test_1_2_and_1_3_predecessors_are_trusted_for_each_profile_and_bmad_mode(self):
         rows = [row for row in TRUST["packages"] if row["version"] in ("1.2.0", "1.2.1", "1.3.0", "1.3.3", "1.3.4")]
@@ -106,13 +134,7 @@ class TransactionTests(unittest.TestCase):
 
                 report = target / "review-reports/previous/merge-review-prior.md"
                 report.write_text("Prior review report stays.\n", encoding="utf-8")
-                if version == "1.3.4":
-                    package = ROOT / "dist/gitlab-workspace-kit-1.3.4.zip"
-                    old_installer = ROOT / "dist/workflowkit-installer-1.3.4.py"
-                else:
-                    fixture = ROOT / f"test/fixtures/workflow-kit-{version}"
-                    package = fixture / f"gitlab-workspace-kit-{version}.zip"
-                    old_installer = fixture / "installer.py"
+                package, old_installer = self.assets_for_predecessor(version)
                 archive_hash = hashlib.sha256(package.read_bytes()).hexdigest()
                 legacy = subprocess.run(
                     [sys.executable, "-X", "utf8", "-B", str(ROOT / "test/release/frozen_installer_runner.py"),

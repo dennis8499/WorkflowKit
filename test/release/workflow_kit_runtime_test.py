@@ -180,6 +180,7 @@ class WorkflowKitWikiRuntimeTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.base = Path(self.temporary.name)
         self.group = self.create_group(self.base, wiki="# Workflow Wiki\n")
+        (self.group / "wiki/overview.md").write_text("# Runtime source context\n\nService and storage overview.\n", encoding="utf-8")
         package = harness.ARCHIVE
         installed, data = self.execute(
             "install", package, self.group, harness.VERSION, "bundled", "--format", "tar.xz",
@@ -212,7 +213,7 @@ class WorkflowKitWikiRuntimeTests(unittest.TestCase):
     def test_prepared_wiki_diagram_resumes_and_publishes_in_a_later_runner_call(self):
         prepared = self.cli(
             "prepare", "--root", self.group, "--type", "architecture", "--slug", "runtime-check",
-            "--title", "執行環境架構", "--wiki-page", "wiki/index.md", "--source", "app.py", "--format", "json",
+            "--title", "執行環境架構", "--wiki-page", "wiki/overview.md", "--source", "app.py", "--format", "json",
         )
         plan_path = Path(prepared["plan"])
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
