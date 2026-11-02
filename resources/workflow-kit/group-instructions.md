@@ -19,6 +19,16 @@ snapshots and generated output. If status reports `bmadMode: external`, use the
 pre-existing BMAD and do not claim the kit's `bmad-workflow` capability. Ensure the
 user-provided `uv` runtime is available before running bundled BMAD workflows.
 
+Run every local helper command from an installed Skill through the shared
+`.agents/gitlab-workspace-kit/run.py` at the selected installation root, keeping
+the original command, working directory and arguments. From a child Repo use the
+Group root's absolute runner path. Bundled BMAD instructions include this wrapper;
+also use it for Wiki, Reviewer, Python and Node.js helpers. Preserve each
+Reviewer's existing `--runtime-root`; for a single Repo, it must name an
+authorized writable path outside all Git Repos. If a helper requires an explicit
+system temporary directory such as `--context-dir`, place it under the runner's
+`<group-root>/.gitlab-workspace/runtime/tmp` directory.
+
 Use `$codebase-wiki` for Wiki maintenance, queries, functional exploration,
 static code audit, ADR, Synthesis, BA/SA/SD, NotebookLM export and archaeology.
 Normal queries are Wiki-first; source-first branches follow the Skill's router.

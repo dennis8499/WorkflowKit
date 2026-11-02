@@ -699,15 +699,21 @@
     }
   },
   "workspaceFiles": {
-    "resources/workflow-kit/group-instructions.md": "9edc32a058fd6c28a67d4b67bce36053354af564201bd664e606dba4a031d10f",
+    "resources/workflow-kit/common/run.py": "8cd7d9b26e1a7b953acc35789a0377cd20e6f7b6d3462814562f9e53fa860906",
+    "resources/workflow-kit/group-instructions.md": "d41e36062ecac5e097aa45355b608a1c844b7d4017f45dd68ef73fe76f0c0562",
     "resources/workflow-kit/legacy-cleanup.md": "cd9abd025fd748b71bfed3b1179834bac7a956280b62e7ff825810b0894e43ff",
+    "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/scripts/wiki-visualize.py": "6f7161a2b2549a0919e199ad5f3a27e39e35ff40216ce3f9fd2795307dd38946",
+    "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify-manifest.json": "ce7ba82b274e1847693bbbc75d547c0001b11fd4d4bcccfdea5d9acd7d11a419",
+    "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify/bin/archify.mjs": "175906c2287e86667ea7b23c829d2beecf8d62c920cabdc81579ee1cd8395206",
+    "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify/bin/visual-check.mjs": "37e25a57912c122f6113304463b0636ce7f8f0510eaec038535e46b6842eec0c",
+    "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify/renderers/shared/atomic-output.mjs": "3e0031540454442120046a54c53c39e56feb231264fa2a3ad25ac53523d4e58a",
     "resources/workflow-kit/overlays/codebase-wiki/.agents/skills/codebase-wiki/SKILL.md": "1ced07ac751257938a95e05523c9baced9224059d752b9eb99502a8ce5ba4d08",
-    "resources/workflow-kit/profile.md": "9151f897fefe839b46ca50bea1eab374e4e4923cb1c136e26143ba66aba2cf5d",
-    "resources/workflow-kit/repository-instructions.md": "0fa288a7f9d5455806139ef4e4369ce7d7616f549eddf1c9057210f00bbf5fc5",
-    "resources/workflow-kit/repository-profile.md": "4872b40e00deeb2bfe52238a0fbb10b8566aa8f0aec95558bac72f69e32332a7",
+    "resources/workflow-kit/profile.md": "024a5589a38492afa1599f71e97b5621caf5f8caa16f7cc7854f09225366ee4d",
+    "resources/workflow-kit/repository-instructions.md": "437d1138a68937d84ccd188b5b43eccedb204a67ab42e78db856c0be0b90a542",
+    "resources/workflow-kit/repository-profile.md": "10a6074e8464d9af4af375f93578feac6d9fe146c98a97ba862e9f3dac4d1504",
     "resources/workflow-kit/skills/output-style/SKILL.md": "e356f9440faadbd20f659a86ebe8ae986150edf065d3098a6c343e0303de4eaf",
     "resources/workflow-kit/skills/output-style/agents/openai.yaml": "9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb",
     "resources/workflow-kit/skills/output-style/references/examples.md": "997eb1deedd5719f733f980161e5e951cbaf69b5878fb855c54cd03ea6badabf",
-    "resources/workflow-kit/trusted-predecessors.json": "8702f5b4866369a8a6e6b9cc7501937e4548fe375a1d11270a2ca9e9d185e2ad"
+    "resources/workflow-kit/trusted-predecessors.json": "4fc69e3f14e5e19c514fdcce453c1133d1282c44ba5f2c23551143c174a7caba"
   }
 }

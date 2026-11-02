@@ -5,6 +5,7 @@ import io
 import json
 import lzma
 import os
+import re
 import stat
 import tarfile
 import tempfile
@@ -196,7 +197,8 @@ def sync_installer_metadata(manifest: dict, payload_files: dict[str, bytes]) -> 
         "PROFILE_MANIFESTS": manifest["profiles"],
         "WIKI_INSTALLED_VERSION_SHA256": manifest["wikiInstalledVersionSha256"],
         "KIT_EXTENSION_FILES": {p: h for p, h in manifest["files"].items()
-                                if p.startswith((".agents/gitlab-workspace-kit/scripts/", ".agents/gitlab-workspace-kit/references/"))},
+                                if p == ".agents/gitlab-workspace-kit/run.py"
+                                or p.startswith((".agents/gitlab-workspace-kit/scripts/", ".agents/gitlab-workspace-kit/references/"))},
         "WIKI_CONFIG_FILES": {name: content.decode("utf-8").replace('mode = "framework"', 'mode = "coexist"').replace('mode = "target"', 'mode = "coexist"')
                               for name, content in _wiki_config_files().items()},
     }
@@ -252,6 +254,30 @@ def apply_overlay(files: dict[str, bytes], overlay_id: str, overlay_root: Path,
     if not added and not replaced:
         raise ValueError(f"Overlay contains no files: {overlay_id}")
     return {"added": added, "replaced": replaced}
+
+
+def apply_bmad_runner_overlay(files: dict[str, bytes]) -> dict[str, object]:
+    """Route every bundled BMAD markdown uv invocation through the shared runner."""
+    replaced: dict[str, dict[str, str]] = {}
+    prefix = "payload/.agents/skills/bmad-"
+    wrapper = 'python -X utf8 -B "{skill-root}/../../gitlab-workspace-kit/run.py" -- uv run'
+    for payload_path, data in sorted(list(files.items())):
+        if not payload_path.startswith(prefix) or not payload_path.endswith(".md"):
+            continue
+        text = data.decode("utf-8")
+        updated, count = re.subn(r"\buv run\b", wrapper, text)
+        if not count:
+            continue
+        updated_data = updated.encode("utf-8")
+        relative = payload_path.removeprefix("payload/")
+        replaced[relative] = {
+            "upstream_sha256": digest(data),
+            "overlay_sha256": digest(updated_data),
+        }
+        files[payload_path] = updated_data
+    if not replaced:
+        raise ValueError("Pinned BMAD Skills contain no uv commands to route through the common runner.")
+    return {"added": {}, "replaced": replaced}
 
 
 def _wiki_config_files() -> dict[str, bytes]:
@@ -359,7 +385,9 @@ def build() -> dict[str, object]:
                 files[f"payload/.agents/skills/{source['id']}/{name}"] = data
         files[f"sources/{source['asset']}"] = archive_path.read_bytes()
 
-    # Common extensions live outside native Skills so repository profile preserves upstream bytes.
+    bmad_runner_overlay = apply_bmad_runner_overlay(files)
+
+    # Common extensions live outside native Skills so both profiles share the runner.
     common = PROFILE / "common"
     for path in sorted(common.rglob("*")):
         if path.is_symlink():
@@ -374,15 +402,21 @@ def build() -> dict[str, object]:
             raise ValueError(f"Kit Skill conflicts with upstream: {name}")
         files[destination] = data
 
+    overlay_root = PROFILE / "overlays"
+    archify_no_hardlink_overlay = apply_overlay(
+        files, "archify-no-hardlink", overlay_root / "archify-no-hardlink",
+    )
+
     native_payload = {name[len("payload/"):]: data for name, data in files.items() if name.startswith("payload/")}
     for source, destination in (("repository-profile.md", "profile.md"), ("repository-instructions.md", "group-instructions.md"), ("legacy-cleanup.md", "legacy-cleanup.md")):
         native_payload[".agents/gitlab-workspace-kit/" + destination] = (PROFILE / source).read_bytes()
 
-    overlay_root = PROFILE / "overlays"
     overlays = {
         "codebase-wiki": apply_overlay(
             files, "codebase-wiki", overlay_root / "codebase-wiki",
         ),
+        "archify-no-hardlink": archify_no_hardlink_overlay,
+        "bmad-runner": bmad_runner_overlay,
     }
 
     for name in ("profile.md", "group-instructions.md", "legacy-cleanup.md"):
@@ -444,7 +478,8 @@ def build() -> dict[str, object]:
                      "agentBlockSha256": digest((PROFILE / "group-instructions.md").read_text(encoding="utf-8").strip().encode("utf-8"))}
     repository_profile = {"files": native_hashes,
                           "payloadSha256": digest(json.dumps(native_hashes, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")),
-                          "overlays": {}, **base_profile_metadata,
+                          "overlays": {"archify-no-hardlink": archify_no_hardlink_overlay,
+                                       "bmad-runner": bmad_runner_overlay}, **base_profile_metadata,
                           "profileHashes": {name: native_hashes[".agents/gitlab-workspace-kit/" + name] for name in ("profile.md", "group-instructions.md", "legacy-cleanup.md")},
                           "bmadFiles": bmad_files,
                           "agentBlockSha256": digest(native_payload[".agents/gitlab-workspace-kit/group-instructions.md"].decode("utf-8").replace('\r\n', '\n').replace('\r', '\n').strip().encode("utf-8"))}
@@ -454,10 +489,12 @@ def build() -> dict[str, object]:
                               if not name.startswith(("_bmad/", ".agents/skills/bmad-"))}
             external_skills = [name for name in profile["skills"] if not name.startswith("bmad-")]
             external_capabilities = [name for name in profile["capabilities"] if name != "bmad-workflow"]
+            external_overlays = {name: value for name, value in profile["overlays"].items()
+                                 if name != "bmad-runner"}
             profile["variants"] = {"external": {
                 "files": external_files,
                 "payloadSha256": digest(json.dumps(external_files, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")),
-                "overlays": profile["overlays"], "profileHashes": profile["profileHashes"],
+                "overlays": external_overlays, "profileHashes": profile["profileHashes"],
                 "skills": external_skills, "capabilities": external_capabilities,
                 "agentBlockSha256": profile["agentBlockSha256"],
             }}

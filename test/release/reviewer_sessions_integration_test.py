@@ -50,7 +50,9 @@ class InstalledReviewerSessionTests(unittest.TestCase):
 
     def cli(self, tool, command, *args, code=0):
         script = self.group / '.agents/skills' / tool / 'scripts/review_session.py'
-        process = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(script), command, *map(str, args)],
+        runner = self.group / '.agents/gitlab-workspace-kit/run.py'
+        process = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(runner), '--',
+                                  sys.executable, '-X', 'utf8', '-B', str(script), command, *map(str, args)],
             cwd=self.repo, env=self.environment, capture_output=True, text=True, encoding='utf-8', timeout=90)
         self.assertEqual(code, process.returncode, process.stderr or process.stdout)
         return json.loads(process.stdout)

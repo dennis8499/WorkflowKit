@@ -21,6 +21,33 @@ while continuing to install the other tools. Check `bmadMode` before assuming th
 `bmad-workflow` capability. Before running bundled workflows, prepare the
 user-provided `uv` runtime; installation itself works offline and does not need Node.js.
 
+## Skill helper execution
+
+Run local helper commands from BMAD, Codebase Wiki, MergeReviewer,
+ReleaseReviewer and the other installed Skills through the shared runner so
+Python, Node.js and `uv` use a writable runtime. Preserve the original working
+directory, command arguments, output and exit status. Use the absolute runner
+path under this repository root:
+
+Runner syntax: `run.py [--runtime-root PATH] -- COMMAND [ARG ...]`. For example,
+to check the installed MergeReviewer capabilities while keeping its arguments:
+
+```powershell
+$runner = (Resolve-Path ".agents\gitlab-workspace-kit\run.py").Path
+python -X utf8 -B $runner -- python .agents\skills\merge-reviewer\scripts\review_session.py capabilities
+```
+
+For Node.js or `uv`, replace the command after `--` with the original executable
+and arguments, for example `node .agents\skills\codebase-wiki\vendor\archify\bin\archify.mjs --help` or `uv run --no-cache python -c "print('ready')"`.
+
+Bundled BMAD command examples already pass through this runner; retain their
+`uv run` arguments. In external BMAD mode, apply the same wrapper to helper
+commands from the pre-existing Skills. Reviewer commands keep their existing
+`--runtime-root` argument and session state; point it to an authorized writable
+location outside every Git Repo. If a helper requires an explicit system
+temporary directory such as `--context-dir`, place it under the runner's
+`<repository-root>/.gitlab-workspace/runtime/tmp` directory.
+
 ## Knowledge
 
 Use `$codebase-wiki` for Wiki maintenance, queries, functional exploration,

@@ -189,24 +189,45 @@ class BmadWorkflowKitTests(unittest.TestCase):
                 self.assertEqual("wiki", config["modules"]["bmm"]["project_knowledge"])
                 self.assertEqual("installed", harness.WorkflowKitInstallerTests.status(self, root)["status"])
 
+                uv = shutil.which("uv")
+                self.assertIsNotNone(uv, "Release CI installs the pinned uv runtime.")
+                runner = root / ".agents/gitlab-workspace-kit/run.py"
+                helper_environment = {**os.environ, "UV_OFFLINE": "1"}
                 resolve = subprocess.run(
-                    [sys.executable, str(root / "_bmad/scripts/resolve_config.py"), "--project-root", str(root),
+                    [sys.executable, "-X", "utf8", "-B", str(runner), "--", uv, "run", "--no-cache",
+                     str(root / "_bmad/scripts/resolve_config.py"), "--project-root", str(root),
                      "--key", "core.project_name", "--key", "modules.bmm.project_knowledge"],
-                    cwd=root, capture_output=True, text=True, encoding="utf-8", check=False,
+                    cwd=root, env=helper_environment,
+                    capture_output=True, text=True, encoding="utf-8", check=False,
                 )
                 self.assertEqual(0, resolve.returncode, resolve.stderr or resolve.stdout)
                 resolved = json.loads(resolve.stdout)
                 self.assertEqual(root.name, resolved["core.project_name"])
                 self.assertEqual("wiki", resolved["modules.bmm.project_knowledge"])
 
+                bmad_skills = sorted(path for path in (root / ".agents/skills").iterdir()
+                                     if path.is_dir() and path.name.startswith("bmad-"))
+                self.assertEqual(29, len(bmad_skills))
+                markdown = [path for skill in bmad_skills for path in skill.rglob("*.md")]
+                for document in markdown:
+                    with self.subTest(skill_document=document.relative_to(root)):
+                        text = document.read_text(encoding="utf-8")
+                        wrapper = 'python -X utf8 -B "{skill-root}/../../gitlab-workspace-kit/run.py" -- uv run'
+                        self.assertNotIn("uv run", text.replace(wrapper, ""))
+                entry = (root / ".agents/skills/bmad-build/SKILL.md").read_text(encoding="utf-8")
+                self.assertIn("{skill-root}/../../gitlab-workspace-kit/run.py", entry)
                 renderer = subprocess.run(
-                    [sys.executable, str(root / "_bmad/scripts/render_skill.py"), "--project-root", str(root),
+                    [sys.executable, "-X", "utf8", "-B", str(runner), "--", uv, "run", "--no-cache",
+                     str(root / "_bmad/scripts/render_skill.py"), "--project-root", str(root),
                      "--skill", str(root / ".agents/skills/bmad-build")],
-                    cwd=root, capture_output=True, text=True, encoding="utf-8", check=False,
+                    cwd=root, env=helper_environment,
+                    capture_output=True, text=True, encoding="utf-8", check=False,
                 )
                 self.assertEqual(0, renderer.returncode, renderer.stdout or renderer.stderr)
                 self.assertIn("read and follow", renderer.stdout)
                 self.assertTrue((root / "_bmad/render/bmad-build").is_dir())
+                self.assertTrue((root / ".gitlab-workspace/runtime/tmp").is_dir())
+                self.assertTrue((root / ".gitlab-workspace/runtime/uv-cache").is_dir())
 
                 preserved = {
                     "_bmad/config.user.toml": b'[core]\nuser_name = "Ada"\n',

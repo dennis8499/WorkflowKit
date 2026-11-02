@@ -18,7 +18,11 @@ CURRENT_SOURCES = json.loads((ROOT / 'resources/offline-tools/source-snapshots.j
 
 class InstalledGroupWorkflowTests(unittest.TestCase):
     def command(self, args, cwd=None, ok=True):
-        result = subprocess.run(list(map(str,args)), cwd=cwd, capture_output=True, text=True, encoding='utf-8')
+        command = list(map(str, args))
+        runner = self.group / '.agents/gitlab-workspace-kit/run.py'
+        if runner.is_file() and command and Path(command[0]).resolve() == Path(sys.executable).resolve():
+            command = [sys.executable, '-X', 'utf8', '-B', str(runner), '--', *command]
+        result = subprocess.run(command, cwd=cwd, capture_output=True, text=True, encoding='utf-8')
         if ok: self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         return result
 
@@ -59,7 +63,7 @@ class InstalledGroupWorkflowTests(unittest.TestCase):
 
 
     def test_native_v3_branch_capture_keeps_one_seed_and_related_heads(self):
-        context=self.base/'branch-context'
+        context=self.group/'.gitlab-workspace/runtime/tmp/branch-context'
         manifest=self.helper(self.reviewer/'git_review_context.py','--workspace',self.group,'--project',self.entry,
             '--base','master','--head','feature/api','--context-dir',context)
         self.assertEqual('merge-reviewer-workspace-context/v3',manifest['schema'])

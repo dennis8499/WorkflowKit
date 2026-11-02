@@ -6,7 +6,7 @@ WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM
 
 需要 Python 3.11+。安裝器不需要 Node.js 或網路；若環境沒有 `uv`，安裝仍會完成並提示你在執行 BMAD 工作流程前備妥它。
 
-下載 `gitlab-workspace-kit-1.3.4.zip`，解壓後執行：
+下載 `gitlab-workspace-kit-1.3.5.zip`，解壓後執行：
 
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyProject
@@ -17,11 +17,13 @@ python -X utf8 -B install.py --target C:\projects\MyProject
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyGroup --profile group
 python -X utf8 -B install.py --target C:\projects\MyRepo --profile repository
-python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.3.4
+python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.3.5
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易路徑>
 ```
 
 Group profile 在選定的 Group 根目錄安裝一份共用 BMAD runtime。從子 Repo 工作時，將該 Repo 的明確路徑交給 BMAD 工作流程。Repository profile 則安裝在選定 Git Repository 根目錄。
+
+整合後的 Skills 透過 `.agents/gitlab-workspace-kit/run.py` 啟動本機 Python、Node.js 與 `uv` 輔助工具。它會把暫存檔和 `uv` 快取放在安裝根目錄的 `.gitlab-workspace/runtime/`；單 Repo 的 Reviewer 仍須使用 Git Repo 外已授權可寫的 `--runtime-root`。
 
 ## BMAD 設定與外部安裝
 

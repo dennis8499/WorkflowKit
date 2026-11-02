@@ -59,13 +59,20 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual("- status: complete\n", (self.repo / "docs/work/previous-work/workflow.md").read_text(encoding="utf-8"))
         self.assertIn("Keep this user text.", (self.repo / "AGENTS.md").read_text(encoding="utf-8"))
 
-    def test_native_payload_is_fixed_upstream_and_has_its_own_capabilities(self):
+    def test_native_payload_keeps_a_traceable_wiki_atomic_output_overlay(self):
         self.installed()
         state = self.status(self.repo)
         self.assertEqual(("installed", "repository", VERSION), (state["status"], state["profile"], state["version"]))
         self.assertIn("release-review", state["capabilities"])
         self.assertNotIn("merge-group", state["capabilities"])
         self.assertNotIn("merge-mr", state["capabilities"])
+        marker = json.loads((self.repo / MARKER).read_text(encoding="utf-8"))
+        self.assertEqual({"archify-no-hardlink", "bmad-runner"}, set(marker["overlays"]))
+        archify_overlay = marker["overlays"]["archify-no-hardlink"]
+        self.assertEqual(5, len(archify_overlay["replaced"]))
+        for relative, record in archify_overlay["replaced"].items():
+            self.assertEqual(record["overlay_sha256"], hashlib.sha256((self.repo / relative).read_bytes()).hexdigest())
+            self.assertEqual(record["overlay_sha256"], state["files"][relative]["sha256"])
         self.assertFalse((self.repo / ".agents/skills/merge-reviewer/scripts/group_review.py").exists())
         for module in ("review_workspace.py", "workspace_report.py"):
             self.assertTrue((self.repo / ".agents/skills/merge-reviewer/scripts" / module).is_file())
@@ -141,9 +148,11 @@ class ProfileTests(unittest.TestCase):
             with self.subTest(profile=profile):
                 installed = self.installed(profile)
                 marker = json.loads((self.repo / MARKER).read_bytes())
+                self.assertTrue((self.repo / ".agents/gitlab-workspace-kit/run.py").is_file())
                 ignored = sorted(set(marker["files"]) | {
                     MARKER, installed["transaction"], ".workflow-kit-install.lock",
                     ".gitlab-workspace/tool-installs/future/transaction.json",
+                    ".gitlab-workspace/runtime/probe.tmp",
                 })
                 versionable = [
                     ".gitignore", "AGENTS.md", "Codex.md", ".codex/config.toml", ".codex/hooks.json",
