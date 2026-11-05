@@ -92,18 +92,20 @@ class ReleaseReviewerIntegrationTests(unittest.TestCase):
             manifest = json.loads(archive.read("workflow-kit/manifest.json").decode("utf-8"))
         requirement = manifest["reviewerRequirements"]["release-reviewer"]
         source = harness.CURRENT_SOURCES["release-reviewer"]
-        self.assertEqual("0.11.1", requirement["minimumVersion"])
+        self.assertEqual("0.12.0", requirement["minimumVersion"])
         self.assertEqual(source["payloadSha256"], requirement["payloadSha256"])
-        self.assertEqual("0.11.1", source["version"])
+        self.assertEqual("0.12.0", source["version"])
 
-    def test_installed_native_payload_matches_pinned_archive(self):
-        archive_path = harness.ROOT / "resources/offline-tools/sources" / harness.CURRENT_SOURCES['release-reviewer']['filename']
-        with zipfile.ZipFile(archive_path) as archive:
-            expected = {item.filename.removeprefix("release-reviewer/"): archive.read(item)
-                        for item in archive.infolist() if not item.is_dir()}
-        skill = self.scripts.parent
-        actual = {p.relative_to(skill).as_posix(): p.read_bytes() for p in skill.rglob("*") if p.is_file()}
-        self.assertEqual(expected, actual)
+    def test_installed_reviewer_payloads_match_pinned_archives(self):
+        for tool in ("merge-reviewer", "release-reviewer"):
+            with self.subTest(tool=tool):
+                archive_path = harness.ROOT / "resources/offline-tools/sources" / harness.CURRENT_SOURCES[tool]['filename']
+                with zipfile.ZipFile(archive_path) as archive:
+                    expected = {item.filename.removeprefix(tool + "/"): archive.read(item)
+                                for item in archive.infolist() if not item.is_dir()}
+                skill = self.group / ".agents/skills" / tool
+                actual = {p.relative_to(skill).as_posix(): p.read_bytes() for p in skill.rglob("*") if p.is_file()}
+                self.assertEqual(expected, actual)
 
     def test_installed_cli_both_profiles_reports_checklists_and_dirty_state(self):
         status_before = self.git("status", "--porcelain")

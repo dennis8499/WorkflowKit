@@ -48,13 +48,35 @@ class InstalledReviewerSessionTests(unittest.TestCase):
         self.assertEqual(0, process.returncode, process.stderr)
         return process.stdout.strip()
 
-    def cli(self, tool, command, *args, code=0):
+    def cli(self, tool, command, *args, code=0, deny_report_write=False):
         script = self.group / '.agents/skills' / tool / 'scripts/review_session.py'
         runner = self.group / '.agents/gitlab-workspace-kit/run.py'
+        invocation = [str(script), command, *map(str, args)]
+        if deny_report_write:
+            # Inject only a staging-file permission failure in the installed
+            # process; the facade, runner and frozen validation remain real.
+            injection = '''import errno, runpy, sys
+from pathlib import Path
+from unittest.mock import patch
+original = Path.open
+def denied(path, *args, **kwargs):
+    mode = args[0] if args else kwargs.get("mode", "r")
+    if path.parent.name == "review-reports" and path.name.startswith((".merge-review-", ".release-report-")) and any(flag in mode for flag in "wx"):
+        raise PermissionError(errno.EACCES, "fixture report output unavailable", str(path))
+    return original(path, *args, **kwargs)
+sys.argv = sys.argv[1:]
+sys.path.insert(0, str(Path(sys.argv[0]).parent))
+with patch.object(Path, "open", denied):
+    runpy.run_path(sys.argv[0], run_name="__main__")
+'''
+            invocation = ['-c', injection, *invocation]
         process = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(runner), '--',
-                                  sys.executable, '-X', 'utf8', '-B', str(script), command, *map(str, args)],
+                                  sys.executable, '-X', 'utf8', '-B', *invocation],
             cwd=self.repo, env=self.environment, capture_output=True, text=True, encoding='utf-8', timeout=90)
-        self.assertEqual(code, process.returncode, process.stderr or process.stdout)
+        self.assertIn(process.returncode, (code,) if isinstance(code, int) else code,
+                      process.stderr or process.stdout)
+        if command == 'view':
+            self.assertLessEqual(len(process.stdout.encode('utf-8')), 24 * 1024)
         return json.loads(process.stdout)
 
     def test_both_installed_facades_check_resume_publish_retry_and_cancel_independently(self):
@@ -64,12 +86,21 @@ class InstalledReviewerSessionTests(unittest.TestCase):
         for tool, job_schema in (('merge-reviewer', 'MergeReviewSession/v1'),
                                  ('release-reviewer', 'ReleaseReviewSession/v1')):
             with self.subTest(tool=tool):
+                capabilities = self.cli(tool, 'capabilities')
+                self.assertEqual(harness.CURRENT_SOURCES[tool]['version'], capabilities['skill_version'])
+                self.assertTrue(capabilities['features']['publication_retry'])
                 draft_arguments = []
                 if tool == 'merge-reviewer':
-                    capabilities = self.cli(tool, 'capabilities')
                     self.assertIn('compact', capabilities['draft_formats'])
                     self.assertTrue(capabilities['features']['read_only_artifact_view'])
+                    self.assertTrue(capabilities['features']['batch_artifact_view'])
+                    self.assertTrue(capabilities['features']['validation_progress'])
                     draft_arguments = ['--draft-format', 'compact']
+                else:
+                    self.assertTrue(capabilities['features']['runtime_paths'])
+                    self.assertTrue(capabilities['features']['read_only_batch_view'])
+                    self.assertTrue(capabilities['features']['base_final_review'])
+                    self.assertEqual(harness.CURRENT_SOURCES[tool]['payloadSha256'], capabilities['payload_sha256'])
                 runtime = self.root / tool
                 start = self.cli(tool, 'start', '--workspace', self.repo, '--project', self.repo,
                     '--base', 'main', '--head', 'feature', '--runtime-root', runtime, '--request-id', identifier,
@@ -160,6 +191,17 @@ class InstalledReviewerSessionTests(unittest.TestCase):
                     row.update(status='reviewed', reason='Compared both fixed constant values and the final tree.', evidence=evidence)
                 draft_path.write_text(json.dumps(draft, ensure_ascii=False), encoding='utf-8')
                 self.cli(tool, 'check', *arguments)
+                frozen_manifest = (context / 'manifest.json').read_bytes()
+                failed = self.cli(tool, 'finish', *arguments, code=3, deny_report_write=True)
+                self.assertTrue(failed['recoverable'])
+                self.assertTrue(failed['context_retained'])
+                self.assertEqual('publication.output-unavailable' if tool == 'merge-reviewer' else 'publication.io',
+                                 failed['errors'][0]['code'])
+                self.assertEqual(frozen_manifest, (context / 'manifest.json').read_bytes())
+                retry_status = self.cli(tool, 'status', *arguments)
+                self.assertEqual(identifier, retry_status['request_id'])
+                self.assertEqual(0, retry_status['network_activity']['fetch_attempt_count'])
+                self.assertEqual(draft, json.loads(draft_path.read_text(encoding='utf-8')))
                 published = self.cli(tool, 'finish', *arguments)
                 report = Path(published['report_path']); outputs.append(report)
                 body = report.read_text(encoding='utf-8')
@@ -168,6 +210,10 @@ class InstalledReviewerSessionTests(unittest.TestCase):
                 self.assertFalse(context.exists())
                 self.assertTrue(published['review_outcome']['review_complete'])
                 self.assertTrue(self.cli(tool, 'status', *arguments)['review_outcome']['review_complete'])
+                if tool == 'merge-reviewer':
+                    progress = self.cli(tool, 'status', *arguments, '--summary')['progress']
+                    self.assertIn('validation', progress)
+                    self.assertIn('validation_updated_at', progress)
                 self.assertEqual(str(report), self.cli(tool, 'finish', *arguments)['report_path'])
                 self.assertEqual(body, report.read_text(encoding='utf-8'))
                 cancelled_id = 'b' * 32
@@ -180,6 +226,65 @@ class InstalledReviewerSessionTests(unittest.TestCase):
         self.assertNotEqual(outputs[0], outputs[1])
         self.assertEqual(2, len(list((self.repo / 'review-reports').glob('*.md'))))
         self.assertEqual(before, self.git('status', '--porcelain'))
+
+    def test_installed_batch_views_keep_batch_and_page_continuations_read_only(self):
+        for tool in ('merge-reviewer', 'release-reviewer'):
+            with self.subTest(tool=tool):
+                runtime, identifier = self.root / tool, 'e' * 32
+                start = self.cli(tool, 'start', '--workspace', self.repo, '--project', self.repo,
+                    '--base', 'main', '--head', 'feature', '--runtime-root', runtime, '--request-id', identifier)
+                context = Path(start['context_dir'])
+                arguments = ['--runtime-root', runtime, '--request-id', identifier]
+                values = ['中文字' * 40 for _ in range(100)]
+                fixture = self.root / (tool + '-artifact.json')
+                fixture.write_text(json.dumps(values, ensure_ascii=False), encoding='utf-8')
+                scripts = self.group / '.agents/skills' / tool / 'scripts'
+                store = subprocess.run([sys.executable, '-X', 'utf8', '-B',
+                    str(self.group / '.agents/gitlab-workspace-kit/run.py'), '--',
+                    sys.executable, '-X', 'utf8', '-B', '-c',
+                    'import json,sys; from pathlib import Path; sys.path.insert(0,sys.argv[1]); '
+                    'import review_runtime; print(review_runtime.store_view(Path(sys.argv[2]), '
+                    'json.loads(Path(sys.argv[3]).read_text(encoding="utf-8"))))',
+                    str(scripts), str(context), str(fixture)], cwd=self.repo, env=self.environment,
+                    capture_output=True, text=True, encoding='utf-8', timeout=30)
+                self.assertEqual(0, store.returncode, store.stderr or store.stdout)
+                artifact = store.stdout.strip()
+                requests = self.root / (tool + '-views.json')
+                requests.write_text(json.dumps([{'id': f'page-{n}', 'artifact': artifact} for n in range(4)]),
+                                    encoding='utf-8')
+                before = {p.relative_to(context): p.read_bytes() for p in context.rglob('*') if p.is_file()}
+                offset, identifiers, first_page, batches = 0, [], None, 0
+                while True:
+                    # Merge uses exit 3 for a valid unfinished batch; Release
+                    # returns exit 0 with its separate continuation marker.
+                    result = self.cli(tool, 'view', *arguments, '--requests-file', requests, '--offset', offset,
+                                      code=(0, 3) if tool == 'merge-reviewer' else 0)
+                    batches += 1
+                    identifiers.extend(row['id'] for row in result['results'])
+                    for row in result['results']:
+                        page = row['result']
+                        self.assertEqual(len(values), page['total'])
+                        self.assertIn('continue', page)
+                        if first_page is None:
+                            first_page = page
+                    if result['complete']:
+                        break
+                    self.assertGreater(result['next_index'], offset)
+                    offset = result['next_index']
+                self.assertGreater(batches, 1)
+                self.assertEqual([f'page-{n}' for n in range(4)], identifiers)
+                observed = list(first_page['items'])
+                offset = first_page['next_offset']
+                while offset is not None:
+                    page = self.cli(tool, 'view', *arguments, '--artifact', artifact, '--offset', offset)
+                    observed.extend(page['items'])
+                    following = page['next_offset']
+                    self.assertTrue(following is None or following > offset)
+                    offset = following
+                self.assertEqual(values, observed)
+                self.assertEqual(before, {p.relative_to(context): p.read_bytes()
+                                         for p in context.rglob('*') if p.is_file()})
+                self.assertEqual('cancelled', self.cli(tool, 'cancel', *arguments)['state'])
 
     def test_published_incomplete_outcomes_survive_cleanup_retry_and_legacy_metadata_is_unknown(self):
         before = self.git('status', '--porcelain')

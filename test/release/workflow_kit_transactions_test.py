@@ -70,8 +70,8 @@ class TransactionTests(unittest.TestCase):
         return self.predecessor_assets[version]
 
     def test_1_2_and_1_3_predecessors_are_trusted_for_each_profile_and_bmad_mode(self):
-        rows = [row for row in TRUST["packages"] if row["version"] in ("1.2.0", "1.2.1", "1.3.0", "1.3.3", "1.3.4")]
-        self.assertEqual(20, len(rows))
+        rows = [row for row in TRUST["packages"] if row["version"] in ("1.2.0", "1.2.1", "1.3.0", "1.3.3", "1.3.4", "1.3.5")]
+        self.assertEqual(24, len(rows))
         identities = set()
         for row in rows:
             with self.subTest(version=row["version"], profile=row["profile"], bmadMode=row["bmadMode"]):
@@ -92,7 +92,7 @@ class TransactionTests(unittest.TestCase):
                 self.assertEqual(row["payloadSha256"], selected["payloadSha256"])
                 self.assertEqual(row["capabilities"], selected["capabilities"])
                 identities.add((row["version"], row["profile"], row["bmadMode"]))
-        self.assertEqual(20, len(identities))
+        self.assertEqual(24, len(identities))
 
     def test_real_predecessors_upgrade_repeat_and_rollback_from_versioned_fixtures(self):
         cases = (
@@ -110,6 +110,10 @@ class TransactionTests(unittest.TestCase):
             ("1.3.4", "group", "external"),
             ("1.3.4", "repository", "bundled"),
             ("1.3.4", "repository", "external"),
+            ("1.3.5", "group", "bundled"),
+            ("1.3.5", "group", "external"),
+            ("1.3.5", "repository", "bundled"),
+            ("1.3.5", "repository", "external"),
         )
         selected_version = os.environ.get("WORKFLOW_KIT_TEST_PREDECESSOR_VERSION")
         if selected_version:
@@ -147,7 +151,7 @@ class TransactionTests(unittest.TestCase):
                 legacy_manifest = json.loads((target / MARKER).read_text(encoding="utf-8"))
                 self.assertEqual((version, profile, bmad_mode),
                                  (legacy_manifest["version"], legacy_manifest["profile"], legacy_manifest["bmadMode"]))
-                source_wiki_version = {"1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2"}.get(version, "0.6.4")
+                source_wiki_version = {"1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2", "1.3.5": "0.7.2"}.get(version, "0.6.4")
                 self.assertEqual(source_wiki_version, legacy_manifest["upstream"]["codebase-wiki"]["version"])
                 custom = target / "_bmad/custom/user-choice.md"
                 if bmad_mode == "bundled":
@@ -161,7 +165,8 @@ class TransactionTests(unittest.TestCase):
                 self.assertEqual(bmad_mode, data["bmadMode"])
                 status = self.status(target)
                 self.assertEqual("0.7.2", status["upstreamVersions"]["codebase-wiki"])
-                self.assertEqual("0.20.4", status["upstreamVersions"]["merge-reviewer"])
+                self.assertEqual("0.20.6", status["upstreamVersions"]["merge-reviewer"])
+                self.assertEqual("0.12.0", status["upstreamVersions"]["release-reviewer"])
                 self.assertIn("visualize", status["capabilities"])
                 self.assertEqual(b"user-owned earlier visualization\n", prior_diagram.read_bytes())
                 self.assertEqual("Prior review report stays.\n", report.read_text(encoding="utf-8"))

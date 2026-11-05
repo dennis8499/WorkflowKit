@@ -713,7 +713,9 @@ class ResumeTests(GitFixture):
         trusted_path.parent.mkdir(parents=True)
         trusted_path.write_text('{"packages": []}')
         fields = {'agentBlockSha256': 'a', 'capabilities': [], 'payloadSha256': 'b', 'profileHashes': {},
-                  'skills': [], 'overlays': {}, 'files': {'.agents/skills/retired/x': 'c'}}
+                  'skills': [], 'overlays': {}, 'files': {'.agents/skills/retired/x': 'c',
+                      '.agents/gitlab-workspace-kit/run.py': 'e',
+                      '.agents/gitlab-workspace-kit/references/guide.md': 'f'}}
         manifest = {'version': '1.0.0', 'upstream': {}, 'wikiInstalledVersionSha256': 'd',
                     'profiles': {'group': fields, 'repository': fields}}
         files = {'gitlab-workspace-kit-1.0.0.zip': zip_bytes({'workflow-kit/manifest.json': release.encoded(manifest)})}
@@ -721,6 +723,9 @@ class ResumeTests(GitFixture):
         release.freeze_predecessor(root, '1.0.0', 'a' * 40, files, b'installer')
         trusted = json.loads(trusted_path.read_text())
         self.assertEqual({'group', 'repository'}, {item['profile'] for item in trusted['packages']})
+        for item in trusted['packages']:
+            self.assertEqual({'.agents/gitlab-workspace-kit/run.py': 'e',
+                              '.agents/gitlab-workspace-kit/references/guide.md': 'f'}, item['extensionFiles'])
         with self.assertRaisesRegex(release.ReleaseError, 'conflicts'):
             release.freeze_predecessor(root, '1.0.0', 'a' * 40, files, b'changed installer')
 
