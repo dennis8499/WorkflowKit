@@ -87,7 +87,8 @@ class BmadWorkflowKitTests(unittest.TestCase):
         marker = json.loads((root / harness.MARKER).read_text(encoding="utf-8"))
         self.assertEqual("external", marker["bmadMode"])
         self.assertEqual(list(EXTERNAL_SKILLS), [name for name in marker["skills"] if not name.startswith("bmad-")])
-        self.assertEqual(4, len(marker["skills"]))
+        self.assertEqual(5, len(marker["skills"]))
+        self.assertIn("model-routing", marker["skills"])
         self.assertNotIn("bmad-method", marker["upstream"])
         self.assertNotIn("bmad-workflow", marker["capabilities"])
         self.assertFalse(any(installer.external_bmad_path(name) for name in marker["files"]))
@@ -159,7 +160,7 @@ class BmadWorkflowKitTests(unittest.TestCase):
         result, data = self.apply(root, "group", environment)
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         self.assertEqual("bundled", data["bmadMode"])
-        self.assertEqual(33, data["skills"])
+        self.assertEqual(34, data["skills"])
         self.assertIn("bmad-workflow", data["capabilities"])
         self.assertTrue(any("uv" in warning for warning in data["warnings"]))
         self.assertEqual(before, output.read_bytes())
@@ -176,7 +177,7 @@ class BmadWorkflowKitTests(unittest.TestCase):
                 result, data = self.apply(root, profile)
                 self.assertEqual(0, result.returncode, result.stderr or result.stdout)
                 self.assertEqual("bundled", data["bmadMode"])
-                self.assertEqual(33, data["skills"])
+                self.assertEqual(34, data["skills"])
                 self.assertIn("bmad-method", data["upstreamVersions"])
                 self.assertIn("bmad-workflow", data["capabilities"])
 
@@ -310,7 +311,7 @@ class BmadWorkflowKitTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         self.assertEqual("bundled", updated["bmadMode"])
         self.assertTrue((root / "_bmad/config.toml").is_file())
-        self.assertEqual(33, updated["skills"])
+        self.assertEqual(34, updated["skills"])
 
     def test_transaction_paths_allow_only_owned_bundled_runtime_and_skills(self):
         profile = installer.PROFILE_MANIFESTS["group"]

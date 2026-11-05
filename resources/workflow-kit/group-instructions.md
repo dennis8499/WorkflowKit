@@ -39,7 +39,16 @@ Preserve user-authored Wiki content, synchronize `wiki/index.md` and append
 `wiki/log.md` for durable updates. Raw sources remain read-only during Wiki work.
 
 Use `$merge-reviewer` or `$release-reviewer` with exactly one Repo and explicit
-base/head branches. Load that installed Skill's rules, then use its own
+base/head branches. For a new or resumed review first use the installed
+`$model-routing` Skill with `effort=auto` (or this request's explicit low, medium,
+high, xhigh or max). It binds one native capture, selects GPT-6 Luna from frozen
+changes and dispatches the selected effort. An already-routed reviewer continuation
+uses the saved request, draft and checkpoint directly; it never routes recursively.
+Auto may checkpoint and strictly raise effort; manual effort stays fixed. In the
+workbench the host controls model/effort per turn; direct Skills use one reviewer
+child at a time. Preserve missing evidence and stop if the exact model/effort is
+unavailable. Routing records do not establish semantic coverage.
+ Load that installed Skill's rules, then use its own
 `scripts/review_session.py`: `start`, necessary ordered `step` batches, `check`,
 then `finish`. Save request ID, runtime, draft and artifact paths. After context
 compression use `status` and its remaining work to resume the same frozen review;

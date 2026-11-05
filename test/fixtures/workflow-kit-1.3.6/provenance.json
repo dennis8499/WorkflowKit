@@ -1,0 +1,10 @@
+{
+  "version": "1.3.6",
+  "sourceKind": "local-verified-pre-routing-release",
+  "archiveSha256": "6ce58857e1c004c25843208f0d2e58c2a95e673f4ec6a97b9a19e278c8ff7800",
+  "installerSha256": "f8d70b186abee2133f9bffebbf36d52d0280277ebce35fa9864ecc4dbbf3fcaa",
+  "profiles": [
+    "group",
+    "repository"
+  ]
+}

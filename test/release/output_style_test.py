@@ -22,8 +22,7 @@ class OutputStylePackageTests(unittest.TestCase):
         prefix = ".agents/skills/output-style/"
         self.assertTrue({prefix + name for name in ("SKILL.md", "agents/openai.yaml", "references/examples.md")}
                         <= resources.keys())
-        self.assertTrue(all(name.startswith(prefix) for name in resources))
-        for name, data in resources.items():
+        for name, data in {key: data for key, data in resources.items() if key.startswith(prefix)}.items():
             self.assertEqual((builder.PROFILE / "skills/output-style" / name[len(prefix):]).read_bytes(), data)
             if name.endswith(".md"):
                 for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", data.decode("utf-8")):
@@ -37,7 +36,7 @@ class OutputStylePackageTests(unittest.TestCase):
             profile = Path(temporary)
             skill = profile / "skills/output-style"
             skill.mkdir(parents=True)
-            with mock.patch.object(builder, "PROFILE", profile):
+            with mock.patch.object(builder, "PROFILE", profile), mock.patch.object(builder, "KIT_SKILLS", ("output-style",)):
                 with self.assertRaisesRegex(ValueError, "missing SKILL.md"):
                     builder.kit_skill_files()
                 (skill / "SKILL.md").write_text("valid entrypoint", encoding="utf-8")
@@ -57,7 +56,7 @@ class OutputStylePackageTests(unittest.TestCase):
                 os.symlink(outside, skill / "linked.md")
             except OSError as error:
                 self.skipTest(f"Symbolic links are unavailable: {error}")
-            with mock.patch.object(builder, "PROFILE", profile):
+            with mock.patch.object(builder, "PROFILE", profile), mock.patch.object(builder, "KIT_SKILLS", ("output-style",)):
                 with self.assertRaisesRegex(ValueError, "cannot be links"):
                     builder.kit_skill_files()
 

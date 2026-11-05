@@ -1,12 +1,12 @@
 # WorkflowKit
 
-WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.2、MergeReviewer 0.20.6、ReleaseReviewer 0.12.0、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
+WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.2、MergeReviewer 0.20.6、ReleaseReviewer 0.12.0、Model Routing、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
 
 ## 安裝
 
 需要 Python 3.11+。安裝器不需要 Node.js 或網路；若環境沒有 `uv`，安裝仍會完成並提示你在執行 BMAD 工作流程前備妥它。
 
-下載 `gitlab-workspace-kit-1.3.6.zip`，解壓後執行：
+下載 `gitlab-workspace-kit-1.4.0.zip`，解壓後執行：
 
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyProject
@@ -17,13 +17,21 @@ python -X utf8 -B install.py --target C:\projects\MyProject
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyGroup --profile group
 python -X utf8 -B install.py --target C:\projects\MyRepo --profile repository
-python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.3.6
+python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.4.0
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易路徑>
 ```
 
 Group profile 在選定的 Group 根目錄安裝一份共用 BMAD runtime。從子 Repo 工作時，將該 Repo 的明確路徑交給 BMAD 工作流程。Repository profile 則安裝在選定 Git Repository 根目錄。
 
 整合後的 Skills 透過 `.agents/gitlab-workspace-kit/run.py` 啟動本機 Python、Node.js 與 `uv` 輔助工具。它會把暫存檔和 `uv` 快取放在安裝根目錄的 `.gitlab-workspace/runtime/`；單 Repo 的 Reviewer 仍須使用 Git Repo 外已授權可寫的 `--runtime-root`。
+
+## Reviewer Model Routing
+
+`$merge-reviewer`、`$release-reviewer` 先由共用 `$model-routing` 根據本次固定 diff、必要上下文及風險選擇 GPT-6 Luna 思考強度。預設 `effort=auto`：純敘述文件使用 low、明確局部邏輯使用 medium、一般程式變更使用 high；契約、權限、資料或部署風險提高到 xhigh，大範圍破壞性變更或交織風險使用 max。檔案數與行數只作輔助。
+
+可在提示詞指定本次 `effort=low|medium|high|xhigh|max`，例如 `$merge-reviewer effort=xhigh`，再提供 Repo、基礎分支與比較分支。手動指定固定到本次結束；auto 遇到具體新風險時，保存草稿與 checkpoint 後提高強度。直接 Skill 使用一個 Luna reviewer 子 agent；支援此能力的 GitLab 工作台以明確模型／強度啟動各回合，並顯示理由與歷程。
+
+路由及升級沿用一次 capture 的 request ID、SHA、證據與草稿；恢復不重建快照，refresh 使用新 request。紀錄保存在原生 runtime 的 `routing/<tool>/<request-id>.json`，發布後仍可讀取。缺少 Luna 或所需強度時保存進度並回報；一般 Codex 任務的模型設定沿用原設定。
 
 ## BMAD 設定與外部安裝
 

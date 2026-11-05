@@ -10,6 +10,7 @@
       "ingest",
       "lint",
       "merge-repo",
+      "model-routing",
       "notebooklm-export",
       "query",
       "release-review",
@@ -28,6 +29,7 @@
       "ingest",
       "lint",
       "merge-repo",
+      "model-routing",
       "notebooklm-export",
       "query",
       "release-review",
@@ -704,7 +706,7 @@
   },
   "workspaceFiles": {
     "resources/workflow-kit/common/run.py": "8cd7d9b26e1a7b953acc35789a0377cd20e6f7b6d3462814562f9e53fa860906",
-    "resources/workflow-kit/group-instructions.md": "d41e36062ecac5e097aa45355b608a1c844b7d4017f45dd68ef73fe76f0c0562",
+    "resources/workflow-kit/group-instructions.md": "97a5eba7a11aea9a2467cb9ca65a8ad611fb53ebe8bbb0a2eab140e164ee241c",
     "resources/workflow-kit/legacy-cleanup.md": "cd9abd025fd748b71bfed3b1179834bac7a956280b62e7ff825810b0894e43ff",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/scripts/wiki-visualize.py": "6f7161a2b2549a0919e199ad5f3a27e39e35ff40216ce3f9fd2795307dd38946",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify-manifest.json": "ce7ba82b274e1847693bbbc75d547c0001b11fd4d4bcccfdea5d9acd7d11a419",
@@ -712,12 +714,18 @@
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify/bin/visual-check.mjs": "37e25a57912c122f6113304463b0636ce7f8f0510eaec038535e46b6842eec0c",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify/renderers/shared/atomic-output.mjs": "3e0031540454442120046a54c53c39e56feb231264fa2a3ad25ac53523d4e58a",
     "resources/workflow-kit/overlays/codebase-wiki/.agents/skills/codebase-wiki/SKILL.md": "1ced07ac751257938a95e05523c9baced9224059d752b9eb99502a8ce5ba4d08",
-    "resources/workflow-kit/profile.md": "024a5589a38492afa1599f71e97b5621caf5f8caa16f7cc7854f09225366ee4d",
-    "resources/workflow-kit/repository-instructions.md": "437d1138a68937d84ccd188b5b43eccedb204a67ab42e78db856c0be0b90a542",
-    "resources/workflow-kit/repository-profile.md": "10a6074e8464d9af4af375f93578feac6d9fe146c98a97ba862e9f3dac4d1504",
+    "resources/workflow-kit/profile.md": "64ec41e6bebfc8cfbd1c5f9783070d63d67253314991834568fb1f281a5e9799",
+    "resources/workflow-kit/repository-instructions.md": "f19c016dcef2889a7b97201e1ec90f89248863b20cff1f4c149eb95fd4eeda60",
+    "resources/workflow-kit/repository-profile.md": "dcfc1505d2c4d2f9fdb377c7d438f5d67319ab8d68593dad92856f391aa81605",
+    "resources/workflow-kit/skills/model-routing/SKILL.md": "375bb9b24b5eaf05b0be9b48101ba655cb1f6133074b01531066839e73fa8830",
+    "resources/workflow-kit/skills/model-routing/agents/openai.yaml": "3bd1f9a167ce1ffa7325a2e341358f85ef8306ea77ba418030f774e106b449f0",
+    "resources/workflow-kit/skills/model-routing/references/execution.md": "c78d0c81610563878c432211712eb1b37a3572681db52ef16fed18b8f2a921bb",
+    "resources/workflow-kit/skills/model-routing/references/reviewer-execution.md": "3a32e2d078d3205903057dcd0fc18cd22f0db1579b94f4824cd43093297e4b8d",
+    "resources/workflow-kit/skills/model-routing/references/routing-policy.md": "7fa47ef898c52a3a4ca0854b2b5b7cd259d582db73c1f89699f34f8d10668d6e",
+    "resources/workflow-kit/skills/model-routing/scripts/routing.py": "def292d296dc5fab87e0ee274c7e933729559eec0c9b02ae7ac4e5912381cfc3",
     "resources/workflow-kit/skills/output-style/SKILL.md": "5506258a0cc2d488eac32d932fae7de65998e0fee87c9fe4576a52bde71d1779",
     "resources/workflow-kit/skills/output-style/agents/openai.yaml": "9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb",
     "resources/workflow-kit/skills/output-style/references/examples.md": "dd4ef423b59527199e5edb4de75fb0fba4e43d12704bf6d0cfa9c3dffa51c61a",
-    "resources/workflow-kit/trusted-predecessors.json": "6db1ffb0dd1c30ab4745aa089216be9f2fd7e6faf04270de8e7d7a49480cc203"
+    "resources/workflow-kit/trusted-predecessors.json": "1e738318735503efae099b20671f0b9915041e95369703980d44e24f5427b814"
   }
 }

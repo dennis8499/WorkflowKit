@@ -24,7 +24,7 @@ ROOT_NAME = "workflow-kit"
 MAX_FILES = 12000
 MAX_FILE_BYTES = 64 * 1024 * 1024
 MAX_EXPANDED_BYTES = 400 * 1024 * 1024
-KIT_SKILLS = ("output-style",)
+KIT_SKILLS = ("output-style", "model-routing")
 
 PINNED_SOURCES = ({'id': 'codebase-wiki',
   'repository': 'code-base-llm-wiki',
@@ -464,7 +464,7 @@ def build() -> dict[str, object]:
     ).encode("utf-8"))
     capabilities = sorted(["functional-exploration", "ingest", "query", "lint", "audit", "adr", "synthesis",
                            "business-analysis", "system-analysis", "system-design", "notebooklm-export", "archaeology",
-                           "merge-repo", "release-review", "bmad-workflow", "visualize"])
+                           "merge-repo", "release-review", "model-routing", "bmad-workflow", "visualize"])
     native_hashes = {name: digest(data) for name, data in sorted(native_payload.items())}
     manifest["capabilities"] = capabilities
     manifest["wikiInstalledVersionSha256"] = digest(files["framework/VERSION"])
@@ -564,7 +564,7 @@ def build() -> dict[str, object]:
         release = {
             'schema': 'workflowkit-release/v1', 'package': PACKAGE_ID,
             'version': KIT_VERSION, 'workspaceContract': 2, 'installerApi': 1, 'statusApi': 1,
-            'minimumExtensionVersion': '0.33.0',
+            'minimumExtensionVersion': '0.40.0',
             'profiles': ['group', 'repository'], 'skills': skill_names,
             'assets': {
                 'package': {'name': external_zip.name, 'size': temporary_zip.stat().st_size, 'sha256': zip_sha},

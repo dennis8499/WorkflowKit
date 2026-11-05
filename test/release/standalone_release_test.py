@@ -40,7 +40,7 @@ class StandaloneReleaseTests(unittest.TestCase):
     def test_release_descriptor_authenticates_zip_and_both_installer_copies(self):
         release = json.loads((ROOT / 'dist/release.json').read_text(encoding='utf-8'))
         self.assertEqual(VERSION, release['version'])
-        self.assertEqual('0.33.0', release['minimumExtensionVersion'])
+        self.assertEqual('0.40.0', release['minimumExtensionVersion'])
         for asset in release['assets'].values():
             content = (ROOT / 'dist' / asset['name']).read_bytes()
             self.assertEqual(asset['size'], len(content))

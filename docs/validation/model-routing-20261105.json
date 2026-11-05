@@ -1,0 +1,539 @@
+{
+  "date": "2026-11-05",
+  "model": "gpt-6-luna",
+  "policySha256": "7fa47ef898c52a3a4ca0854b2b5b7cd259d582db73c1f89699f34f8d10668d6e",
+  "runs": [
+    {
+      "fixture": "prose",
+      "kind": "route",
+      "effort": "high",
+      "elapsedSeconds": 14.309,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 20932,
+          "inputTokens": 20847,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 85,
+          "reasoningOutputTokens": 42
+        },
+        "last": {
+          "totalTokens": 20932,
+          "inputTokens": 20847,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 85,
+          "reasoningOutputTokens": 42
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "low",
+      "result": {
+        "effort": "low",
+        "reason": "The frozen fixture shows only explanatory README wording changes, with no runtime behavior or operational instructions changed.",
+        "findings": []
+      }
+    },
+    {
+      "fixture": "local",
+      "kind": "route",
+      "effort": "high",
+      "elapsedSeconds": 9.999,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17465,
+          "inputTokens": 17358,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 107,
+          "reasoningOutputTokens": 62
+        },
+        "last": {
+          "totalTokens": 17465,
+          "inputTokens": 17358,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 107,
+          "reasoningOutputTokens": 62
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "medium",
+      "result": {
+        "effort": "medium",
+        "reason": "The change affects a pure local formatting helper with bounded behavior and no external contract or persisted-data side effect.",
+        "findings": []
+      }
+    },
+    {
+      "fixture": "ordinary",
+      "kind": "route",
+      "effort": "high",
+      "elapsedSeconds": 10.731,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17600,
+          "inputTokens": 17397,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 203,
+          "reasoningOutputTokens": 125
+        },
+        "last": {
+          "totalTokens": 17600,
+          "inputTokens": 17397,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 203,
+          "reasoningOutputTokens": 125
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "high",
+      "result": {
+        "effort": "high",
+        "reason": "The import pipeline changes behavior across three interacting functions, including conversions, error aggregation, and successful-row filtering. Its effects are bounded to the internal batch command, with no public contract, persistent writes, credentials, or deployment changes; this is an ordinary multi-function implementation change.",
+        "findings": []
+      }
+    },
+    {
+      "fixture": "destructive",
+      "kind": "route",
+      "effort": "high",
+      "elapsedSeconds": 9.126,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17546,
+          "inputTokens": 17387,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 159,
+          "reasoningOutputTokens": 91
+        },
+        "last": {
+          "totalTokens": 17546,
+          "inputTokens": 17387,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 159,
+          "reasoningOutputTokens": 91
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "max",
+      "result": {
+        "effort": "max",
+        "reason": "The frozen head removes the tenant filter from a durable invoice deletion. Since cleanup runs on every deployment against the shared production database, one tenant’s cleanup can delete every tenant’s invoices. This broad destructive behavior warrants max effort.",
+        "findings": []
+      }
+    },
+    {
+      "fixture": "destructive",
+      "kind": "baseline",
+      "effort": "high",
+      "elapsedSeconds": 7.868,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17000,
+          "inputTokens": 16898,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 102,
+          "reasoningOutputTokens": 0
+        },
+        "last": {
+          "totalTokens": 17000,
+          "inputTokens": 16898,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 102,
+          "reasoningOutputTokens": 0
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "max",
+      "result": {
+        "effort": "high",
+        "reason": "The head removes the tenant filter from the cleanup query, violating the stated cross-tenant preservation invariant.",
+        "findings": [
+          "Every deployment invokes cleanup with one tenant ID against the shared production database. The head executes `DELETE FROM invoices` without using that ID, so it deletes invoices for every tenant, including tenants unrelated to the deployment. Restore the `tenant_id = ?` predicate to limit cleanup to the requested tenant."
+        ]
+      }
+    },
+    {
+      "fixture": "destructive",
+      "kind": "auto",
+      "effort": "max",
+      "elapsedSeconds": 8.656,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17073,
+          "inputTokens": 16898,
+          "cachedInputTokens": 15872,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 175,
+          "reasoningOutputTokens": 99
+        },
+        "last": {
+          "totalTokens": 17073,
+          "inputTokens": 16898,
+          "cachedInputTokens": 15872,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 175,
+          "reasoningOutputTokens": 99
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "max",
+      "result": {
+        "effort": "max",
+        "reason": "The head removes the tenant filter from a cleanup that runs on every deployment against a shared production database.",
+        "findings": [
+          "Each deployment call to cleanup(db, tenant) deletes every invoice, including invoices belonging to other tenants. Restore the tenant_id predicate to preserve the stated invariant."
+        ]
+      }
+    },
+    {
+      "fixture": "cross_repo",
+      "kind": "route",
+      "effort": "high",
+      "elapsedSeconds": 7.571,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17506,
+          "inputTokens": 17372,
+          "cachedInputTokens": 15872,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 134,
+          "reasoningOutputTokens": 55
+        },
+        "last": {
+          "totalTokens": 17506,
+          "inputTokens": 17372,
+          "cachedInputTokens": 15872,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 134,
+          "reasoningOutputTokens": 55
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "xhigh",
+      "result": {
+        "effort": "xhigh",
+        "reason": "The service changes its HTTP response field from `id` to `customerId`, while the frozen billing caller still reads `response[\"id\"]`. They communicate directly over the same endpoint, with no adapter or version negotiation, so this breaks a cross-Repo contract.",
+        "findings": []
+      }
+    },
+    {
+      "fixture": "cross_repo",
+      "kind": "baseline",
+      "effort": "high",
+      "elapsedSeconds": 8.2,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17090,
+          "inputTokens": 16883,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 207,
+          "reasoningOutputTokens": 83
+        },
+        "last": {
+          "totalTokens": 17090,
+          "inputTokens": 16883,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 207,
+          "reasoningOutputTokens": 83
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "xhigh",
+      "result": {
+        "effort": "high",
+        "reason": "The frozen head response breaks the frozen billing caller’s response contract.",
+        "findings": [
+          "The service changes the response field from `id` to `customerId`, while the billing caller still reads `response[\"id\"]`. On the new service response, that lookup raises `KeyError` before `issue_invoice` runs, blocking invoice issuance. Because they communicate directly over the same endpoint and have no adapter or version negotiation, deploying the service change requires a coordinated caller update or a compatibility mechanism that preserves `id`."
+        ]
+      }
+    },
+    {
+      "fixture": "cross_repo",
+      "kind": "auto",
+      "effort": "xhigh",
+      "elapsedSeconds": 13.846,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17371,
+          "inputTokens": 16884,
+          "cachedInputTokens": 15872,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 487,
+          "reasoningOutputTokens": 356
+        },
+        "last": {
+          "totalTokens": 17371,
+          "inputTokens": 16884,
+          "cachedInputTokens": 15872,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 487,
+          "reasoningOutputTokens": 356
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "xhigh",
+      "result": {
+        "effort": "xhigh",
+        "reason": "The service changes its response field while the frozen billing caller still requires the old field; the direct endpoint has no compatibility layer.",
+        "findings": [
+          "Breaking response contract: when the service head responds with `{\"customerId\": ...}`, the billing peer head's `response[\"id\"]` lookup raises a `KeyError`, so `issue_invoice` is not called. The service rollout depends on a compatible billing caller or a response that continues to include `id`; without an adapter or version negotiation, deploy the changes compatibly or in coordination."
+        ]
+      }
+    },
+    {
+      "fixture": "deployment",
+      "kind": "route",
+      "effort": "high",
+      "elapsedSeconds": 9.032,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17548,
+          "inputTokens": 17368,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 180,
+          "reasoningOutputTokens": 100
+        },
+        "last": {
+          "totalTokens": 17548,
+          "inputTokens": 17368,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 180,
+          "reasoningOutputTokens": 100
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "xhigh",
+      "result": {
+        "effort": "xhigh",
+        "reason": "The head producer routes billing events to billing-v2, but the frozen deployment provisions only billing-v1, queue creation is disabled, and the unchanged worker consumes billing-v1. This changes a producer/worker contract and deployment dependency; assessing the connected runtime impact requires xhigh.",
+        "findings": []
+      }
+    },
+    {
+      "fixture": "deployment",
+      "kind": "baseline",
+      "effort": "high",
+      "elapsedSeconds": 11.667,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17207,
+          "inputTokens": 16879,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 328,
+          "reasoningOutputTokens": 196
+        },
+        "last": {
+          "totalTokens": 17207,
+          "inputTokens": 16879,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 328,
+          "reasoningOutputTokens": 196
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "xhigh",
+      "result": {
+        "effort": "high",
+        "reason": "The frozen evidence establishes two independent deployment failures introduced by routing billing events to billing-v2.",
+        "findings": [
+          "The deployment provisions only billing-v1 and queue creation is disabled. When the head producer publishes a billing event to billing-v2, the queue is unavailable and the event cannot be delivered. Provision billing-v2 before deploying the producer.",
+          "The supporting worker still consumes billing-v1. Even if billing-v2 is provisioned, events routed there will not be consumed or processed. Migrate the worker to consume billing-v2 as part of the deployment."
+        ]
+      }
+    },
+    {
+      "fixture": "deployment",
+      "kind": "auto",
+      "effort": "xhigh",
+      "elapsedSeconds": 15.439,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17404,
+          "inputTokens": 16880,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 524,
+          "reasoningOutputTokens": 379
+        },
+        "last": {
+          "totalTokens": 17404,
+          "inputTokens": 16880,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 524,
+          "reasoningOutputTokens": 379
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "xhigh",
+      "result": {
+        "effort": "xhigh",
+        "reason": "The frozen evidence establishes two new production mismatches introduced by the queue migration.",
+        "findings": [
+          "The head producer sends billing events to billing-v2, but the unchanged production deployment provisions only billing-v1 and application queue creation is disabled. When production emits a billing event, publishing to billing-v2 cannot proceed because that queue is not provisioned. Add billing-v2 provisioning to the deployment.",
+          "The supporting worker still consumes billing-v1 while the producer sends all billing events to billing-v2. After billing-v2 is provisioned, events will remain unprocessed unless the worker is also migrated to consume billing-v2."
+        ]
+      }
+    },
+    {
+      "fixture": "agent_instructions",
+      "kind": "route",
+      "effort": "high",
+      "elapsedSeconds": 10.21,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17496,
+          "inputTokens": 17368,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 128,
+          "reasoningOutputTokens": 67
+        },
+        "last": {
+          "totalTokens": 17496,
+          "inputTokens": 17368,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 128,
+          "reasoningOutputTokens": 67
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "xhigh",
+      "result": {
+        "effort": "xhigh",
+        "reason": "The installed agent’s behavior changes an authorization boundary: it will automatically post production release approval to an authenticated deployment endpoint where explicit approval was previously required. That warrants xhigh review effort.",
+        "findings": []
+      }
+    },
+    {
+      "fixture": "mixed",
+      "kind": "route",
+      "effort": "high",
+      "elapsedSeconds": 10.769,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17535,
+          "inputTokens": 17386,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 149,
+          "reasoningOutputTokens": 92
+        },
+        "last": {
+          "totalTokens": 17535,
+          "inputTokens": 17386,
+          "cachedInputTokens": 0,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 149,
+          "reasoningOutputTokens": 92
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "xhigh",
+      "result": {
+        "effort": "xhigh",
+        "reason": "The frozen endpoint removes its administrator check and exposes user-export data to every authenticated user, changing an authorization boundary. The glossary edits do not affect the effort selection.",
+        "findings": []
+      }
+    },
+    {
+      "fixture": "mixed",
+      "kind": "baseline",
+      "effort": "high",
+      "elapsedSeconds": 9.701,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17066,
+          "inputTokens": 16897,
+          "cachedInputTokens": 15872,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 169,
+          "reasoningOutputTokens": 94
+        },
+        "last": {
+          "totalTokens": 17066,
+          "inputTokens": 16897,
+          "cachedInputTokens": 15872,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 169,
+          "reasoningOutputTokens": 94
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "xhigh",
+      "result": {
+        "effort": "high",
+        "reason": "The frozen base/head evidence establishes a new authorization defect: the administrator check was removed while the endpoint remains accessible to authenticated users.",
+        "findings": [
+          "Authenticated non-administrators can call export_users and receive all user data, exposing an export that must be restricted to administrators."
+        ]
+      }
+    },
+    {
+      "fixture": "mixed",
+      "kind": "auto",
+      "effort": "xhigh",
+      "elapsedSeconds": 12.703,
+      "tokenUsage": {
+        "total": {
+          "totalTokens": 17253,
+          "inputTokens": 16898,
+          "cachedInputTokens": 15872,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 355,
+          "reasoningOutputTokens": 270
+        },
+        "last": {
+          "totalTokens": 17253,
+          "inputTokens": 16898,
+          "cachedInputTokens": 15872,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 355,
+          "reasoningOutputTokens": 270
+        },
+        "modelContextWindow": 258400
+      },
+      "toolCalls": 0,
+      "expectedEffort": "xhigh",
+      "result": {
+        "effort": "xhigh",
+        "reason": "The frozen head removes the administrator check from the user export endpoint.",
+        "findings": [
+          "Authorization regression: when any authenticated non-administrator calls `export_users`, the endpoint now returns `all_users()`. This exposes user-export data to users who must not see it. No new deployment dependency is established by the fixture."
+        ]
+      }
+    }
+  ],
+  "status": "complete",
+  "cliVersion": "0.166.0"
+}

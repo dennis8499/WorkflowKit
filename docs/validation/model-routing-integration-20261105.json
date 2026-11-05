@@ -1,0 +1,80 @@
+{
+  "schema": "WorkflowKitModelRoutingValidation/v1",
+  "date": "2026-11-05",
+  "codexCli": "0.166.0",
+  "nativeMerge": {
+    "status": "passed",
+    "finalTaskStatus": "completed",
+    "requestId": "826366f604bc40c7a63c1bad256dd02d",
+    "model": "gpt-6-luna",
+    "selectedEffort": "medium",
+    "routingPhase": "complete",
+    "snapshotHash": "958169244acd0eb3c05e16bd0aa78a428b9762da9d2d61995c6fe701625bad4b",
+    "fixedSources": {
+      "input_digest": "c13d14cd6173eddceef8643d6ab77e83bad072349feacb9259f791baf34765b6",
+      "repositories": [
+        {
+          "id": "repo-000",
+          "snapshot_sources": [],
+          "sources": {
+            "base": "6bf7dd5d455dab7c5125b14c16d6a723abfa8ec1",
+            "head": "f3e96b5136d2392436280da865c52442c14aa104",
+            "merge-base": "6bf7dd5d455dab7c5125b14c16d6a723abfa8ec1",
+            "merge-preview": "be66a17302a7483d9a4c334e63df036d45995983"
+          }
+        }
+      ],
+      "selected_repo": "repo-000"
+    },
+    "captureCount": 1,
+    "nativeJobCount": 1,
+    "reportCount": 1,
+    "reportSha256": "9ae5a83cd2ca7916d6935e06d75039346e89d35ab993271efc9193c1d94fb229",
+    "reviewComplete": true,
+    "fetchCommands": 0,
+    "trackedWorkingTreeClean": true,
+    "nativeRoutingIdentityMatches": true
+  },
+  "workflowKit": {
+    "suites": 17,
+    "casesIncludingReleaseCi": 172,
+    "skipped": 1,
+    "result": "passed with targeted reruns",
+    "profiles": [
+      "group",
+      "repository"
+    ],
+    "bmadModes": [
+      "bundled",
+      "external"
+    ],
+    "predecessor": "1.3.6"
+  },
+  "workbench": {
+    "fullUnitCases": 1103,
+    "initialPassed": 1095,
+    "initialFailed": 5,
+    "skipped": 3,
+    "targetedRetryPassed": 6,
+    "finalRelatedCasesPassed": 46,
+    "packageValidation": "passed"
+  },
+  "benchmark": "model-routing-20261105.json",
+  "artifacts": [
+    {
+      "name": "gitlab-workspace-kit-1.4.0.zip",
+      "size": 32625869,
+      "sha256": "5882604f46f5f87ce0912bf95f8d2cb45afb2e7e31e2c04ba9fe30bfce62c962"
+    },
+    {
+      "name": "workflowkit-installer-1.4.0.py",
+      "size": 4183814,
+      "sha256": "ed5ebf6a16d12b91d153270b6c57781f05a935d7d0a03895f5a6d644c7b5b6f4"
+    },
+    {
+      "name": "gitlab-workspace-0.40.0.vsix",
+      "size": 1072169,
+      "sha256": "1b5bb45483a0243c51ac805db3aac49b96d37a2383a59639e2600f9c89b3ce9e"
+    }
+  ]
+}

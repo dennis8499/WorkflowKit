@@ -274,16 +274,32 @@ def freeze(selected_tools: list[str] | None = None) -> dict:
     return check(compare_local=selected_tools is None)
 
 
+def freeze_workspace() -> dict:
+    """Snapshot kit-owned changes while preserving every reviewed upstream pin."""
+    snapshot = json.loads(SNAPSHOTS.read_text(encoding='utf-8'))
+    snapshot['workspaceFiles'] = {path.relative_to(ROOT).as_posix(): digest(path.read_bytes())
+        for path in sorted((ROOT / 'resources/workflow-kit').rglob('*'))
+        if path.is_file() and '__pycache__' not in path.parts and path.suffix not in ('.pyc', '.pyo', '.zip')}
+    capabilities = builder_capabilities(ast.parse((ROOT / 'scripts/build-workflow-kit.py').read_text(encoding='utf-8')))
+    snapshot['capabilities'] = {'group': capabilities, 'repository': capabilities}
+    SNAPSHOTS.write_text(json.dumps(snapshot, ensure_ascii=False, sort_keys=True, indent=2) + '\n', encoding='utf-8', newline='')
+    return check(compare_local=False)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--freeze', action='store_true', help='Explicitly snapshot reviewed sibling sources.')
+    parser.add_argument('--freeze-workspace', action='store_true', help='Snapshot kit-owned changes without changing upstream sources.')
     parser.add_argument('--tool', action='append', choices=tuple(REPOS), help='Freeze only these reviewed upstreams; preserve all other frozen source records and archives.')
     parser.add_argument('--archives-only', action='store_true', help='Verify fixed archives without sibling repositories (CI).')
     args = parser.parse_args()
     if args.tool and not args.freeze:
         parser.error('--tool requires --freeze')
+    if args.freeze_workspace and (args.freeze or args.tool):
+        parser.error('--freeze-workspace cannot be combined with --freeze or --tool')
     try:
-        print(json.dumps(freeze(args.tool) if args.freeze else check(not args.archives_only), ensure_ascii=False, indent=2))
+        result = freeze_workspace() if args.freeze_workspace else freeze(args.tool) if args.freeze else check(not args.archives_only)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
     except (OSError, ValueError, zipfile.BadZipFile, subprocess.CalledProcessError) as error:
         print(json.dumps({'ok': False, 'error': str(error)}, ensure_ascii=False))
         raise SystemExit(1)
