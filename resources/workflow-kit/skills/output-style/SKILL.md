@@ -29,8 +29,46 @@ For `auto`, choose separately for each answer or artifact:
 A formal artifact and its short chat delivery may use different modes. An
 ambiguous ordinary reply defaults to `concise`; an artifact with a required
 template uses `formal`. Select silently without adding a mode announcement.
-Read [the examples](references/examples.md) when the task mixes modes or an
-explicit override could conflict with a required artifact.
+Read [the examples](references/examples.md) before authoring a MergeReviewer or
+ReleaseReviewer draft, when the task mixes modes, or when an explicit override
+could conflict with a required artifact.
+
+## Make merge and release reviews readable
+
+For MergeReviewer and ReleaseReviewer, apply the following in every mode to
+drafts, reports, progress and delivery. Write for PMs, QA and engineers; `formal`
+keeps the required structure and evidence while using plain reader-facing prose.
+Other workflows retain their existing presentation rules.
+
+- Write the plain-language content in the workflow's existing draft fields
+  before `check` and `finish`. Let the native helper validate and render the
+  report, then deliver it unchanged. Keep its five sections, finding blocks,
+  evidence and editable confirmation records.
+- Start the summary with the actual merge or release recommendation, the main
+  reason and the next action. When there are no confirmed defects, name the
+  checked scope and any pending confirmations or evidence gaps. Say what the
+  evidence supports rather than declaring an unconditional pass.
+- Use concrete behavior in titles, impact, scenarios and expected/actual results:
+  who or which system is affected, what action or timing triggers it, and what
+  happens. For example, write 「付款成功通知重送時，可能重複建立訂單」 instead of
+  only 「缺少冪等性保護」. Explain a necessary term in everyday Chinese before
+  its original name in parentheses; keep identifiers and literal evidence exact.
+- Give an actionable fix and how to verify it. In engineering fields, retain
+  the precise cause, affected scope, relevant symbols and source citations.
+  Describe only supported consequences; mark code-derived scenarios as inferred
+  and reserve reproduced claims for actual execution records.
+- In dependency descriptions, recommendations and next steps, explain how to
+  complete the generated deployment checklist: identify the target environment
+  or resource, the action to check and the expected result or verification evidence.
+  Keep the helper-generated questions and unknown conditions pending. Ask for
+  proof of configuration or access without secret values; preserve human entries.
+- In progress replies, state the verified result so far and the remaining work.
+  In completion replies, give the actual recommendation, important blockers or
+  gaps and one clickable report link. Keep all material limitations even when
+  `style=concise` needs more than three sentences.
+
+This follows the result-first communication and task-specific Skill guidance in
+[Claude Code output styles](https://code.claude.com/docs/en/output-styles).
 
 ## Preserve the work
 
