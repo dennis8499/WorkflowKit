@@ -30,6 +30,24 @@ def zip_bytes(entries):
     return stream.getvalue()
 
 
+class CommitReviewerSourceTests(unittest.TestCase):
+    def test_canonical_release_accepts_checkout_crlf_and_still_rejects_changed_bytes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / 'skills/commit-reviewer'
+            source.mkdir(parents=True)
+            entries = {'VERSION': b'0.1.0\n', 'SKILL.md': b'# Commit Reviewer\n', 'asset.bin': b'\x00\r\n'}
+            for name, data in entries.items():
+                (source / name).write_bytes(data.replace(b'\n', b'\r\n') if name != 'asset.bin' else data)
+            tracked = '\n'.join('skills/commit-reviewer/' + name for name in entries)
+            archive = zip_bytes({'commit-reviewer/' + name: data for name, data in entries.items()})
+            with patch.object(release, 'git', return_value=tracked):
+                self.assertEqual(entries, release.verify_source_archive(root, 'CommitReviewer', '0.1.0', archive))
+                (source / 'SKILL.md').write_bytes(b'# Different content\n')
+                with self.assertRaisesRegex(release.ReleaseError, 'differs from committed source'):
+                    release.verify_source_archive(root, 'CommitReviewer', '0.1.0', archive)
+
+
 class GitFixture(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

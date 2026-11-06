@@ -325,7 +325,11 @@ def source_entries(root, name):
         path = root / relative
         if path.is_symlink() or getattr(path, 'is_junction', lambda: False)():
             raise ReleaseError('Linked release source')
-        files[path.relative_to(directory).as_posix()] = path.read_bytes()
+        data = path.read_bytes()
+        if name == 'CommitReviewer' and (path.name == 'VERSION' or path.suffix.lower() in
+                {'.md', '.py', '.yaml', '.yml', '.json', '.txt', '.toml'}):
+            data = data.replace(b'\r\n', b'\n')
+        files[path.relative_to(directory).as_posix()] = data
     return files
 
 
