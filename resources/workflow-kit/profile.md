@@ -1,7 +1,7 @@
 # GitLab Workspace Group profile
 
 The versioned kit installs Codebase LLM Wiki, MergeReviewer,
-ReleaseReviewer, Output Style and the 29 Codex Skills from BMAD Method v6.12.4 Core+BMM. Install and update the complete package transactionally; use only
+ReleaseReviewer, CommitReviewer, Output Style and the 29 Codex Skills from BMAD Method v6.12.4 Core+BMM. Install and update the complete package transactionally; use only
 its verified manifest and source snapshots. This profile applies to the matched
 non-Git Group root and its actual direct-child Git repositories, including local
 Repos not yet mapped to GitLab. Repository names alone are not matching evidence.
@@ -139,3 +139,5 @@ For human-readable output, use the installed `$output-style` at
 `.agents/skills/output-style/SKILL.md` before the selected workflow's fallback.
 Preserve required artifact structure, evidence and completion gates. If absent,
 keep the selected Skill's original output style.
+
+Use `$commit-reviewer` for staged Commit drafts or MR readiness checks on one explicit Repo. Follow its native `inspect`, analysis, `verify`/`report` workflow and preserve snapshot IDs, full SHAs and real developer confirmations. Commit mode reads staged changes only and stays offline. MR mode fetches only the selected remote target; ambiguous remotes need an explicit choice. Run it with the shared helper runner and a fresh `<workspace>/.commit-reviewer-runtime/<unique>` evidence directory. Exit 3 from report means a saved report still has failures, gaps or pending confirmation. Use the current Codex model settings. Present the draft for the developer to copy; Stage, Commit, Rebase, Push and MR creation remain developer actions.

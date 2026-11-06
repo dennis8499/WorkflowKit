@@ -249,7 +249,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         for profile_name in ("group", "repository"):
             self.assertIn("visualize", manifest["profiles"][profile_name]["capabilities"])
         labels = {'codebase-wiki': 'Codebase LLM Wiki',
-                  'merge-reviewer': 'MergeReviewer', 'release-reviewer': 'ReleaseReviewer',
+                  'merge-reviewer': 'MergeReviewer', 'release-reviewer': 'ReleaseReviewer', 'commit-reviewer': 'CommitReviewer',
                   'bmad-method': 'BMAD Method'}
         self.assertEqual(len(labels) + 1, len(manifest['sourceSummary']))
         compatibility = manifest["upstream"]["release-reviewer"]

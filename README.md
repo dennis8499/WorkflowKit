@@ -6,7 +6,7 @@ WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM
 
 需要 Python 3.11+。安裝器不需要 Node.js 或網路；若環境沒有 `uv`，安裝仍會完成並提示你在執行 BMAD 工作流程前備妥它。
 
-下載 `gitlab-workspace-kit-1.4.0.zip`，解壓後執行：
+下載 `gitlab-workspace-kit-1.5.0.zip`，解壓後執行：
 
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyProject
@@ -17,7 +17,7 @@ python -X utf8 -B install.py --target C:\projects\MyProject
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyGroup --profile group
 python -X utf8 -B install.py --target C:\projects\MyRepo --profile repository
-python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.4.0
+python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.5.0
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易路徑>
 ```
 
@@ -57,3 +57,7 @@ python -X utf8 -B scripts/test.py
 BMAD 上游固定於 [v6.12.4](https://github.com/bmad-code-org/BMAD-METHOD/releases/tag/v6.12.4) 與提交 `bab9082c3e884e0d72c759bcd1a6d90bcc01be84`。維護者可用固定來源附件、官方 CLI 與 lockfile 重建 Codex payload；一般建置只使用凍結附件，不需要 Node.js 或網路。
 
 本機建置會產生 ZIP、獨立安裝器、`release.json`、`SHA256SUMS` 及離線來源附件。發行格式沿用 `workflowkit-release/v1`、installer API 1 與 status API 1；遠端發布另行處理。
+
+## Commit 準備與 MR 前檢查
+
+Group 與 Repository profiles 均包含 CommitReviewer 0.1.0。使用 `$commit-reviewer` 準備已暫存變更的 Commit 草稿，或檢查 MR 前的主線同步、線性歷史、Issue 編號與他人異動。報告位於受檢 Repo 的 `review-reports/`，草稿由開發者手動複製。Commit 模式不連網；MR 模式只精確 Fetch 選定目標。模型沿用目前 Codex 設定。

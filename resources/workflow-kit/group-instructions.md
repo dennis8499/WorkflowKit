@@ -91,3 +91,5 @@ Merge `report_layout=engineering-review/v1` or Release `report_layout=engineerin
 and complete that Skill's engineering fields, including Release expected/actual.
 Comparison and coverage records belong in the technical section; Release dependencies
 and the editable Checklist belong in scope and limitations.
+
+Use `$commit-reviewer` for staged Commit drafts or MR readiness checks on one explicit Repo. Follow its native `inspect`, analysis, `verify`/`report` workflow and preserve snapshot IDs, full SHAs and real developer confirmations. Commit mode reads staged changes only and stays offline. MR mode fetches only the selected remote target; ambiguous remotes need an explicit choice. Run it with the shared helper runner and a fresh `<workspace>/.commit-reviewer-runtime/<unique>` evidence directory. Exit 3 from report means a saved report still has failures, gaps or pending confirmation. Use the current Codex model settings. Present the draft for the developer to copy; Stage, Commit, Rebase, Push and MR creation remain developer actions.

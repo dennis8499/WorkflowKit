@@ -46,7 +46,7 @@ class ProfileTests(unittest.TestCase):
         result, data = self.apply(profile)
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         self.assertEqual(profile, data["profile"])
-        expected = {'codebase-wiki', 'merge-reviewer', 'release-reviewer'}
+        expected = {'codebase-wiki', 'merge-reviewer', 'release-reviewer', 'commit-reviewer'}
         if data.get('bmadMode') == 'bundled':
             expected.add('bmad-method')
         self.assertEqual(expected, set(data['upstreamVersions']))

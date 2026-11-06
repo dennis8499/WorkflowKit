@@ -18,7 +18,7 @@ sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOTS = ROOT / 'resources/offline-tools/source-snapshots.json'
 REPOS = {'codebase-wiki': 'code-base-llm-wiki',
-         'merge-reviewer': 'MergeReviewer', 'release-reviewer': 'ReleaseReviewer',
+         'merge-reviewer': 'MergeReviewer', 'release-reviewer': 'ReleaseReviewer', 'commit-reviewer': 'CommitReviewer',
          'bmad-method': 'BMAD-METHOD'}
 
 

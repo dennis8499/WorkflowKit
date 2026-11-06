@@ -47,6 +47,12 @@ PINNED_SOURCES = ({'id': 'codebase-wiki',
   'sha256': 'c613e062a63c054adde2e6914773290e33c3b8ebbfa5c893c169bd160085090d',
   'minimum_version': '0.12.0',
   'payload_sha256': '4e1f4797e1033c11d3dc57f2236eb5d54bba10368c5f3fcd9ed7c74b19fb24d6'},
+ {'id': 'commit-reviewer',
+  'repository': 'CommitReviewer',
+  'asset': 'commit-reviewer-0.1.0.zip',
+  'filename': 'commit-reviewer-0.1.0.zip',
+  'version': '0.1.0',
+  'sha256': 'debe3c7a6900c4c3aed68eba4064575cdc2f63db17d610b94d6de7afb94746d5'},
  {'id': 'bmad-method',
   'repository': 'bmad-code-org/BMAD-METHOD',
   'asset': 'bmad-method-6.12.4-codex.zip',
@@ -68,6 +74,7 @@ def source_summary(upstream: dict[str, dict[str, str]]) -> list[str]:
         f"Native Codebase LLM Wiki {upstream['codebase-wiki']['version']} adds evidence-bound Archify visualizations. Node.js 18+ and a local browser are required to publish diagrams; installation remains offline. The Group overlay applies shared-Wiki and Repo/path evidence rules.",
         f"Native MergeReviewer {upstream['merge-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps MergeReviewSession/v1 jobs. The Skill agent applies Code Review defect criteria to the diff and evidence-linked consumers after start freezes base/head and all peer Repos' current local HEADs. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout under the selected Repo's review-reports/ with 8-character commit IDs in the filename and full evidence validation. No Workspace overlay or MR-specific report adapter is applied.",
         f"Native ReleaseReviewer {upstream['release-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps ReleaseReviewSession/v1 jobs in an independent runtime. The Skill agent reviews diff-linked blockers and deployment dependencies using base/head and all peer Repos' current local HEADs frozen by start. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout with an editable manual checklist under the selected Repo's review-reports/ without an overlay.",
+        f"Native CommitReviewer {upstream['commit-reviewer']['version']} prepares staged Commit messages and checks MR readiness with its native inspect/verify/report CLI. It preserves fixed SHA evidence and manual confirmations, saves Traditional Chinese reports under the selected Repo review-reports/, and uses the current Codex model settings.",
         f"Official BMAD Method {upstream['bmad-method']['version']} includes the pinned Codex Core and BMM Skills, shared runtime and manifests. Its native `_bmad` runtime and `.agents/skills/bmad-*` entries are a separately verifiable workflow component with a bundled or external installation mode.",
     ]
 
@@ -464,7 +471,7 @@ def build() -> dict[str, object]:
     ).encode("utf-8"))
     capabilities = sorted(["functional-exploration", "ingest", "query", "lint", "audit", "adr", "synthesis",
                            "business-analysis", "system-analysis", "system-design", "notebooklm-export", "archaeology",
-                           "merge-repo", "release-review", "model-routing", "bmad-workflow", "visualize"])
+                           "merge-repo", "release-review", "commit-draft", "mr-precheck", "model-routing", "bmad-workflow", "visualize"])
     native_hashes = {name: digest(data) for name, data in sorted(native_payload.items())}
     manifest["capabilities"] = capabilities
     manifest["wikiInstalledVersionSha256"] = digest(files["framework/VERSION"])

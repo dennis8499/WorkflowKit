@@ -40,10 +40,11 @@ SPECS = {
     'WorkflowKit': {'version': 'VERSION', 'workflow': 'release.yml', 'tool': 'workflowkit'},
     'code-base-llm-wiki': {'version': 'VERSION', 'workflow': 'release.yml', 'tool': 'codebase-wiki'},
     'MergeReviewer': {'version': 'skills/merge-reviewer/VERSION', 'workflow': 'ci.yml', 'tool': 'merge-reviewer'},
+    'CommitReviewer': {'version': 'skills/commit-reviewer/VERSION', 'workflow': 'ci.yml', 'tool': 'commit-reviewer'},
     'ReleaseReviewer': {'version': 'skills/release-reviewer/VERSION', 'workflow': 'ci.yml', 'tool': 'release-reviewer'},
     'GitlabWorkSpace': {'version': 'package.json', 'workflow': 'release.yml'},
 }
-WORKSPACE_UPSTREAMS = frozenset({'code-base-llm-wiki', 'MergeReviewer', 'ReleaseReviewer'})
+WORKSPACE_UPSTREAMS = frozenset({'code-base-llm-wiki', 'MergeReviewer', 'ReleaseReviewer', 'CommitReviewer'})
 STABLE = re.compile(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\Z')
 RUN_ID = re.compile(r'\d{8}T\d{6}Z-[a-f0-9]{8}\Z')
 
@@ -292,7 +293,7 @@ def expected_assets(name, version):
         return {'codebase-llm-wiki-codex.zip', 'codebase-llm-wiki-copilot.zip', 'update-manifest.json', 'SHA256SUMS'}
     tool = SPECS[name]['tool']
     base = f'{tool}-{version}.zip'
-    return {base, base + '.sha256'} if name == 'ReleaseReviewer' else {base}
+    return {base, base + '.sha256'} if name in ('ReleaseReviewer', 'CommitReviewer') else {base}
 
 
 def verify_checksums(files):

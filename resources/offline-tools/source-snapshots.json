@@ -6,11 +6,13 @@
       "audit",
       "bmad-workflow",
       "business-analysis",
+      "commit-draft",
       "functional-exploration",
       "ingest",
       "lint",
       "merge-repo",
       "model-routing",
+      "mr-precheck",
       "notebooklm-export",
       "query",
       "release-review",
@@ -25,11 +27,13 @@
       "audit",
       "bmad-workflow",
       "business-analysis",
+      "commit-draft",
       "functional-exploration",
       "ingest",
       "lint",
       "merge-repo",
       "model-routing",
+      "mr-precheck",
       "notebooklm-export",
       "query",
       "release-review",
@@ -615,6 +619,26 @@
       "treeSha256": "97d9343c8c8d0d17b511be85109ee5a929e31ac5a962e1781f231c2f08fa51af",
       "version": "0.7.2"
     },
+    "commit-reviewer": {
+      "archiveSha256": "debe3c7a6900c4c3aed68eba4064575cdc2f63db17d610b94d6de7afb94746d5",
+      "commit": "b43a2fbc276f6f77dc1a6897ac91e700723be2d5",
+      "dirty": false,
+      "entryRoot": "commit-reviewer",
+      "filename": "commit-reviewer-0.1.0.zip",
+      "files": {
+        "SKILL.md": "2a55f3168bca3cfb4702813742ad922c8df72c9955acf2f1aa9912edd250a9f1",
+        "VERSION": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
+        "agents/openai.yaml": "3f7d0fcb0d51d80d0058bae4585ca2169900dd193c94a675be3860566b481b92",
+        "assets/mr-report.md": "077bdd6d7b4e92d3878dd3c0f44d950f7e412e0ba82285c1edfc1f0e712ec40e",
+        "references/workflow.md": "f8bdcbb227a1e48436f752c96aeb7601368f2e255fe37628d4a90ed734e83e1c",
+        "scripts/commit_review.py": "30acf1c285cddfce102da67d5a0e32f633afca38ac5afbf46e0586f7c3546412",
+        "scripts/git_evidence.py": "c10fca1e334bc5d5af0154c6680bbea26dc77237b0c04d3094eeb23c4d2956eb"
+      },
+      "repository": "CommitReviewer",
+      "sourceKind": "official-release",
+      "treeSha256": "12a2333b866c47769230d6c30c7df9743d9e24fa6d4b7fe4ea4a162ca0d3c50a",
+      "version": "0.1.0"
+    },
     "merge-reviewer": {
       "archiveSha256": "0e893102f4213285880fed59558bdbd4ff962390b8302fb3e7a3fc66028092c3",
       "commit": "2812c331587bbada4ba25f419bb18f5f2e7c07d0",
@@ -706,7 +730,7 @@
   },
   "workspaceFiles": {
     "resources/workflow-kit/common/run.py": "8cd7d9b26e1a7b953acc35789a0377cd20e6f7b6d3462814562f9e53fa860906",
-    "resources/workflow-kit/group-instructions.md": "97a5eba7a11aea9a2467cb9ca65a8ad611fb53ebe8bbb0a2eab140e164ee241c",
+    "resources/workflow-kit/group-instructions.md": "ba5f737fefd4bf9ee43519628d0eb30c79b0dbaca5338ac8339bdeb9c3b64548",
     "resources/workflow-kit/legacy-cleanup.md": "cd9abd025fd748b71bfed3b1179834bac7a956280b62e7ff825810b0894e43ff",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/scripts/wiki-visualize.py": "6f7161a2b2549a0919e199ad5f3a27e39e35ff40216ce3f9fd2795307dd38946",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify-manifest.json": "ce7ba82b274e1847693bbbc75d547c0001b11fd4d4bcccfdea5d9acd7d11a419",
@@ -714,9 +738,9 @@
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify/bin/visual-check.mjs": "37e25a57912c122f6113304463b0636ce7f8f0510eaec038535e46b6842eec0c",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify/renderers/shared/atomic-output.mjs": "3e0031540454442120046a54c53c39e56feb231264fa2a3ad25ac53523d4e58a",
     "resources/workflow-kit/overlays/codebase-wiki/.agents/skills/codebase-wiki/SKILL.md": "1ced07ac751257938a95e05523c9baced9224059d752b9eb99502a8ce5ba4d08",
-    "resources/workflow-kit/profile.md": "64ec41e6bebfc8cfbd1c5f9783070d63d67253314991834568fb1f281a5e9799",
-    "resources/workflow-kit/repository-instructions.md": "f19c016dcef2889a7b97201e1ec90f89248863b20cff1f4c149eb95fd4eeda60",
-    "resources/workflow-kit/repository-profile.md": "dcfc1505d2c4d2f9fdb377c7d438f5d67319ab8d68593dad92856f391aa81605",
+    "resources/workflow-kit/profile.md": "8d7d137be8131476baf33281a0728b82c8e6f9d8ac28618f2e08bc0a0ab6c7a7",
+    "resources/workflow-kit/repository-instructions.md": "c29e8b5f6cb37b5efdcfa9cc02d3cbcfa725e38c5c9cef0b84a0f99e515c69bf",
+    "resources/workflow-kit/repository-profile.md": "f85e90fa5414c066e2febebf0831e168b7c7160ca3505481cf7c9ff3f1af2570",
     "resources/workflow-kit/skills/model-routing/SKILL.md": "375bb9b24b5eaf05b0be9b48101ba655cb1f6133074b01531066839e73fa8830",
     "resources/workflow-kit/skills/model-routing/agents/openai.yaml": "3bd1f9a167ce1ffa7325a2e341358f85ef8306ea77ba418030f774e106b449f0",
     "resources/workflow-kit/skills/model-routing/references/execution.md": "c78d0c81610563878c432211712eb1b37a3572681db52ef16fed18b8f2a921bb",
@@ -726,6 +750,6 @@
     "resources/workflow-kit/skills/output-style/SKILL.md": "5506258a0cc2d488eac32d932fae7de65998e0fee87c9fe4576a52bde71d1779",
     "resources/workflow-kit/skills/output-style/agents/openai.yaml": "9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb",
     "resources/workflow-kit/skills/output-style/references/examples.md": "dd4ef423b59527199e5edb4de75fb0fba4e43d12704bf6d0cfa9c3dffa51c61a",
-    "resources/workflow-kit/trusted-predecessors.json": "1e738318735503efae099b20671f0b9915041e95369703980d44e24f5427b814"
+    "resources/workflow-kit/trusted-predecessors.json": "5f48d686202f83e61189756781dfd00af23f832b2bfb6bc38e3a4a1a48e96fdc"
   }
 }
