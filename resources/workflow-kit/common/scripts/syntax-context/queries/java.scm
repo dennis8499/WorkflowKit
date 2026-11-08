@@ -1,0 +1,13 @@
+(method_declaration) @member
+(constructor_declaration) @member
+(compact_constructor_declaration) @member
+(field_declaration) @initializer
+(static_initializer) @initializer
+(block) @class_block
+(class_declaration) @container
+(interface_declaration) @container
+(enum_declaration) @container
+(record_declaration) @container
+(import_declaration) @import
+(package_declaration) @import
+(method_invocation) @call

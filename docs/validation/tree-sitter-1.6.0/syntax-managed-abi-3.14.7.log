@@ -1,0 +1,26 @@
+test_all_grammars_select_complete_changed_member (managed_tests.SyntaxEngineTests.test_all_grammars_select_complete_changed_member) ... ok
+test_bundle_identity_and_query_tampering_are_rejected (managed_tests.SyntaxEngineTests.test_bundle_identity_and_query_tampering_are_rejected) ... ok
+test_cli_output_budget_handles_a_single_giant_identifier (managed_tests.SyntaxEngineTests.test_cli_output_budget_handles_a_single_giant_identifier) ... ok
+test_csharp_file_namespace_and_top_level_initialization (managed_tests.SyntaxEngineTests.test_csharp_file_namespace_and_top_level_initialization) ... ok
+test_default_enablement_requires_both_acceptance_gates (managed_tests.SyntaxEngineTests.test_default_enablement_requires_both_acceptance_gates) ... ok
+test_encoding_crlf_and_source_rebinding (managed_tests.SyntaxEngineTests.test_encoding_crlf_and_source_rebinding) ... ok
+test_fake_comment_symbols_do_not_become_definitions (managed_tests.SyntaxEngineTests.test_fake_comment_symbols_do_not_become_definitions) ... ok
+test_foreign_bytecode_prefix_cannot_replace_managed_wheel_source (managed_tests.SyntaxEngineTests.test_foreign_bytecode_prefix_cannot_replace_managed_wheel_source) ... ok
+test_git_hunks_keep_source_specific_deletions_and_literal_changes (managed_tests.SyntaxEngineTests.test_git_hunks_keep_source_specific_deletions_and_literal_changes) ... ok
+test_header_changes_require_full_context (managed_tests.SyntaxEngineTests.test_header_changes_require_full_context) ... ok
+test_initialization_and_annotated_overloads_are_retained (managed_tests.SyntaxEngineTests.test_initialization_and_annotated_overloads_are_retained) ... ok
+test_large_files_and_repeated_native_lifetimes (managed_tests.SyntaxEngineTests.test_large_files_and_repeated_native_lifetimes) ... ok
+test_local_declarations_keep_the_complete_function_and_global_initialization (managed_tests.SyntaxEngineTests.test_local_declarations_keep_the_complete_function_and_global_initialization) ... ok
+test_no_secret_literal_in_syntax_artifact (managed_tests.SyntaxEngineTests.test_no_secret_literal_in_syntax_artifact) ... ok
+test_partial_parse_keeps_every_source_line_unread (managed_tests.SyntaxEngineTests.test_partial_parse_keeps_every_source_line_unread) ... ok
+test_partial_unknown_binary_and_limit_preserve_obligations (managed_tests.SyntaxEngineTests.test_partial_unknown_binary_and_limit_preserve_obligations) ... ok
+test_source_cli_is_read_only_and_detects_inventory_drift (managed_tests.SyntaxEngineTests.test_source_cli_is_read_only_and_detects_inventory_drift) ... ok
+test_tsx_jsx_and_top_level_initialization (managed_tests.SyntaxEngineTests.test_tsx_jsx_and_top_level_initialization) ... ok
+test_typescript_member_decorators_follow_their_owners (managed_tests.SyntaxEngineTests.test_typescript_member_decorators_follow_their_owners) ... ok
+test_unmanaged_siblings_and_bytecode_are_rejected_before_execution (managed_tests.SyntaxEngineTests.test_unmanaged_siblings_and_bytecode_are_rejected_before_execution) ... ok
+test_wrong_pinned_grammar_abi_falls_back (managed_tests.SyntaxEngineTests.test_wrong_pinned_grammar_abi_falls_back) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 3.769s
+
+OK

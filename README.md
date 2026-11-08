@@ -2,11 +2,13 @@
 
 WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.2、MergeReviewer 0.20.6、ReleaseReviewer 0.12.0、Model Routing、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
 
+1.6.0 內附 Tree-sitter，支援 Windows x64／Python 3.11–3.14 的 C#、Java、JS／JSX、TS／TSX 結構導航。整合包增強層可讓 Reviewer 優先讀取完整變更函式與必要上下文；原始上游 ZIP 與證據驗證保持可追溯。模型品質與整體耗時門檻尚未完成，正式預設為關閉，明確設定 `WORKFLOW_KIT_SYNTAX_CONTEXT=auto` 可進行評估。詳見 [導入與驗收說明](docs/syntax-context.md)。
+
 ## 安裝
 
 需要 Python 3.11+。安裝器不需要 Node.js 或網路；若環境沒有 `uv`，安裝仍會完成並提示你在執行 BMAD 工作流程前備妥它。
 
-下載 `gitlab-workspace-kit-1.5.0.zip`，解壓後執行：
+下載 `gitlab-workspace-kit-1.6.0.zip`，解壓後執行：
 
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyProject

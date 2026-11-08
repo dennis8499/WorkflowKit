@@ -1,0 +1,82 @@
+{
+  "schema": "gitlab-workspace-validation/v1",
+  "mode": "release",
+  "workers": 2,
+  "seconds": 1248.185,
+  "nodeVersion": "v24.21.0",
+  "platform": "win32",
+  "arch": "x64",
+  "status": "failed",
+  "success": false,
+  "stages": [
+    {
+      "id": "lint",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "node_modules/eslint/bin/eslint.js",
+        ".",
+        "--max-warnings",
+        "0"
+      ],
+      "startedAt": "2026-11-08T04:15:13.262Z",
+      "finishedAt": "2026-11-08T04:15:32.686Z",
+      "seconds": 19.423,
+      "exitCode": 0,
+      "signal": null,
+      "log": "C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\GitlabWorkSpace\\.gitlab-workspace-validation\\runs\\2026-11-08T04-15-13.254Z-65924\\lint.log"
+    },
+    {
+      "id": "release-tooling",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--test",
+        "scripts/extension-test-environment.test.mjs",
+        "scripts/live-benchmark-comparison.test.mjs",
+        "scripts/live-environments.test.mjs",
+        "scripts/live-fixture-plan.test.mjs",
+        "scripts/live-test-paths.test.mjs",
+        "scripts/live-validation-state.test.mjs",
+        "scripts/python-runtime.test.mjs",
+        "scripts/release-policy.test.mjs",
+        "scripts/release-workflow.test.mjs",
+        "scripts/validation-orchestration.test.mjs",
+        "scripts/validation-runtime.test.mjs",
+        "scripts/verify-ui-artifact-identity.test.mjs"
+      ],
+      "startedAt": "2026-11-08T04:15:34.392Z",
+      "finishedAt": "2026-11-08T04:15:39.960Z",
+      "seconds": 5.569,
+      "exitCode": 0,
+      "signal": null,
+      "log": "C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\GitlabWorkSpace\\.gitlab-workspace-validation\\runs\\2026-11-08T04-15-13.254Z-65924\\release-tooling.log"
+    },
+    {
+      "id": "release-commit_reviewer_integration",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-python.mjs",
+        "test/release/commit_reviewer_integration_test.py"
+      ],
+      "startedAt": "2026-11-08T04:15:39.964Z",
+      "finishedAt": "2026-11-08T04:17:53.020Z",
+      "seconds": 133.057,
+      "exitCode": 1,
+      "signal": null,
+      "log": "C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\GitlabWorkSpace\\.gitlab-workspace-validation\\runs\\2026-11-08T04-15-13.254Z-65924\\release-commit_reviewer_integration.log"
+    },
+    {
+      "id": "release-workflowkit_131_integration",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/run-python.mjs",
+        "test/release/workflowkit_131_integration_test.py"
+      ],
+      "startedAt": "2026-11-08T04:15:39.976Z",
+      "finishedAt": "2026-11-08T04:36:01.443Z",
+      "seconds": 1221.467,
+      "exitCode": 0,
+      "signal": null,
+      "log": "C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\GitlabWorkSpace\\.gitlab-workspace-validation\\runs\\2026-11-08T04-15-13.254Z-65924\\release-workflowkit_131_integration.log"
+    }
+  ]
+}

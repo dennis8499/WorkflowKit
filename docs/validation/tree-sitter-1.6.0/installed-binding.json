@@ -1,0 +1,12 @@
+{
+  "schema": "SyntaxInstalledBindingValidation/v1",
+  "engine_sha256": "693acd4b68c4564aedade62436ecf96eb4792b946927e6d00bf50f3b0489e0c6",
+  "installed_package_sha256": "a00104d22f21d8e7dfc9e7204d7000ac4d073c5b674c5a6244c00a3cc4074fa9",
+  "compiled_extension_binding": true,
+  "bundled_status_verifier": true,
+  "wiki_inventory_snapshot_retained": true,
+  "wiki_cli_read_only": true,
+  "wiki_semantic_reviewed": false,
+  "default_mode": "off",
+  "tamper_rejected": true
+}

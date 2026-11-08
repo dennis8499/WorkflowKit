@@ -241,7 +241,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                          {name: item["version"] for name, item in manifest["upstream"].items()})
         self.assertEqual("0.7.2", manifest["upstream"]["codebase-wiki"]["version"])
         self.assertEqual(2, manifest["workspaceContract"])
-        self.assertEqual({"codebase-wiki", "archify-no-hardlink", "bmad-runner"}, set(manifest["overlays"]))
+        self.assertEqual({"codebase-wiki", "archify-no-hardlink", "bmad-runner", "syntax-context"}, set(manifest["overlays"]))
         self.assertTrue(all(overlay["added"] or overlay["replaced"]
                             for overlay in manifest["overlays"].values()))
         self.assertEqual(64, len(manifest["payloadSha256"]))
@@ -443,11 +443,13 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                         self.assertEqual(0, installed.returncode, installed.stderr or installed.stdout)
                         self.assertEqual((profile, bmad_mode), (receipt["profile"], receipt["bmadMode"]))
                         manifest = json.loads((target / MARKER).read_text(encoding="utf-8"))
-                        expected_overlays = {"archify-no-hardlink"}
+                        expected_overlays = {"archify-no-hardlink", "syntax-context"}
                         if bmad_mode == "bundled":
                             expected_overlays.add("bmad-runner")
                         if profile == "group":
                             expected_overlays.add("codebase-wiki")
+                        else:
+                            expected_overlays.add("syntax-wiki")
                         self.assertEqual(expected_overlays, set(manifest["overlays"]))
                         archify = manifest["overlays"]["archify-no-hardlink"]
                         for relative, record in archify["replaced"].items():

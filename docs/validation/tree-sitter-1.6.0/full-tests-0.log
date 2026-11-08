@@ -1,0 +1,154 @@
+test_1_1_baseline_without_external_bmad_upgrades_to_the_bundle (bmad_workflow_kit_test.BmadWorkflowKitTests.test_1_1_baseline_without_external_bmad_upgrades_to_the_bundle) ... ok
+test_bmad_output_alone_does_not_suppress_the_bundled_component (bmad_workflow_kit_test.BmadWorkflowKitTests.test_bmad_output_alone_does_not_suppress_the_bundled_component) ... ok
+test_bundle_defaults_config_render_and_user_state_survive_upgrade_and_rollback (bmad_workflow_kit_test.BmadWorkflowKitTests.test_bundle_defaults_config_render_and_user_state_survive_upgrade_and_rollback) ... ok
+test_bundled_runtime_installs_from_a_long_unicode_windows_path (bmad_workflow_kit_test.BmadWorkflowKitTests.test_bundled_runtime_installs_from_a_long_unicode_windows_path) ... ok
+test_external_bmad_from_1_1_baselines_remains_byte_identical_after_upgrade (bmad_workflow_kit_test.BmadWorkflowKitTests.test_external_bmad_from_1_1_baselines_remains_byte_identical_after_upgrade) ... ok
+test_external_install_profile_switch_repeat_and_rollback_preserve_every_byte (bmad_workflow_kit_test.BmadWorkflowKitTests.test_external_install_profile_switch_repeat_and_rollback_preserve_every_byte) ... ok
+test_managed_bmad_modification_and_unknown_skill_file_block_without_reclassification (bmad_workflow_kit_test.BmadWorkflowKitTests.test_managed_bmad_modification_and_unknown_skill_file_block_without_reclassification) ... ok
+test_source_is_fixed_and_payload_has_29_codex_skills (bmad_workflow_kit_test.BmadWorkflowKitTests.test_source_is_fixed_and_payload_has_29_codex_skills) ... ok
+test_transaction_paths_allow_only_owned_bundled_runtime_and_skills (bmad_workflow_kit_test.BmadWorkflowKitTests.test_transaction_paths_allow_only_owned_bundled_runtime_and_skills) ... ok
+test_both_profiles_run_both_native_modes_with_saved_report_exit_codes (commit_reviewer_integration_test.CommitReviewerIntegrationTests.test_both_profiles_run_both_native_modes_with_saved_report_exit_codes) ... ok
+test_official_140_upgrade_and_rollback_preserve_user_content_in_both_profiles (commit_reviewer_integration_test.CommitReviewerIntegrationTests.test_official_140_upgrade_and_rollback_preserve_user_content_in_both_profiles) ... ok
+test_native_v3_branch_capture_keeps_one_seed_and_related_heads (group_workflow_test.InstalledGroupWorkflowTests.test_native_v3_branch_capture_keeps_one_seed_and_related_heads) ... ok
+test_removed_capture_routes_fail_without_changing_repositories (group_workflow_test.InstalledGroupWorkflowTests.test_removed_capture_routes_fail_without_changing_repositories) ... ok
+test_installed_frozen_snapshot_survives_source_gc_and_preserves_pending_confirmations (local_review_targets_test.LocalReviewTargetsTests.test_installed_frozen_snapshot_survives_source_gc_and_preserves_pending_confirmations) ... ok
+test_v3_branch_reports_preserve_index_and_saved_modifications_in_both_profiles (local_review_targets_test.LocalReviewTargetsTests.test_v3_branch_reports_preserve_index_and_saved_modifications_in_both_profiles) ... ok
+test_versions_and_removed_user_options_are_rejected (local_review_targets_test.LocalReviewTargetsTests.test_versions_and_removed_user_options_are_rejected) ... ok
+test_conflicting_or_incomplete_formal_release_is_preserved (mirror_release_test.MirrorTests.test_conflicting_or_incomplete_formal_release_is_preserved) ... ok
+test_corrupt_source_asset_is_rejected_before_any_mirror_mutation (mirror_release_test.MirrorTests.test_corrupt_source_asset_is_rejected_before_any_mirror_mutation) ... ok
+test_creates_public_git_mirror_and_publishes_only_after_all_attachments_match (mirror_release_test.MirrorTests.test_creates_public_git_mirror_and_publishes_only_after_all_attachments_match) ... ok
+test_identical_formal_release_is_read_only_and_idempotent (mirror_release_test.MirrorTests.test_identical_formal_release_is_read_only_and_idempotent) ... ok
+test_incomplete_draft_resumes_and_is_promoted_after_verification (mirror_release_test.MirrorTests.test_incomplete_draft_resumes_and_is_promoted_after_verification) ... ok
+test_assessment_cannot_publish_and_cancelled_jobs_cannot_dispatch (model_routing_test.ModelRoutingTests.test_assessment_cannot_publish_and_cancelled_jobs_cannot_dispatch) ... ok
+test_completion_preserves_native_incomplete_outcome_after_cleanup (model_routing_test.ModelRoutingTests.test_completion_preserves_native_incomplete_outcome_after_cleanup) ... ok
+test_each_effort_and_both_native_source_formats_bind_without_reviewing (model_routing_test.ModelRoutingTests.test_each_effort_and_both_native_source_formats_bind_without_reviewing) ... ok
+test_invalid_checkpoint_does_not_commit_an_unreadable_record (model_routing_test.ModelRoutingTests.test_invalid_checkpoint_does_not_commit_an_unreadable_record) ... ok
+test_manual_override_is_fixed_and_rebind_is_idempotent (model_routing_test.ModelRoutingTests.test_manual_override_is_fixed_and_rebind_is_idempotent) ... ok
+test_mutable_ledgers_do_not_invalidate_but_peer_source_changes_do (model_routing_test.ModelRoutingTests.test_mutable_ledgers_do_not_invalidate_but_peer_source_changes_do) ... ok
+test_revision_and_exact_retry_prevent_repeated_escalation (model_routing_test.ModelRoutingTests.test_revision_and_exact_retry_prevent_repeated_escalation) ... ok
+test_windows_utf8_bom_decision_files_preserve_unicode (model_routing_test.ModelRoutingTests.test_windows_utf8_bom_decision_files_preserve_unicode) ... ok
+test_linked_resources_are_rejected (output_style_test.OutputStylePackageTests.test_linked_resources_are_rejected) ... skipped "Symbolic links are unavailable: [WinError 1314] 用戶端沒有這項特殊權限。: 'C:\\\\Users\\\\denni\\\\AppData\\\\Local\\\\Temp\\\\output-style-link-3e9di1rj\\\\outside.md' -> 'C:\\\\Users\\\\denni\\\\AppData\\\\Local\\\\Temp\\\\output-style-link-3e9di1rj\\\\skills\\\\output-style\\\\linked.md'"
+test_missing_entrypoint_and_oversized_resource_fail_before_build (output_style_test.OutputStylePackageTests.test_missing_entrypoint_and_oversized_resource_fail_before_build) ... ok
+test_source_resources_keep_discoverable_paths_and_resolve_local_links (output_style_test.OutputStylePackageTests.test_source_resources_keep_discoverable_paths_and_resolve_local_links) ... ok
+test_archive_boundary_checks (release_manager_test.ArchiveTests.test_archive_boundary_checks) ... ok
+test_case_colliding_paths_are_rejected (release_manager_test.ArchiveTests.test_case_colliding_paths_are_rejected) ... ok
+test_full_checksums_pass (release_manager_test.ArchiveTests.test_full_checksums_pass) ... ok
+test_incomplete_or_changed_checksum_manifest_fails (release_manager_test.ArchiveTests.test_incomplete_or_changed_checksum_manifest_fails) ... ok
+test_pins_update_preserves_unrelated_source (release_manager_test.ArchiveTests.test_pins_update_preserves_unrelated_source) ... ok
+test_canonical_release_accepts_checkout_crlf_and_still_rejects_changed_bytes (release_manager_test.CommitReviewerSourceTests.test_canonical_release_accepts_checkout_crlf_and_still_rejects_changed_bytes) ... ok
+test_custom_evidence_destination_still_shares_workspace_lock (release_manager_test.JournalTests.test_custom_evidence_destination_still_shares_workspace_lock) ... ok
+test_dead_owner_same_run_is_recoverable_only_on_resume (release_manager_test.JournalTests.test_dead_owner_same_run_is_recoverable_only_on_resume) ... ok
+test_external_verification_can_be_forced_on_resume (release_manager_test.JournalTests.test_external_verification_can_be_forced_on_resume) ... ok
+test_failed_and_interrupted_steps_resume_and_preserve_attempt (release_manager_test.JournalTests.test_failed_and_interrupted_steps_resume_and_preserve_attempt) ... ok
+test_live_lock_is_not_stolen_even_on_resume (release_manager_test.JournalTests.test_live_lock_is_not_stolen_even_on_resume) ... ok
+test_modified_plan_is_rejected (release_manager_test.JournalTests.test_modified_plan_is_rejected) ... ok
+test_run_id_cannot_escape_evidence_root (release_manager_test.JournalTests.test_run_id_cannot_escape_evidence_root) ... ok
+test_successful_step_is_not_repeated_after_reopen (release_manager_test.JournalTests.test_successful_step_is_not_repeated_after_reopen) ... ok
+test_changed_upstream_selects_only_it_and_workspace (release_manager_test.PlanningTests.test_changed_upstream_selects_only_it_and_workspace) ... ok
+test_current_readme_version_changes_without_rewriting_history (release_manager_test.PlanningTests.test_current_readme_version_changes_without_rewriting_history) ... ok
+test_dirty_candidate_is_rejected (release_manager_test.PlanningTests.test_dirty_candidate_is_rejected) ... ok
+test_grouped_checkout_paths_keep_upstream_integration_independent_of_extension (release_manager_test.PlanningTests.test_grouped_checkout_paths_keep_upstream_integration_independent_of_extension) ... ok
+test_missing_affected_version_is_reported_before_mutation (release_manager_test.PlanningTests.test_missing_affected_version_is_reported_before_mutation) ... ok
+test_no_changes_has_no_release_work (release_manager_test.PlanningTests.test_no_changes_has_no_release_work) ... ok
+test_published_version_cannot_be_reused (release_manager_test.PlanningTests.test_published_version_cannot_be_reused) ... ok
+test_simultaneous_upstream_releases_keep_only_selected_dependencies (release_manager_test.PlanningTests.test_simultaneous_upstream_releases_keep_only_selected_dependencies) ... ok
+test_target_tag_conflict_is_rejected (release_manager_test.PlanningTests.test_target_tag_conflict_is_rejected) ... ok
+test_unchanged_repo_cannot_be_accidentally_released (release_manager_test.PlanningTests.test_unchanged_repo_cannot_be_accidentally_released) ... ok
+test_workspace_current_release_highlights_follow_pins_without_rewriting_older_history (release_manager_test.PlanningTests.test_workspace_current_release_highlights_follow_pins_without_rewriting_older_history) ... ok
+test_workspace_current_versions_and_upgrade_list_follow_pins (release_manager_test.PlanningTests.test_workspace_current_versions_and_upgrade_list_follow_pins) ... ok
+test_workspace_lockfile_version_changes_together (release_manager_test.PlanningTests.test_workspace_lockfile_version_changes_together) ... ok
+test_workspace_only_does_not_revalidate_upstreams (release_manager_test.PlanningTests.test_workspace_only_does_not_revalidate_upstreams) ... ok
+test_already_versioned_wiki_rejects_changed_source_and_downgrade (release_manager_test.ResumeTests.test_already_versioned_wiki_rejects_changed_source_and_downgrade) ... ok
+test_already_versioned_wiki_requires_ready_not_merely_zero_exit (release_manager_test.ResumeTests.test_already_versioned_wiki_requires_ready_not_merely_zero_exit) ... ok
+test_already_versioned_wiki_reuses_exact_analyzed_commit_without_empty_commit (release_manager_test.ResumeTests.test_already_versioned_wiki_reuses_exact_analyzed_commit_without_empty_commit) ... ok
+test_changed_candidate_invalidates_run_before_any_stage (release_manager_test.ResumeTests.test_changed_candidate_invalidates_run_before_any_stage) ... ok
+test_ci_duplicate_cell_cannot_be_hidden_by_name_dictionary (release_manager_test.ResumeTests.test_ci_duplicate_cell_cannot_be_hidden_by_name_dictionary) ... ok
+test_ci_failed_job_attempt_can_combine_only_same_run_previous_successes (release_manager_test.ResumeTests.test_ci_failed_job_attempt_can_combine_only_same_run_previous_successes) ... ok
+test_ci_foreign_repository_run_cannot_satisfy_candidate (release_manager_test.ResumeTests.test_ci_foreign_repository_run_cannot_satisfy_candidate) ... ok
+test_ci_missing_or_skipped_required_cell_is_never_success (release_manager_test.ResumeTests.test_ci_missing_or_skipped_required_cell_is_never_success) ... ok
+test_interrupt_prevents_new_remote_mutations_and_polling (release_manager_test.ResumeTests.test_interrupt_prevents_new_remote_mutations_and_polling) ... ok
+test_isolated_clone_does_not_change_user_branch_or_source (release_manager_test.ResumeTests.test_isolated_clone_does_not_change_user_branch_or_source) ... ok
+test_new_plan_promotes_already_published_upstream_using_verified_formal_bytes (release_manager_test.ResumeTests.test_new_plan_promotes_already_published_upstream_using_verified_formal_bytes) ... ok
+test_partial_run_preserves_success_and_resumes_only_failed_dependency (release_manager_test.ResumeTests.test_partial_run_preserves_success_and_resumes_only_failed_dependency) ... ok
+test_predecessor_freeze_preserves_both_profiles_and_rejects_conflicts (release_manager_test.ResumeTests.test_predecessor_freeze_preserves_both_profiles_and_rejects_conflicts) ... ok
+test_reused_upstream_rejects_changed_checkout_or_mismatched_archive (release_manager_test.ResumeTests.test_reused_upstream_rejects_changed_checkout_or_mismatched_archive) ... ok
+test_reused_upstream_rejects_nonmatching_version_before_download (release_manager_test.ResumeTests.test_reused_upstream_rejects_nonmatching_version_before_download) ... ok
+test_tag_conflict_and_main_advance_prevent_remote_mutation (release_manager_test.ResumeTests.test_tag_conflict_and_main_advance_prevent_remote_mutation) ... ok
+test_unrecognized_dependency_requires_a_new_plan_before_api_calls (release_manager_test.ResumeTests.test_unrecognized_dependency_requires_a_new_plan_before_api_calls) ... ok
+test_wiki_preparation_refreshes_only_metadata_and_keeps_notes_external (release_manager_test.ResumeTests.test_wiki_preparation_refreshes_only_metadata_and_keeps_notes_external) ... ok
+test_group_version_tampering_and_repository_version_rewrite_are_rejected (release_manager_test.WorkspaceDeliveryTests.test_group_version_tampering_and_repository_version_rewrite_are_rejected) ... ok
+test_installed_marker_identity_and_cli_receipt_must_match_public_archive (release_manager_test.WorkspaceDeliveryTests.test_installed_marker_identity_and_cli_receipt_must_match_public_archive) ... ok
+test_manifest_and_official_installer_version_contract_must_agree (release_manager_test.WorkspaceDeliveryTests.test_manifest_and_official_installer_version_contract_must_agree) ... ok
+test_native_installed_state_cannot_be_bypassed_by_matching_payload_hashes (release_manager_test.WorkspaceDeliveryTests.test_native_installed_state_cannot_be_bypassed_by_matching_payload_hashes) ... ok
+test_official_installer_authenticates_both_profiles_with_group_version_rewrite (release_manager_test.WorkspaceDeliveryTests.test_official_installer_authenticates_both_profiles_with_group_version_rewrite) ... ok
+test_other_managed_files_keep_original_payload_hashes (release_manager_test.WorkspaceDeliveryTests.test_other_managed_files_keep_original_payload_hashes) ... ok
+test_public_installer_must_equal_committed_source_before_execution (release_manager_test.WorkspaceDeliveryTests.test_public_installer_must_equal_committed_source_before_execution) ... ok
+test_failed_report_cleans_owned_context (release_reviewer_integration_test.ReleaseReviewerIntegrationTests.test_failed_report_cleans_owned_context) ... ok
+test_installed_cli_both_profiles_reports_checklists_and_dirty_state (release_reviewer_integration_test.ReleaseReviewerIntegrationTests.test_installed_cli_both_profiles_reports_checklists_and_dirty_state) ... ok
+test_installed_group_supporting_freezes_current_head_instead_of_default_branch (release_reviewer_integration_test.ReleaseReviewerIntegrationTests.test_installed_group_supporting_freezes_current_head_instead_of_default_branch) ... ok
+test_installed_reviewer_payloads_match_pinned_archives (release_reviewer_integration_test.ReleaseReviewerIntegrationTests.test_installed_reviewer_payloads_match_pinned_archives) ... ok
+test_release_reviewer_minimum_version_and_payload_are_declared_and_verified (release_reviewer_integration_test.ReleaseReviewerIntegrationTests.test_release_reviewer_minimum_version_and_payload_are_declared_and_verified) ... ok
+test_saved_workspace_single_report_and_editable_checklist_snapshot (release_reviewer_integration_test.ReleaseReviewerIntegrationTests.test_saved_workspace_single_report_and_editable_checklist_snapshot) ... ok
+test_self_rehashed_release_skill_is_rejected (release_reviewer_integration_test.ReleaseReviewerIntegrationTests.test_self_rehashed_release_skill_is_rejected) ... ok
+test_both_installed_facades_check_resume_publish_retry_and_cancel_independently (reviewer_sessions_integration_test.InstalledReviewerSessionTests.test_both_installed_facades_check_resume_publish_retry_and_cancel_independently) ... ok
+test_installed_batch_views_keep_batch_and_page_continuations_read_only (reviewer_sessions_integration_test.InstalledReviewerSessionTests.test_installed_batch_views_keep_batch_and_page_continuations_read_only) ... ok
+test_installed_merge_check_rejects_own_impact_source_mismatch_and_preserves_the_request (reviewer_sessions_integration_test.InstalledReviewerSessionTests.test_installed_merge_check_rejects_own_impact_source_mismatch_and_preserves_the_request) ... ok
+test_published_incomplete_outcomes_survive_cleanup_retry_and_legacy_metadata_is_unknown (reviewer_sessions_integration_test.InstalledReviewerSessionTests.test_published_incomplete_outcomes_survive_cleanup_retry_and_legacy_metadata_is_unknown) ... ok
+test_release_descriptor_authenticates_zip_and_both_installer_copies (standalone_release_test.StandaloneReleaseTests.test_release_descriptor_authenticates_zip_and_both_installer_copies) ... ok
+test_unpacked_release_installs_without_extension_or_original_archive (standalone_release_test.StandaloneReleaseTests.test_unpacked_release_installs_without_extension_or_original_archive) ... ok
+test_missed_critical_defects_and_false_positives_block_acceptance (syntax_benchmark_test.SyntaxBenchmarkGateTests.test_missed_critical_defects_and_false_positives_block_acceptance) ... ok
+test_requires_independent_cold_and_warm_repetitions (syntax_benchmark_test.SyntaxBenchmarkGateTests.test_requires_independent_cold_and_warm_repetitions) ... ok
+test_small_case_regression_and_large_input_threshold_are_independent (syntax_benchmark_test.SyntaxBenchmarkGateTests.test_small_case_regression_and_large_input_threshold_are_independent) ... ok
+test_merge_parents_delete_and_rename_keep_every_native_obligation (syntax_context_test.InstalledSyntaxTests.test_merge_parents_delete_and_rename_keep_every_native_obligation) ... ok
+test_real_frozen_sessions_use_bounded_reads_and_keep_coverage_unreviewed (syntax_context_test.InstalledSyntaxTests.test_real_frozen_sessions_use_bounded_reads_and_keep_coverage_unreviewed) ... ok
+test_all_grammars_select_complete_changed_member (syntax_context_test.SyntaxEngineTests.test_all_grammars_select_complete_changed_member) ... ok
+test_bundle_identity_and_query_tampering_are_rejected (syntax_context_test.SyntaxEngineTests.test_bundle_identity_and_query_tampering_are_rejected) ... ok
+test_cli_output_budget_handles_a_single_giant_identifier (syntax_context_test.SyntaxEngineTests.test_cli_output_budget_handles_a_single_giant_identifier) ... ok
+test_csharp_file_namespace_and_top_level_initialization (syntax_context_test.SyntaxEngineTests.test_csharp_file_namespace_and_top_level_initialization) ... ok
+test_default_enablement_requires_both_acceptance_gates (syntax_context_test.SyntaxEngineTests.test_default_enablement_requires_both_acceptance_gates) ... ok
+test_encoding_crlf_and_source_rebinding (syntax_context_test.SyntaxEngineTests.test_encoding_crlf_and_source_rebinding) ... ok
+test_fake_comment_symbols_do_not_become_definitions (syntax_context_test.SyntaxEngineTests.test_fake_comment_symbols_do_not_become_definitions) ... ok
+test_git_hunks_keep_source_specific_deletions_and_literal_changes (syntax_context_test.SyntaxEngineTests.test_git_hunks_keep_source_specific_deletions_and_literal_changes) ... ok
+test_header_changes_require_full_context (syntax_context_test.SyntaxEngineTests.test_header_changes_require_full_context) ... ok
+test_initialization_and_annotated_overloads_are_retained (syntax_context_test.SyntaxEngineTests.test_initialization_and_annotated_overloads_are_retained) ... ok
+test_large_files_and_repeated_native_lifetimes (syntax_context_test.SyntaxEngineTests.test_large_files_and_repeated_native_lifetimes) ... ok
+test_local_declarations_keep_the_complete_function_and_global_initialization (syntax_context_test.SyntaxEngineTests.test_local_declarations_keep_the_complete_function_and_global_initialization) ... ok
+test_no_secret_literal_in_syntax_artifact (syntax_context_test.SyntaxEngineTests.test_no_secret_literal_in_syntax_artifact) ... ok
+test_partial_parse_keeps_every_source_line_unread (syntax_context_test.SyntaxEngineTests.test_partial_parse_keeps_every_source_line_unread) ... ok
+test_partial_unknown_binary_and_limit_preserve_obligations (syntax_context_test.SyntaxEngineTests.test_partial_unknown_binary_and_limit_preserve_obligations) ... ok
+test_source_cli_is_read_only_and_detects_inventory_drift (syntax_context_test.SyntaxEngineTests.test_source_cli_is_read_only_and_detects_inventory_drift) ... ok
+test_tsx_jsx_and_top_level_initialization (syntax_context_test.SyntaxEngineTests.test_tsx_jsx_and_top_level_initialization) ... ok
+test_typescript_member_decorators_follow_their_owners (syntax_context_test.SyntaxEngineTests.test_typescript_member_decorators_follow_their_owners) ... ok
+test_wrong_pinned_grammar_abi_falls_back (syntax_context_test.SyntaxEngineTests.test_wrong_pinned_grammar_abi_falls_back) ... ok
+test_windows_no_replace_move_replaces_outputs_after_hard_link_denial (workflow_kit_archify_overlay_test.ArchifyAtomicOverlayTests.test_windows_no_replace_move_replaces_outputs_after_hard_link_denial) ... ok
+test_preserves_child_arguments_cwd_output_and_exit_code (workflow_kit_runtime_test.WorkflowKitRuntimeTests.test_preserves_child_arguments_cwd_output_and_exit_code) ... ok
+test_rejects_non_directory_runtime_before_launch (workflow_kit_runtime_test.WorkflowKitRuntimeTests.test_rejects_non_directory_runtime_before_launch) ... ok
+test_rejects_symlink_runtime_before_launch (workflow_kit_runtime_test.WorkflowKitRuntimeTests.test_rejects_symlink_runtime_before_launch) ... skipped 'This Windows account cannot create symlinks.'
+test_reparse_point_attribute_is_rejected (workflow_kit_runtime_test.WorkflowKitRuntimeTests.test_reparse_point_attribute_is_rejected) ... ok
+test_reviewer_scratch_runtime_is_a_sibling_of_owned_session_runtime (workflow_kit_runtime_test.WorkflowKitRuntimeTests.test_reviewer_scratch_runtime_is_a_sibling_of_owned_session_runtime) ... ok
+test_uv_succeeds_when_inherited_temp_and_cache_point_to_a_file (workflow_kit_runtime_test.WorkflowKitRuntimeTests.test_uv_succeeds_when_inherited_temp_and_cache_point_to_a_file) ... ok
+test_prepared_wiki_diagram_resumes_and_publishes_in_a_later_runner_call (workflow_kit_runtime_test.WorkflowKitWikiRuntimeTests.test_prepared_wiki_diagram_resumes_and_publishes_in_a_later_runner_call) ... FAIL
+test_binary_source_bytes_are_not_normalized (workflow_kit_sources_test.SourcePackageTests.test_binary_source_bytes_are_not_normalized) ... ok
+test_complete_reviewer_package_matches_local_distribution (workflow_kit_sources_test.SourcePackageTests.test_complete_reviewer_package_matches_local_distribution) ... ok
+test_package_document_and_version_drift_are_rejected (workflow_kit_sources_test.SourcePackageTests.test_package_document_and_version_drift_are_rejected) ... ok
+test_scoped_freeze_preserves_unselected_source_without_reading_its_live_checkout (workflow_kit_sources_test.SourcePackageTests.test_scoped_freeze_preserves_unselected_source_without_reading_its_live_checkout) ... ok
+test_windows_text_line_endings_match_without_changing_archive_identity (workflow_kit_sources_test.SourcePackageTests.test_windows_text_line_endings_match_without_changing_archive_identity) ... ok
+test_codebase_wiki_archive_root_tracks_the_upstream_version (workflow_kit_sources_test.SourceSummaryTests.test_codebase_wiki_archive_root_tracks_the_upstream_version) ... ok
+test_source_notes_follow_each_new_pin_instead_of_a_historical_version (workflow_kit_sources_test.SourceSummaryTests.test_source_notes_follow_each_new_pin_instead_of_a_historical_version) ... ok
+test_vendor_bytes_keep_release_line_endings (workflow_kit_sources_test.SourceSummaryTests.test_vendor_bytes_keep_release_line_endings) ... ok
+test_wiki_freeze_uses_new_root_is_stable_and_preserves_other_sources (workflow_kit_sources_test.WikiFreezeRegressionTests.test_wiki_freeze_uses_new_root_is_stable_and_preserves_other_sources) ... ok
+
+======================================================================
+FAIL: test_prepared_wiki_diagram_resumes_and_publishes_in_a_later_runner_call (workflow_kit_runtime_test.WorkflowKitWikiRuntimeTests.test_prepared_wiki_diagram_resumes_and_publishes_in_a_later_runner_call)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\denni\OneDrive\Desktop\新增資料夾\WorkflowKit\test\release\workflow_kit_runtime_test.py", line 263, in test_prepared_wiki_diagram_resumes_and_publishes_in_a_later_runner_call
+    self.assertEqual(0, direct.returncode, direct.stderr or direct.stdout)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1 : {"schemaVersion":1,"ok":false,"command":"finalize","status":"fail","type":"architecture","quality":"showcase","specification":{"path":"C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\WorkflowKit\\.tmp\\kit-wiki-runtime-yutpukq3\\測試 Group 工作區\\.gitlab-workspace\\runtime\\tmp\\codebase-wiki-visualize-hmyf_et3\\direct-finalize\\candidate.json","sha256":"40529425285e737411af278ffea97d92db8d56547c1da5b7ffc2d32cb1d193c2","bytes":802},"artifact":{"path":"C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\WorkflowKit\\.tmp\\kit-wiki-runtime-yutpukq3\\測試 Group 工作區\\.gitlab-workspace\\runtime\\tmp\\codebase-wiki-visualize-hmyf_et3\\direct-finalize\\diagram.html","sha256":"be9083517251244c36bcfa82161e787c3a3ad2b25bca090b0f21edcbaec5fc76","bytes":804706},"gates":{"validate":"pass","deliver":"pass","check":"pass","browser-check":"fail"},"failedStage":"browser-check","diagnostics":[{"code":"viewer/temp-cleanup-incomplete","severity":"error","message":"Browser cleanup could not safely finish; inspect the reported retained path.","subject":{"artifact":"C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\WorkflowKit\\.tmp\\kit-wiki-runtime-yutpukq3\\測試 Group 工作區\\.gitlab-workspace\\runtime\\tmp\\codebase-wiki-visualize-hmyf_et3\\direct-finalize\\diagram.html"},"evidence":{"reason":"Chrome did not exit; retained temporary profile \"C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\WorkflowKit\\.tmp\\kit-wiki-runtime-yutpukq3\\測試 Group 工作區\\.gitlab-workspace\\runtime\\tmp\\archify-visual-check-profile-WnE4EJ\".","retainedDirectory":"C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\WorkflowKit\\.tmp\\kit-wiki-runtime-yutpukq3\\測試 Group 工作區\\.gitlab-workspace\\runtime\\tmp\\archify-visual-check-profile-WnE4EJ"},"supportedFixes":["resolve the reported process or filesystem failure; verify directory ownership before manual cleanup"]}],"diagnosticSummary":{"total":1,"shown":1,"truncated":false},"evidence":{"receipt":"C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\WorkflowKit\\.tmp\\kit-wiki-runtime-yutpukq3\\測試 Group 工作區\\.gitlab-workspace\\runtime\\tmp\\codebase-wiki-visualize-hmyf_et3\\direct-finalize\\diagram.finalize.json","summaryReceipt":"C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\WorkflowKit\\.tmp\\kit-wiki-runtime-yutpukq3\\測試 Group 工作區\\.gitlab-workspace\\runtime\\tmp\\codebase-wiki-visualize-hmyf_et3\\direct-finalize\\diagram.finalize-summary.json","browserCheckReceipt":"C:\\Users\\denni\\OneDrive\\Desktop\\新增資料夾\\WorkflowKit\\.tmp\\kit-wiki-runtime-yutpukq3\\測試 Group 工作區\\.gitlab-workspace\\runtime\\tmp\\codebase-wiki-visualize-hmyf_et3\\direct-finalize\\diagram.browser-check.json"},"visualReview":"not-requested","durationMs":8976,"browserCheck":{"requested":true,"ran":false}}
+
+
+----------------------------------------------------------------------
+Ran 139 tests in 2427.926s
+
+FAILED (failures=1, skipped=2)

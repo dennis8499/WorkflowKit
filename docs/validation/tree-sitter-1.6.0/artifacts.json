@@ -1,0 +1,25 @@
+{
+  "schema": "SyntaxArtifactValidation/v1",
+  "upstream_pins_unchanged": true,
+  "upstream_worktrees_clean": true,
+  "zip_bundles_match_source": true,
+  "vsix_status_helper_matches_source": true,
+  "vsix_parser_assets": false,
+  "artifacts": [
+    {
+      "name": "gitlab-workspace-kit-1.6.0.zip",
+      "size": 35521993,
+      "sha256": "a00104d22f21d8e7dfc9e7204d7000ac4d073c5b674c5a6244c00a3cc4074fa9"
+    },
+    {
+      "name": "workflowkit-installer-1.6.0.py",
+      "size": 5263647,
+      "sha256": "a6d35bd64ad660360306a159574fe5a052fa22f7d53463630bb575b1c96dc48f"
+    },
+    {
+      "name": "gitlab-workspace-0.44.0.vsix",
+      "size": 2362831,
+      "sha256": "898d897a55de5df140731b7c5e060cf4029388f5ea3822104aca017c0c10819c"
+    }
+  ]
+}

@@ -105,6 +105,21 @@ class ReleaseReviewerIntegrationTests(unittest.TestCase):
                                 for item in archive.infolist() if not item.is_dir()}
                 skill = self.group / ".agents/skills" / tool
                 actual = {p.relative_to(skill).as_posix(): p.read_bytes() for p in skill.rglob("*") if p.is_file()}
+                manifest = json.loads((harness.ROOT / "resources/offline-tools/manifest.json").read_text(encoding="utf-8"))
+                prefix = f".agents/skills/{tool}/"
+                for overlay in manifest["overlays"].values():
+                    for name, change in overlay["replaced"].items():
+                        if name.startswith(prefix):
+                            relative = name[len(prefix):]
+                            self.assertEqual(change["upstream_sha256"], hashlib.sha256(expected[relative]).hexdigest())
+                            self.assertEqual(change["overlay_sha256"], hashlib.sha256(actual[relative]).hexdigest())
+                            expected[relative] = actual[relative]
+                    for name, digest in overlay["added"].items():
+                        if name.startswith(prefix):
+                            relative = name[len(prefix):]
+                            self.assertNotIn(relative, expected)
+                            self.assertEqual(digest, hashlib.sha256(actual[relative]).hexdigest())
+                            expected[relative] = actual[relative]
                 self.assertEqual(expected, actual)
 
     def test_installed_cli_both_profiles_reports_checklists_and_dirty_state(self):

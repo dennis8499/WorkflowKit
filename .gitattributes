@@ -10,3 +10,6 @@ VERSION text eol=lf
 # The pinned Archify bundle is byte-verified; preserve its upstream line endings.
 .agents/skills/codebase-wiki/vendor/archify/** -text
 .agents/skills/codebase-wiki/vendor/archify-manifest.json -text
+
+# Keep the hash-bound bundle, helper and extracted wheels byte-identical.
+resources/workflow-kit/common/scripts/syntax-context/** -text

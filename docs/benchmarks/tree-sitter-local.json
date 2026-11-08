@@ -1,0 +1,53 @@
+{
+  "schema": "SyntaxBenchmark/v1",
+  "engine_sha256": "693acd4b68c4564aedade62436ecf96eb4792b946927e6d00bf50f3b0489e0c6",
+  "repetitions": 5,
+  "mechanical": [
+    {
+      "language": "csharp",
+      "source_sha256": "d5c8785191b35360066bb6110176d9d95c3f9105aa2fae4bd02b6fd8036d4ec6",
+      "full_source_bytes": 17798,
+      "selected_source_bytes": 52,
+      "selected_source_ratio": 0.002921676592875604,
+      "cold_facts_cache_seconds_median": 0.27228220002143644,
+      "warm_facts_cache_seconds_median": 0.001233399991178885,
+      "all_changed_lines_selected": true
+    },
+    {
+      "language": "java",
+      "source_sha256": "896c8cbd5cce06ea5974553bf2af389fa43369ece209bdf0bb8f2f3df0c1edfc",
+      "full_source_bytes": 17798,
+      "selected_source_bytes": 52,
+      "selected_source_ratio": 0.002921676592875604,
+      "cold_facts_cache_seconds_median": 0.25689669998246245,
+      "warm_facts_cache_seconds_median": 0.0012907000200357288,
+      "all_changed_lines_selected": true
+    },
+    {
+      "language": "javascript",
+      "source_sha256": "ab7d575c5930ab88f22d6940486677d601acb6fc9d3f50956e199e0f5b50e639",
+      "full_source_bytes": 18780,
+      "selected_source_bytes": 38,
+      "selected_source_ratio": 0.0020234291799787005,
+      "cold_facts_cache_seconds_median": 0.7414034999965224,
+      "warm_facts_cache_seconds_median": 0.0015221999783534557,
+      "all_changed_lines_selected": true
+    },
+    {
+      "language": "typescript",
+      "source_sha256": "ab38c22803bacb3b4c6e9ceb2f1083d05db21008a2d07491d7a0e2a0015765b9",
+      "full_source_bytes": 22780,
+      "selected_source_bytes": 46,
+      "selected_source_ratio": 0.002019315188762072,
+      "cold_facts_cache_seconds_median": 0.730614300002344,
+      "warm_facts_cache_seconds_median": 0.00147720001405105,
+      "all_changed_lines_selected": true
+    }
+  ],
+  "model_tokens": null,
+  "end_to_end_review_seconds": null,
+  "model_quality_verified": false,
+  "end_to_end_performance_verified": false,
+  "default_enablement_passed": false,
+  "limitation": "Selected source bytes exclude model reasoning, syntax outlines and native framing. Timings compare cold/warm in-memory facts caches; grammar modules and OS caches may be warm. This is not an end-to-end review speed or quality result."
+}

@@ -132,6 +132,7 @@ def child_environment(temporary: Path, cache: Path, command: list[str]) -> dict[
         TMPDIR=str(temporary),
         UV_CACHE_DIR=str(cache),
         PYTHONDONTWRITEBYTECODE="1",
+        WORKFLOW_KIT_SYNTAX_RUNTIME=str(temporary.parent / "syntax-context"),
     )
     if Path(command[0]).name.casefold() in {"uv", "uv.exe"}:
         environment.update(

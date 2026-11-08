@@ -1,0 +1,26 @@
+{
+  "all_test_count": 174,
+  "shard": 2,
+  "selected_test_ids": [
+    "workflow_kit_transactions_test.TransactionTests.test_1_2_and_1_3_predecessors_are_trusted_for_each_profile_and_bmad_mode",
+    "workflow_kit_transactions_test.TransactionTests.test_changed_archive_rejected_even_when_caller_rehashes_it",
+    "workflow_kit_transactions_test.TransactionTests.test_dry_run_leaves_group_bytes_and_directories_unchanged",
+    "workflow_kit_transactions_test.TransactionTests.test_fresh_rollback_preserves_user_files",
+    "workflow_kit_transactions_test.TransactionTests.test_interrupted_recovery_checks_identity_and_all_edits_before_restoring",
+    "workflow_kit_transactions_test.TransactionTests.test_real_predecessors_upgrade_repeat_and_rollback_from_versioned_fixtures",
+    "workflow_kit_transactions_test.TransactionTests.test_repeated_install_is_byte_identical_and_keeps_original_journal",
+    "workflow_kit_transactions_test.TransactionTests.test_rollback_rejects_later_edits_before_changing_any_file",
+    "workflow_kit_transactions_test.TransactionTests.test_self_rehashed_profile_is_not_a_trusted_predecessor",
+    "workflow_kit_transactions_test.TransactionTests.test_unknown_predecessor_rejected_even_with_self_consistent_file_hashes",
+    "workflow_kit_transactions_test.TransactionTests.test_windows_checkout_and_git_archive_have_identical_bundle_digests"
+  ],
+  "package_sha256": "31e4b4487530bde2fc70e66e77b503dd09a451e579c39481c92bee09b16e891b",
+  "engine_sha256": "a9f9f0051603b904bc10830b8c0a1a6c7c41f2413a6785502979c5a0d67acec2",
+  "test_sources_sha256": "c35de957990d95c410f1ec20a231ff0042e067fc6ceb73881ec1108e31da636e",
+  "seconds": 3591.213,
+  "tests_run": 11,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "success": true
+}

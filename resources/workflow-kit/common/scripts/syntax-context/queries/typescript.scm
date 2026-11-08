@@ -1,0 +1,15 @@
+(function_declaration) @member
+(generator_function_declaration) @member
+(method_definition) @member
+(lexical_declaration) @member
+(variable_declaration) @member
+(public_field_definition) @initializer
+(class_static_block) @initializer
+(expression_statement) @top_level
+(class_declaration) @container
+(interface_declaration) @container
+(internal_module) @container
+(import_statement) @import
+(decorator) @decorator
+(export_statement) @export
+(call_expression) @call

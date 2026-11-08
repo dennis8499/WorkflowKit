@@ -1,0 +1,16 @@
+test_1_2_and_1_3_predecessors_are_trusted_for_each_profile_and_bmad_mode (workflow_kit_transactions_test.TransactionTests.test_1_2_and_1_3_predecessors_are_trusted_for_each_profile_and_bmad_mode) ... ok
+test_changed_archive_rejected_even_when_caller_rehashes_it (workflow_kit_transactions_test.TransactionTests.test_changed_archive_rejected_even_when_caller_rehashes_it) ... ok
+test_dry_run_leaves_group_bytes_and_directories_unchanged (workflow_kit_transactions_test.TransactionTests.test_dry_run_leaves_group_bytes_and_directories_unchanged) ... ok
+test_fresh_rollback_preserves_user_files (workflow_kit_transactions_test.TransactionTests.test_fresh_rollback_preserves_user_files) ... ok
+test_interrupted_recovery_checks_identity_and_all_edits_before_restoring (workflow_kit_transactions_test.TransactionTests.test_interrupted_recovery_checks_identity_and_all_edits_before_restoring) ... ok
+test_real_predecessors_upgrade_repeat_and_rollback_from_versioned_fixtures (workflow_kit_transactions_test.TransactionTests.test_real_predecessors_upgrade_repeat_and_rollback_from_versioned_fixtures) ... ok
+test_repeated_install_is_byte_identical_and_keeps_original_journal (workflow_kit_transactions_test.TransactionTests.test_repeated_install_is_byte_identical_and_keeps_original_journal) ... ok
+test_rollback_rejects_later_edits_before_changing_any_file (workflow_kit_transactions_test.TransactionTests.test_rollback_rejects_later_edits_before_changing_any_file) ... ok
+test_self_rehashed_profile_is_not_a_trusted_predecessor (workflow_kit_transactions_test.TransactionTests.test_self_rehashed_profile_is_not_a_trusted_predecessor) ... ok
+test_unknown_predecessor_rejected_even_with_self_consistent_file_hashes (workflow_kit_transactions_test.TransactionTests.test_unknown_predecessor_rejected_even_with_self_consistent_file_hashes) ... ok
+test_windows_checkout_and_git_archive_have_identical_bundle_digests (workflow_kit_transactions_test.TransactionTests.test_windows_checkout_and_git_archive_have_identical_bundle_digests) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 3591.212s
+
+OK

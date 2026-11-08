@@ -1,0 +1,6 @@
+test_profiles_install_the_exact_native_payload_and_status_remains_read_only (__main__.CommitReviewerReleaseTests.test_profiles_install_the_exact_native_payload_and_status_remains_read_only) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 127.855s
+
+OK

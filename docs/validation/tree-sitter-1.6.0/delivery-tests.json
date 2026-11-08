@@ -1,0 +1,22 @@
+{
+  "schema": "SyntaxFinalImpactedValidation/v1",
+  "test_names": [
+    "syntax_context_test",
+    "release_reviewer_integration_test.ReleaseReviewerIntegrationTests.test_installed_reviewer_payloads_match_pinned_archives",
+    "workflow_kit_transactions_test.TransactionTests.test_windows_checkout_and_git_archive_have_identical_bundle_digests",
+    "workflow_kit_transactions_test.TransactionTests.test_real_predecessors_upgrade_repeat_and_rollback_from_versioned_fixtures",
+    "workflow_kit_installer_test.WorkflowKitInstallerTests.test_bundled_and_external_profiles_install_with_current_native_versions",
+    "reviewer_sessions_integration_test.InstalledReviewerSessionTests.test_both_installed_facades_check_resume_publish_retry_and_cancel_independently"
+  ],
+  "expected_tests": 29,
+  "package_sha256": "a00104d22f21d8e7dfc9e7204d7000ac4d073c5b674c5a6244c00a3cc4074fa9",
+  "engine_sha256": "693acd4b68c4564aedade62436ecf96eb4792b946927e6d00bf50f3b0489e0c6",
+  "predecessor_filter": "1.5.0",
+  "status": "passed",
+  "success": true,
+  "tests_run": 29,
+  "skipped": 0,
+  "failures": 0,
+  "errors": 0,
+  "seconds": 963.393
+}

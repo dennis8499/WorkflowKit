@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -108,7 +109,13 @@ with patch.object(Path, "open", denied):
                     self.assertTrue(capabilities['features']['runtime_paths'])
                     self.assertTrue(capabilities['features']['read_only_batch_view'])
                     self.assertTrue(capabilities['features']['base_final_review'])
-                    self.assertEqual(harness.CURRENT_SOURCES[tool]['payloadSha256'], capabilities['payload_sha256'])
+                    skill = self.group / '.agents/skills' / tool
+                    rows = [[path.relative_to(skill).as_posix(), hashlib.sha256(path.read_bytes()).hexdigest()]
+                            for path in skill.rglob('*') if path.is_file() and '__pycache__' not in path.parts
+                            and path.suffix != '.pyc']
+                    rows.sort(key=lambda row: row[0].encode('utf-8'))
+                    installed_sha = hashlib.sha256(json.dumps(rows, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()
+                    self.assertEqual(installed_sha, capabilities['payload_sha256'])
                 runtime = self.root / tool
                 start = self.cli(tool, 'start', '--workspace', self.repo, '--project', self.repo,
                     '--base', 'main', '--head', 'feature', '--runtime-root', runtime, '--request-id', identifier,
