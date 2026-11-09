@@ -1,11 +1,11 @@
 ---
 name: model-routing
-description: Route WorkflowKit MergeReviewer and ReleaseReviewer reviews to GPT-6 Luna reasoning efforts using frozen changes and risk evidence. Apply before either installed Reviewer, for effort overrides, and when resuming or escalating a routed review.
+description: Route WorkflowKit MergeReviewer and ReleaseReviewer reviews to the selected model's reasoning efforts using frozen changes and risk evidence. Apply before either installed Reviewer, for effort overrides, and when resuming or escalating a routed review.
 ---
 
 # Model Routing
 
-Use `gpt-6-luna` for the actual review. Accept `effort=auto|low|medium|high|xhigh|max` (default `auto`) for this request only. Read [routing policy](references/routing-policy.md) before assessing risk, and [execution protocol](references/execution.md) before capture, dispatch or recovery. These installed references and `scripts/routing.py` are the shared protocol for direct Skills and the workbench.
+Use the workbench-supplied model and supported efforts for both assessment and review. A direct Skill without a model selection retains `gpt-6-luna` and the legacy five efforts. Accept `effort=auto` (default) or an explicitly supported manual effort for this request only. Read [routing policy](references/routing-policy.md) before assessing risk, and [execution protocol](references/execution.md) before capture, dispatch or recovery. These installed references and `scripts/routing.py` are the shared protocol for direct Skills and the workbench.
 
 Select the current role before following the numbered workflow:
 
@@ -19,7 +19,7 @@ Resolve exactly one Reviewer, Repo, base and head, and the authorized external r
 
 Use the kit runner's defaults: `python -X utf8 -B <runner> -- python -X utf8 -B <helper> <command> ... --runtime-root <native-runtime>`. The native `--runtime-root` belongs after `--`, in the helper arguments. The runner stores its own temporary/cache files in a separate location; its optional runtime override must never point to the native review runtime. Use the concrete host-supplied helper command when provided; see [the two runtime paths](references/execution.md#runner-and-native-runtime).
 
-Run `routing.py bind --tool <tool> --runtime-root <runtime> --request-id <id> --effort <requested>`. This binds routing to that native job's fixed sources, not the working tree. Reuse a saved decision on recovery. Routing reads never mark coverage reviewed and never fill semantic review decisions.
+Run `routing.py bind --tool <tool> --runtime-root <runtime> --request-id <id> --effort <requested>`, adding the supplied `--model` and `--supported-efforts` for workbench selections. This binds routing to that native job's fixed sources, model and capabilities. Reuse a saved decision on recovery. Routing reads never mark coverage reviewed and never fill semantic review decisions.
 
 In `auto`, read the complete change inventory and patches through native evidence operations, including continuations, then the context needed to understand risk. Save a UTF-8 decision JSON with `effort`, a concrete `reason`, and `evidence` references. Run `routing.py decide ... --revision <revision> --decision-file <file>`. Apply the policy's highest applicable risk; line counts and paths alone cannot establish semantics. A manual effort is selected by `bind` without another assessment.
 
@@ -27,7 +27,7 @@ The assess role stops after saving the decision and returns `{"action":"review",
 
 ## 2. Execute at the selected effort
 
-For a direct Skill, start exactly one fresh reviewer child with explicit `model="gpt-6-luna"` and the selected reasoning effort. Pass `routing_role=reviewer`, the routing state path, native Skill path, tool, request ID, runtime, context, draft, fixed sources and original user instructions. Give it the checkpoint on recovery. Wait for it to yield or complete before dispatching another child. Preserve the parent's sandbox and authorization. Failure to start the exact model/effort stops dispatch and preserves the session.
+For a direct Skill, start exactly one fresh reviewer child with the saved record's explicit model and selected reasoning effort. Pass `routing_role=reviewer`, the routing state path, native Skill path, tool, request ID, runtime, context, draft, fixed sources and original user instructions. Give it the checkpoint on recovery. Wait for it to yield or complete before dispatching another child. Preserve the parent's sandbox and authorization. Failure to start the exact model/effort stops dispatch and preserves the session.
 
 For `routing_role=reviewer` or `routing_adapter=workbench routing_phase=review`, execute the native Reviewer in the current agent. This is the already-routed continuation: use `status` and the saved context, and proceed with native evidence operations, authoring, `check` and `finish`. For a manual workbench request without a job yet, first perform step 1's single capture and `bind`; then continue the review in this same turn. Do not route recursively. A review includes all native coverage, evidence and publication requirements.
 
@@ -35,7 +35,7 @@ Read [reviewer execution](references/reviewer-execution.md) before doing the rev
 
 ## 3. Checkpoint, escalate or complete
 
-If new fixed evidence needs greater effort in `auto`, save the native draft and a UTF-8 handoff with `effort`, `reason`, `evidence` and `checkpoint` (remaining work plus previously reviewed paths/decisions to recheck). Run `routing.py escalate ... --revision <revision> --decision-file <file>`, then yield `{"action":"escalate","request_id":"<id>"}` without publishing. The parent/host starts the higher effort only after this execution ends. Recheck the checkpoint's affected decisions before continuing. Every escalation strictly increases effort, up to `max`; keep missing evidence visible.
+If new fixed evidence needs greater effort in `auto`, save the native draft and a UTF-8 handoff with `effort`, `reason`, `evidence` and `checkpoint` (remaining work plus previously reviewed paths/decisions to recheck). Run `routing.py escalate ... --revision <revision> --decision-file <file>`, then yield `{"action":"escalate","request_id":"<id>"}` when a strictly higher actual effort was saved. The parent/host starts that effort only after this execution ends. Recheck the checkpoint's affected decisions before continuing. At the saved model's maximum, retain the cap reason and finish the current review with missing evidence visible.
 
 A manual effort remains fixed. Record a higher-effort recommendation in the native limitations or progress when relevant and continue at the requested effort.
 

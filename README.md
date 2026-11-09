@@ -29,7 +29,9 @@ Group profile 在選定的 Group 根目錄安裝一份共用 BMAD runtime。從�
 
 ## Reviewer Model Routing
 
-`$merge-reviewer`、`$release-reviewer` 先由共用 `$model-routing` 根據本次固定 diff、必要上下文及風險選擇 GPT-6 Luna 思考強度。預設 `effort=auto`：純敘述文件使用 low、明確局部邏輯使用 medium、一般程式變更使用 high；契約、權限、資料或部署風險提高到 xhigh，大範圍破壞性變更或交織風險使用 max。檔案數與行數只作輔助。
+`$merge-reviewer`、`$release-reviewer` 先由共用 `$model-routing` 根據本次固定 diff、必要上下文及風險選擇思考強度。直接呼叫預設 GPT-6 Luna；支援 `model-routing-model-selection` 的 GitLab 工作台可在建立前選擇模型與強度，評估、正式審查與升級都使用該模型。預設 `effort=auto`：純敘述文件建議 low、明確局部邏輯建議 medium、一般程式變更建議 high；契約、權限、資料或部署風險提高到 xhigh，大範圍破壞性變更或交織風險建議 max。檔案數與行數只作輔助。
+
+模型選擇以 `ReviewModelRouting/v2` 保存模型、能力快照、建議及實際強度。Auto 選擇達到建議值的最低可用強度；超出上限時使用模型最高強度並顯示原因，不重複啟動同強度升級。無法排序的強度可手動選擇。舊 v1 紀錄及未提供模型參數的直接呼叫保留 Luna 協定；恢復不更換模型或固定證據。
 
 可在提示詞指定本次 `effort=low|medium|high|xhigh|max`，例如 `$merge-reviewer effort=xhigh`，再提供 Repo、基礎分支與比較分支。手動指定固定到本次結束；auto 遇到具體新風險時，保存草稿與 checkpoint 後提高強度。直接 Skill 使用一個 Luna reviewer 子 agent；支援此能力的 GitLab 工作台以明確模型／強度啟動各回合，並顯示理由與歷程。
 

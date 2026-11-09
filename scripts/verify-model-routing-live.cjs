@@ -8,13 +8,17 @@ const workbench = process.env.WORKFLOWKIT_WORKBENCH_ROOT ?? path.resolve(__dirna
 const outputDirectory = path.resolve(__dirname, '../.tmp');
 const { CodexBridge } = require(path.join(workbench, 'out/src/codex/bridge.js'));
 const { modelRoutingBinding } = require(path.join(workbench, 'out/src/codex/modelRouting.js'));
+const argument = (name, fallback) => { const index = process.argv.indexOf(name); return index < 0 ? fallback : process.argv[index + 1]; };
+const selectedModel = argument('--model', 'gpt-6-luna'), requestedEffort = argument('--effort', 'auto');
+if (!/^[a-zA-Z0-9._-]{1,200}$/.test(selectedModel) || !/^[a-z][a-z0-9_-]{0,39}$/.test(requestedEffort)) throw new Error('Invalid smoke model/effort');
+const resultPrefix = `model-routing-native-${selectedModel}-${requestedEffort}`;
 (async () => {
   await fs.mkdir(outputDirectory, { recursive: true });
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'routing-native-smoke-'));
   const group = path.join(root, 'workspace'), repo = path.join(group, 'service'), runtime = path.join(root, 'runtime');
   const requestId = crypto.randomUUID().replaceAll('-', '');
   process.env.GITLAB_WORKSPACE_RUNTIME_DIR = path.join(root, 'network');
-  const result = { status: 'running', requestId, root };
+  const result = { status: 'running', requestId, root, model: selectedModel, requestedEffort };
   let bridge;
   try {
     await fs.mkdir(repo, { recursive: true });
@@ -37,7 +41,7 @@ const { modelRoutingBinding } = require(path.join(workbench, 'out/src/codex/mode
         `Declared workspace=${JSON.stringify(group)}; runtime_root=${JSON.stringify(runtime)}; request_id=${requestId}.\n` +
         'Use the installed native helper and kit runner. All branches are local; keep capture offline. This fixture is a pure calculation helper; review the removed zero-count behavior. Finish the native report with all required coverage and retain any real gaps.',
       skill: { name: tool, path: path.join(group, '.agents/skills', tool, 'SKILL.md') }, writableRoots: [group, runtime, runtime + '-workflow-kit', path.join(root, 'network')],
-      environmentKey: 'smoke', review: { tool, requestId, revision: 'smoke' }, routing: await modelRoutingBinding(group, tool, runtime, requestId, 'auto') };
+      environmentKey: 'smoke', review: { tool, requestId, revision: 'smoke' }, routing: await modelRoutingBinding(group, tool, runtime, requestId, requestedEffort, true) };
     const events = [];
     bridge = new CodexBridge({ storage: path.join(root, 'storage'), version: 'routing-smoke', executable: () => '', trusted: () => true,
       prepare: async () => spec, openUrl: async () => {},
@@ -52,6 +56,12 @@ const { modelRoutingBinding } = require(path.join(workbench, 'out/src/codex/mode
           void bridge.answer(item.taskId, item.id, { decision: 'decline' }).catch(() => {});
         }
       } });
+    const models = await bridge.models(group), selected = models.find(item => item.model === selectedModel);
+    if (!selected) throw new Error(`Selected live model unavailable: ${selectedModel}`);
+    const supportedEfforts = selected.supportedReasoningEfforts.map(item => item.reasoningEffort);
+    Object.assign(spec.source, { model: selectedModel, effort: requestedEffort, modelEfforts: supportedEfforts });
+    Object.assign(spec, { model: selectedModel, effort: requestedEffort });
+    Object.assign(spec.routing, { model: selectedModel, supportedEfforts });
     await bridge.enqueue(spec, 'native-smoke');
     const deadline = Date.now() + 600000;
     while (Date.now() < deadline) {
@@ -78,7 +88,8 @@ const { modelRoutingBinding } = require(path.join(workbench, 'out/src/codex/mode
       throw new Error('Native evidence, capture count, coverage or defect recall did not match the fixture');
     }
     result.contextRetained = await fs.stat(job.context_dir).then(() => true).catch(() => false);
-    await fs.writeFile(path.join(outputDirectory, 'model-routing-native-events.json'), JSON.stringify(events, null, 2));
+    if (routing.schema !== 'ReviewModelRouting/v2' || routing.model !== selectedModel) throw new Error('Selected model identity was not preserved');
+    await fs.writeFile(path.join(outputDirectory, resultPrefix + '-events.json'), JSON.stringify(events, null, 2));
   } catch (error) { result.status = 'failed'; result.error = error.message; process.exitCode = 1; }
   finally {
     await bridge?.shutdown();
@@ -86,7 +97,7 @@ const { modelRoutingBinding } = require(path.join(workbench, 'out/src/codex/mode
       result.finalTaskStatus = bridge.list()[0]?.status;
       if (result.status === 'passed' && result.finalTaskStatus !== 'completed') { result.status = 'failed'; process.exitCode = 1; }
     }
-    await fs.writeFile(path.join(outputDirectory, 'model-routing-native-result.json'), JSON.stringify(result, null, 2));
+    await fs.writeFile(path.join(outputDirectory, resultPrefix + '-result.json'), JSON.stringify(result, null, 2));
     process.stdout.write(JSON.stringify({ status: result.status, error: result.error, nativeState: result.nativeState }) + '\n');
     // Keep the isolated fixture as an inspectable proof until task delivery.
   }

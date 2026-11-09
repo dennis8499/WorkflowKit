@@ -1,0 +1,177 @@
+{
+  "schema": "WorkflowKitModelSelectionValidation/v1",
+  "date": "2026-11-09",
+  "codexCli": "0.166.0",
+  "published": false,
+  "globalCodexSettingsChanged": false,
+  "workbench": {
+    "modelFeatureCases": 27,
+    "modelFeatureCasesPassed": 27,
+    "preparation": "passed",
+    "unit": {
+      "tests": 1219,
+      "pass": 1215,
+      "fail": 1,
+      "skipped": 3,
+      "localRun": ".gitlab-workspace-validation/runs/2026-11-09T03-34-48.228Z-10264",
+      "failure": "50 simulated user operations across processes obey one local host quota: local network lease owner stopped (ESRCH).",
+      "targetedRetryIncludingModelFeatures": {
+        "tests": 35,
+        "pass": 34,
+        "fail": 1,
+        "skipped": 0
+      },
+      "localRetryEvidence": ".tmp/model-selection-final-targeted.log",
+      "earlierFullSuccessfulRun": ".gitlab-workspace-validation/runs/2026-11-09T03-21-31.675Z-81280"
+    },
+    "behavior": {
+      "nodeCases": 255,
+      "result": "passed including Issue and connection Cucumber suites",
+      "localRun": ".gitlab-workspace-validation/runs/2026-11-09T03-40-53.743Z-81968"
+    },
+    "releaseIntegration": {
+      "result": "passed",
+      "localRun": ".gitlab-workspace-validation/runs/2026-11-09T02-52-34.233Z-45444"
+    },
+    "workspaceTrust": "passed",
+    "vsixValidation": "passed",
+    "fullNpmTest": {
+      "result": "failed",
+      "nativePassed": 19,
+      "nativePending": 4,
+      "nativeFailed": 2,
+      "failures": [
+        "WorkflowKit 1.5.0 installation exceeded 480000 ms",
+        "BMAD build-draft update took 1037 ms; limit is 1000 ms"
+      ],
+      "localRun": ".gitlab-workspace-validation/runs/2026-11-09T02-21-10.832Z-39692"
+    }
+  },
+  "workflowKit": {
+    "build": "passed",
+    "releaseArtifactValidation": "passed",
+    "modelRoutingCases": 12,
+    "fullRegressionCaseInventory": 181,
+    "releaseCiCases": 25,
+    "releaseCiExitCode": 0,
+    "predecessorMatrix": {
+      "result": "passed",
+      "filters": 14,
+      "scenarios": 26,
+      "replacedMonolithicCase": "workflow_kit_transactions_test.TransactionTests.test_real_predecessors_upgrade_repeat_and_rollback_from_versioned_fixtures",
+      "reason": "Executed the existing version/profile filters in independent processes; assertions unchanged.",
+      "localEvidence": ".tmp/model-selection-validation-20261109T023214/predecessor-matrix.json"
+    },
+    "remainingFailures": [
+      {
+        "id": "local_review_targets_test.LocalReviewTargetsTests.test_v3_branch_reports_preserve_index_and_saved_modifications_in_both_profiles",
+        "initialExitCode": 1,
+        "retryExitCode": 1,
+        "localEvidence": ".tmp/model-selection-validation-20261109T023214/local_review_targets_test.LocalReviewTargetsTests.test_v3_branch_reports_preserve_index_and_saved_modifications_in_both_profiles.log"
+      },
+      {
+        "id": "local_review_targets_test.LocalReviewTargetsTests.test_installed_frozen_snapshot_survives_source_gc_and_preserves_pending_confirmations",
+        "initialExitCode": 1,
+        "retryExitCode": 1,
+        "localEvidence": ".tmp/model-selection-validation-20261109T023214/local_review_targets_test.LocalReviewTargetsTests.test_installed_frozen_snapshot_survives_source_gc_and_preserves_pending_confirmations.log"
+      },
+      {
+        "id": "local_review_targets_test.LocalReviewTargetsTests.test_versions_and_removed_user_options_are_rejected",
+        "initialExitCode": 1,
+        "retryExitCode": 1,
+        "localEvidence": ".tmp/model-selection-validation-20261109T023214/local_review_targets_test.LocalReviewTargetsTests.test_versions_and_removed_user_options_are_rejected.log"
+      },
+      {
+        "id": "workflow_kit_installer_test.WorkflowKitInstallerTests.test_visualization_capability_is_installed_for_group_and_repository_profiles",
+        "initialExitCode": 1,
+        "retryExitCode": 1,
+        "localEvidence": ".tmp/model-selection-validation-20261109T023214/workflow_kit_installer_test.WorkflowKitInstallerTests.test_visualization_capability_is_installed_for_group_and_repository_profiles.log"
+      },
+      {
+        "id": "workflow_kit_runtime_test.WorkflowKitWikiRuntimeTests.test_prepared_wiki_diagram_resumes_and_publishes_in_a_later_runner_call",
+        "initialExitCode": 1,
+        "retryExitCode": 1,
+        "localEvidence": ".tmp/model-selection-validation-20261109T023214/workflow_kit_runtime_test.WorkflowKitWikiRuntimeTests.test_prepared_wiki_diagram_resumes_and_publishes_in_a_later_runner_call.log"
+      }
+    ],
+    "remainingFailureSummary": [
+      "Three local-review target cases could not run because class setup exceeded the 60-second installer limit; Windows cleanup also reported a nonempty directory.",
+      "Two visualization tests failed Archify browser-check. The Wiki runtime case reported Chrome not exiting and retained its temporary profile."
+    ],
+    "localEvidence": ".tmp/model-selection-validation-20261109T023214/results.json",
+    "localRetryEvidence": ".tmp/model-selection-validation-20261109T023214/retries.json"
+  },
+  "liveAppServer": [
+    {
+      "model": "gpt-6-luna",
+      "requestedEffort": "high",
+      "status": "passed",
+      "requestId": "7052db38faf74b66a5b6376c23d6ef47",
+      "schema": "ReviewModelRouting/v2",
+      "supportedEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "actualEffort": "high",
+      "finalTaskStatus": "completed",
+      "nativeState": "published",
+      "reviewComplete": true,
+      "captureCount": 1,
+      "nativeJobCount": 1,
+      "recoveredSameRequest": true,
+      "nativeRoutingIdentityMatches": true,
+      "snapshotHash": "1d6363819208f40ae11c4f4421c3a19d86eb0f0904801b15e8c1bdb72e45960f",
+      "reportSha256": "50e3374bf949565e3bca7c8dc7339593c36d713ccbeca171d5f7bebba2fc753e",
+      "localEvidence": ".tmp/model-routing-native-gpt-6-luna-high-result.json"
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "requestedEffort": "auto",
+      "status": "passed",
+      "requestId": "6b8556327c9d477bb115eb810990973a",
+      "schema": "ReviewModelRouting/v2",
+      "supportedEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra"
+      ],
+      "actualEffort": "medium",
+      "finalTaskStatus": "completed",
+      "nativeState": "published",
+      "reviewComplete": true,
+      "captureCount": 1,
+      "nativeJobCount": 1,
+      "recoveredSameRequest": false,
+      "nativeRoutingIdentityMatches": true,
+      "snapshotHash": "952dadde815d42317f98e7e698c78b8cae01823909069ecb0be3a7f86f8474eb",
+      "reportSha256": "839cabf84fdc49f3265bb6bec26a4f686c58c86bf066897b5b868a36c1b6ff02",
+      "localEvidence": ".tmp/model-routing-native-gpt-6.1-sol-auto-result.json"
+    }
+  ],
+  "artifacts": [
+    {
+      "repository": "GitlabWorkSpace",
+      "path": "dist/gitlab-workspace-0.44.0.vsix",
+      "size": 2368164,
+      "sha256": "90064180b1ade43a47b502820bca9d90535c2e4e4d4c5740d599a0a86385a825"
+    },
+    {
+      "repository": "WorkflowKit",
+      "path": "dist/gitlab-workspace-kit-1.6.0.zip",
+      "size": 35525580,
+      "sha256": "b1010bd947736c4578a511965b4c7db5c74716ca8854997277d38f448d7af2d7"
+    },
+    {
+      "repository": "WorkflowKit",
+      "path": "dist/workflowkit-installer-1.6.0.py",
+      "size": 5263953,
+      "sha256": "5003d1c05bc98926df35a5916cff7ad06878d59618ed501c1bacdc3a9c2e61b1"
+    }
+  ]
+}

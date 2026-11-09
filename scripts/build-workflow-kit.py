@@ -479,7 +479,7 @@ def build() -> dict[str, object]:
     ).encode("utf-8"))
     capabilities = sorted(["functional-exploration", "ingest", "query", "lint", "audit", "adr", "synthesis",
                            "business-analysis", "system-analysis", "system-design", "notebooklm-export", "archaeology",
-                           "merge-repo", "release-review", "commit-draft", "mr-precheck", "model-routing", "bmad-workflow", "visualize", "syntax-context"])
+                           "merge-repo", "release-review", "commit-draft", "mr-precheck", "model-routing", "model-routing-model-selection", "bmad-workflow", "visualize", "syntax-context"])
     native_hashes = {name: digest(data) for name, data in sorted(native_payload.items())}
     manifest["capabilities"] = capabilities
     manifest["wikiInstalledVersionSha256"] = digest(files["framework/VERSION"])

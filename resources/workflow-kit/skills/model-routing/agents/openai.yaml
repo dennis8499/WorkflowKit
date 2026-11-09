@@ -1,6 +1,6 @@
 interface:
   display_name: "Model Routing"
-  short_description: "依固定變更與風險選擇 Luna 思考強度，支援覆寫與續審升級"
-  default_prompt: "使用 $model-routing effort=auto，依本次 MergeReviewer 或 ReleaseReviewer 的固定變更選擇 GPT-6 Luna 思考強度。"
+  short_description: "依固定變更與風險選擇指定模型的思考強度，支援覆寫與續審升級"
+  default_prompt: "使用 $model-routing effort=auto，依本次 MergeReviewer 或 ReleaseReviewer 的固定變更選擇思考強度，沿用任務指定模型。"
 policy:
   allow_implicit_invocation: true

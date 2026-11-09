@@ -44,12 +44,61 @@ class ModelRoutingTests(unittest.TestCase):
         self.write(context / 'draft.json', {'coverage': [{'status': 'not-reviewed'}]})
         return root, context, job
 
-    def command(self, root, command, revision=0, decision=None, effort='auto'):
+    def command(self, root, command, revision=0, decision=None, effort='auto', model=None, efforts=None):
         decision_path = self.root / 'decision.json'
         if decision is not None:
             self.write(decision_path, decision)
         return routing.operate(SimpleNamespace(command=command, tool=root.name, request_id=self.identifier,
-            runtime_root=str(root), effort=effort, revision=revision, decision_file=str(decision_path)))
+            runtime_root=str(root), effort=effort, revision=revision, decision_file=str(decision_path), model=model, supported_efforts=efforts))
+
+    def test_selected_model_and_sparse_efforts_are_frozen_and_round_trip(self):
+        root, _, _ = self.native()
+        options = dict(model='fixture-model', efforts=['low', 'high', 'xhigh'])
+        state = self.command(root, 'bind', **options)
+        self.assertEqual('ReviewModelRouting/v2', state['schema'])
+        self.assertEqual(state, self.command(root, 'bind', **options))
+        state = self.command(root, 'decide', decision=self.decision('medium'))
+        self.assertEqual('high', state['effort'])
+        self.assertEqual('medium', state['recommended_effort'])
+        self.assertFalse(state['capped'])
+        self.assertEqual(state, self.command(root, 'status'))
+        with self.assertRaisesRegex(ValueError, 'different model capabilities'):
+            self.command(root, 'bind', model='another-model', efforts=options['efforts'])
+        with self.assertRaisesRegex(ValueError, 'different model capabilities'):
+            self.command(root, 'bind', model='fixture-model', efforts=['low', 'max'])
+
+    def test_auto_caps_and_does_not_add_same_effort_escalations(self):
+        root, _, _ = self.native()
+        self.command(root, 'bind', model='fixture-model', efforts=['low', 'xhigh'])
+        first = self.command(root, 'decide', decision=self.decision('max'))
+        self.assertTrue(first['capped'])
+        self.assertEqual('xhigh', first['effort'])
+        self.assertIn('highest supported', first['reason'])
+        result = self.command(root, 'escalate', first['revision'], self.decision('max', 'Recheck affected judgments.'))
+        self.assertEqual(1, len(result['history']))
+        self.assertEqual('reviewing', result['phase'])
+        self.assertEqual(result, self.command(root, 'status'))
+
+    def test_unknown_effort_is_manual_only_and_legacy_bind_remains_v1(self):
+        root, _, _ = self.native()
+        with self.assertRaisesRegex(ValueError, 'Auto cannot order'):
+            self.command(root, 'bind', model='fixture-model', efforts=['custom'])
+        state = self.command(root, 'bind', model='fixture-model', efforts=['custom'], effort='custom')
+        self.assertEqual('custom', state['effort'])
+        self.assertEqual(state, self.command(root, 'status'))
+        other, _, _ = self.native('release-reviewer')
+        self.assertEqual('ReviewModelRouting/v1', self.command(other, 'bind')['schema'])
+
+    def test_v2_rejects_unsupported_or_tampered_actual_effort(self):
+        root, _, _ = self.native()
+        with self.assertRaisesRegex(ValueError, 'not supported'):
+            self.command(root, 'bind', model='fixture-model', efforts=['high'], effort='max')
+        self.command(root, 'bind', model='fixture-model', efforts=['low', 'high'])
+        state = self.command(root, 'decide', decision=self.decision('max'))
+        state['effort'] = 'low'
+        self.write(Path(state['state_path']), state)
+        with self.assertRaisesRegex(ValueError, 'does not match model capabilities'):
+            self.command(root, 'status')
 
     def decision(self, effort, checkpoint=''):
         return {'effort': effort, 'reason': 'Fixed evidence establishes this behavior.',
