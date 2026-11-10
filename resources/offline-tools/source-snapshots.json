@@ -830,6 +830,6 @@
     "resources/workflow-kit/skills/output-style/SKILL.md": "5506258a0cc2d488eac32d932fae7de65998e0fee87c9fe4576a52bde71d1779",
     "resources/workflow-kit/skills/output-style/agents/openai.yaml": "9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb",
     "resources/workflow-kit/skills/output-style/references/examples.md": "dd4ef423b59527199e5edb4de75fb0fba4e43d12704bf6d0cfa9c3dffa51c61a",
-    "resources/workflow-kit/trusted-predecessors.json": "1f73e747e9152b4a015d4e9ff8ca9619dd33aac3cdbadaae1cfd9125efcefaaa"
+    "resources/workflow-kit/trusted-predecessors.json": "63a590264bd83a1aca593a83dd064907f72cbfd99ef982e3935ff0e70550f6bd"
   }
 }

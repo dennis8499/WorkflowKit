@@ -122,6 +122,10 @@ class TransactionTests(unittest.TestCase):
             ("1.5.0", "group", "external"),
             ("1.5.0", "repository", "bundled"),
             ("1.5.0", "repository", "external"),
+            ("1.6.0", "group", "bundled"),
+            ("1.6.0", "group", "external"),
+            ("1.6.0", "repository", "bundled"),
+            ("1.6.0", "repository", "external"),
         )
         selected_version = os.environ.get("WORKFLOW_KIT_TEST_PREDECESSOR_VERSION")
         if selected_version:
@@ -164,7 +168,7 @@ class TransactionTests(unittest.TestCase):
                 legacy_manifest = json.loads((target / MARKER).read_text(encoding="utf-8"))
                 self.assertEqual((version, profile, bmad_mode),
                                  (legacy_manifest["version"], legacy_manifest["profile"], legacy_manifest["bmadMode"]))
-                source_wiki_version = {"1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2", "1.3.5": "0.7.2", "1.3.6": "0.7.2", "1.5.0": "0.7.2"}.get(version, "0.6.4")
+                source_wiki_version = {"1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2", "1.3.5": "0.7.2", "1.3.6": "0.7.2", "1.5.0": "0.7.2", "1.6.0": "0.7.2"}.get(version, "0.6.4")
                 self.assertEqual(source_wiki_version, legacy_manifest["upstream"]["codebase-wiki"]["version"])
                 custom = target / "_bmad/custom/user-choice.md"
                 if bmad_mode == "bundled":
