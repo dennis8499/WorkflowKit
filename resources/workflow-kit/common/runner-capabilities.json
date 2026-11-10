@@ -1,0 +1,5 @@
+{
+  "schema": "WorkflowKitRunnerCapabilities/v1",
+  "review_launch_request": 1,
+  "read_only_inspection": true
+}

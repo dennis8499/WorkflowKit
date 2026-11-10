@@ -5,7 +5,7 @@ description: Route WorkflowKit MergeReviewer and ReleaseReviewer reviews to the 
 
 # Model Routing
 
-Use the workbench-supplied model and supported efforts for both assessment and review. A direct Skill without a model selection retains `gpt-6-luna` and the legacy five efforts. Accept `effort=auto` (default) or an explicitly supported manual effort for this request only. Read [routing policy](references/routing-policy.md) before assessing risk, and [execution protocol](references/execution.md) before capture, dispatch or recovery. These installed references and `scripts/routing.py` are the shared protocol for direct Skills and the workbench.
+Use the workbench-supplied model and supported efforts for assessment and review. A direct Skill without model selection retains `gpt-6-luna` and the legacy five efforts. Accept `effort=auto` (default) or a supported manual effort for this request. Read [execution protocol](references/execution.md) for capture, dispatch or recovery; read [routing policy](references/routing-policy.md) only when assessing or escalating risk. Native authoring and output-style examples are needed when writing their artifacts, not before launch validation.
 
 Select the current role before following the numbered workflow:
 
@@ -15,13 +15,13 @@ Select the current role before following the numbered workflow:
 
 ## 1. Freeze once and assess
 
-Resolve exactly one Reviewer, Repo, base and head, and the authorized external runtime. Read its native Skill and capabilities. Carry the supplied request ID; otherwise generate a UUID. Check whether `<runtime>/jobs/<id>.json` exists before calling native `status`: resume an existing job, or run native `start` once with the documented supported options when no job exists. Save its runtime, context, draft and evidence paths.
+Resolve exactly one Reviewer, Repo, base and head, and the authorized external runtime. Read its native Skill and capabilities. Carry the supplied request ID; otherwise generate a UUID. Validate the launch before loading deeper authoring references. For a supplied bound request, read `.agents/gitlab-workspace-kit/references/review-launch.md`. Otherwise check `<runtime>/jobs/<id>.json`: resume an existing job, or run supported read-only preflight and native `start` once when absent. New Merge sessions prefer advertised compact format; older helpers and existing sessions keep their supported format. Save runtime, context, draft and evidence paths.
 
 Use the kit runner's defaults: `python -X utf8 -B <runner> -- python -X utf8 -B <helper> <command> ... --runtime-root <native-runtime>`. The native `--runtime-root` belongs after `--`, in the helper arguments. The runner stores its own temporary/cache files in a separate location; its optional runtime override must never point to the native review runtime. Use the concrete host-supplied helper command when provided; see [the two runtime paths](references/execution.md#runner-and-native-runtime).
 
 Run `routing.py bind --tool <tool> --runtime-root <runtime> --request-id <id> --effort <requested>`, adding the supplied `--model` and `--supported-efforts` for workbench selections. This binds routing to that native job's fixed sources, model and capabilities. Reuse a saved decision on recovery. Routing reads never mark coverage reviewed and never fill semantic review decisions.
 
-In `auto`, read the complete change inventory and patches through native evidence operations, including continuations, then the context needed to understand risk. Save a UTF-8 decision JSON with `effort`, a concrete `reason`, and `evidence` references. Run `routing.py decide ... --revision <revision> --decision-file <file>`. Apply the policy's highest applicable risk; line counts and paths alone cannot establish semantics. A manual effort is selected by `bind` without another assessment.
+In `auto`, read the complete change inventory and patches through native evidence operations, including continuations, then enough context to establish the highest applicable risk tier. Once frozen behavior supports that choice, hand off remaining consumer investigation to the reviewer. Preserve uncertainty in the handoff; do not finish semantic review during assessment. Save a UTF-8 decision JSON with `effort`, concrete `reason`, `evidence` references and a checkpoint naming pending reads and decisions. Run `routing.py decide ... --revision <revision> --decision-file <file>`. Line counts and paths alone cannot establish risk. Manual effort is selected by `bind` without assessment.
 
 The assess role stops after saving the decision and returns `{"action":"review","request_id":"<id>"}`. The host starts the review at the selected effort. The review role continues through native publication or escalation. Never start a child from the workbench adapter.
 
@@ -37,7 +37,9 @@ Read [reviewer execution](references/reviewer-execution.md) before doing the rev
 
 If new fixed evidence needs greater effort in `auto`, save the native draft and a UTF-8 handoff with `effort`, `reason`, `evidence` and `checkpoint` (remaining work plus previously reviewed paths/decisions to recheck). Run `routing.py escalate ... --revision <revision> --decision-file <file>`, then yield `{"action":"escalate","request_id":"<id>"}` when a strictly higher actual effort was saved. The parent/host starts that effort only after this execution ends. Recheck the checkpoint's affected decisions before continuing. At the saved model's maximum, retain the cap reason and finish the current review with missing evidence visible.
 
-A manual effort remains fixed. Record a higher-effort recommendation in the native limitations or progress when relevant and continue at the requested effort.
+A manual effort remains fixed. Record a higher-effort recommendation in progress or supported `scope_notes` and continue at the requested effort. Reserve native limitations for necessary missing evidence; a model recommendation or a hypothetical external consumer is not such a gap.
+
+After each completed semantic work unit, save the native draft and `routing.py checkpoint` with the current revision. Its `ReviewExecutionCheckpoint/v1` records completed operation IDs, unread continuations, open questions and the next concrete action. The helper binds it to the request, fixed snapshot and saved draft hash. It does not mark coverage reviewed or change effort. Resume from native status and this checkpoint; reconcile a changed draft before trusting the older navigation notes.
 
 After native `finish` and receipt verification, run `routing.py complete ... --revision <revision>`. This requires a published native job and preserves its review outcome, including incomplete coverage. Deliver the report link, important findings, gaps and actual effort. The workbench assessment returns its requested JSON; the formal reviewer delivers ordinary prose after saving completion or escalation. The host reads the saved state and receipt.
 

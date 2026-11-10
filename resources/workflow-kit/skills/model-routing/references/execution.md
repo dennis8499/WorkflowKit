@@ -15,6 +15,8 @@ For native session commands the runner automatically uses `<native-runtime>-work
 
 Check for `<native-runtime>/jobs/<request-id>.json` with a local file existence check before calling `status`. A fresh review has no marker or job yet; perform native `start` once in that case.
 
+When the host supplies a bound launch request, follow the kit's `references/review-launch.md` and use its exact command. It performs preflight before allocating a new native job. For supported inspection commands use the bound action or authenticated runner `--read-only`; mutating operations still prepare their separate scratch runtime.
+
 ## Routing state
 
 Run `<model-routing-dir>/scripts/routing.py` through the installed kit runner, preserving the native runtime argument. Commands emit bounded JSON and use no Git or network operations:
@@ -24,6 +26,7 @@ bind --tool merge-reviewer|release-reviewer --runtime-root PATH --request-id UUI
 status --tool TOOL --runtime-root PATH --request-id UUID
 decide --tool TOOL --runtime-root PATH --request-id UUID --revision N --decision-file PATH
 escalate --tool TOOL --runtime-root PATH --request-id UUID --revision N --decision-file PATH
+checkpoint --tool TOOL --runtime-root PATH --request-id UUID --revision N --checkpoint-file PATH
 complete --tool TOOL --runtime-root PATH --request-id UUID --revision N
 ```
 
@@ -39,7 +42,15 @@ A decision file is a UTF-8 JSON object:
 
 `checkpoint` is required for escalation. References must point to actual frozen evidence; the state helper validates structure and identity, while the agent and native Reviewer validate semantics. Store logical identifiers and masked excerpts, never credentials or full connection strings.
 
-The workbench invokes `$model-routing` for `routing_phase=assess`, with `routing_adapter=workbench`, the supplied request ID/runtime and original native prompt. The assessment saves its decision and returns `{"action":"review","request_id":"<id>"}` under the host's output schema; it never publishes. Formal review uses the native Skill, shared reviewer execution guidance and the saved handoff paths. It delivers the native report or a saved escalation in ordinary prose. The host reads `ReviewModelRouting/v1`, validates model availability and exact effort through `model/list`, and starts each turn with explicit `model` and `effort`. The persisted state and native receipt, rather than the model's final prose, establish completion.
+During `reviewing`, the separate `checkpoint` command saves navigation progress without rerouting. First save the native draft, then pass UTF-8 JSON:
+
+```json
+{"schema":"ReviewExecutionCheckpoint/v1","completed_operation_ids":["init-000001"],"unread_evidence":["artifact <hash> /operations/2/result/lines offset 100"],"open_questions":["Does the fixed Web caller consume the changed response field?"],"next_action":"Read the saved Web continuation, then record its boundary judgment."}
+```
+
+The helper adds request ID, immutable snapshot hash and the current draft SHA-256, and increments the routing revision. Reload status after a revision conflict. Exact retries are idempotent. These notes are not semantic coverage, and an older draft hash calls for reconciliation with current native status rather than recapture.
+
+The workbench invokes `$model-routing` for `routing_phase=assess`, with `routing_adapter=workbench`, the supplied request ID/runtime and original native prompt. The assessment saves its decision and returns `{"action":"review","request_id":"<id>"}` under the host's output schema; it never publishes. Formal review uses the native Skill, shared reviewer execution guidance and saved handoff paths. It delivers the native report or saved escalation in ordinary prose. The host reads the saved v1/v2 routing record, validates model availability and exact effort through `model/list`, and starts each turn with explicit `model` and `effort`. Persisted state and the native receipt establish completion.
 
 Formal review and each escalation use a fresh reviewer conversation. The handoff carries the original task, accepted user supplements, fixed native session and checkpoint. Continue the native review from those artifacts; the assessment's completion rule applies only to its own conversation.
 

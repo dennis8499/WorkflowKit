@@ -183,7 +183,8 @@ class TransactionTests(unittest.TestCase):
                 status = self.status(target)
                 self.assertEqual("installed", status.get("status"), status)
                 self.assertEqual("0.7.2", status["upstreamVersions"]["codebase-wiki"])
-                self.assertEqual("0.20.6", status["upstreamVersions"]["merge-reviewer"])
+                self.assertEqual(harness.CURRENT_SOURCES["merge-reviewer"]["version"],
+                                 status["upstreamVersions"]["merge-reviewer"])
                 self.assertEqual("0.12.0", status["upstreamVersions"]["release-reviewer"])
                 self.assertIn("visualize", status["capabilities"])
                 self.assertEqual(b"user-owned earlier visualization\n", prior_diagram.read_bytes())

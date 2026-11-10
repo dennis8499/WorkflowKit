@@ -9,6 +9,9 @@ import stat
 import subprocess
 import sys
 import uuid
+import hashlib
+import importlib.util
+import json
 
 
 class RuntimePathError(OSError):
@@ -143,9 +146,76 @@ def child_environment(temporary: Path, cache: Path, command: list[str]) -> dict[
     return environment
 
 
+def _review_launcher(arguments: list[str], *, request: bool):
+    """Authenticate the sibling module before importing any of its code."""
+    runner = Path(__file__).resolve()
+    module_path = runner.with_name("review_launch.py")
+    _check_plain_parents(module_path)
+    if not module_path.is_file():
+        raise ValueError("WorkflowKit review launcher is missing; check the installation.")
+    if request:
+        def option(name):
+            if arguments.count(name) != 1 or arguments.index(name) + 1 >= len(arguments):
+                raise ValueError(f"Specify {name} exactly once.")
+            return arguments[arguments.index(name) + 1]
+        source = Path(option("--review-request"))
+        _check_plain_parents(source)
+        expected_request = option("--expected-request-sha256")
+        if not source.is_absolute() or not source.is_file() or source.stat().st_size > 256 * 1024:
+            raise ValueError("Review launch request must be a bounded absolute ordinary file.")
+        with source.open("rb") as stream:
+            raw = stream.read(256 * 1024 + 1)
+        if len(raw) > 256 * 1024:
+            raise ValueError("Review launch metadata exceeds the size limit.")
+        if hashlib.sha256(raw).hexdigest() != expected_request:
+            raise ValueError("Review launch request SHA-256 differs; use the original request file.")
+        binding = json.loads(raw.decode("utf-8-sig"))["binding"]["workflow_kit_runner"]
+        if not isinstance(binding, dict):
+            raise ValueError("Review launch requires an installed runner binding object.")
+        if binding.get("script_sha256") != hashlib.sha256(runner.read_bytes()).hexdigest():
+            raise ValueError("WorkflowKit runner differs from the bound request.")
+        expected = binding.get("review_launch_sha256")
+    else:
+        root = runner.parent.parent.parent
+        marker_path = root / ".gitlab-workspace" / "tool-manifests" / "workflow-kit.json"
+        _check_plain_parents(marker_path)
+        if not marker_path.is_file() or marker_path.stat().st_size > 16 * 1024 * 1024:
+            raise ValueError("Read-only runner requires a verified installation manifest.")
+        files = json.loads(marker_path.read_text(encoding="utf-8"))["files"]
+        if not isinstance(files, dict):
+            raise ValueError("Installed manifest requires a managed file map.")
+        if files.get(".agents/gitlab-workspace-kit/run.py") != hashlib.sha256(runner.read_bytes()).hexdigest():
+            raise ValueError("WorkflowKit runner differs from its installed manifest.")
+        expected = files.get(".agents/gitlab-workspace-kit/review_launch.py")
+    if expected != hashlib.sha256(module_path.read_bytes()).hexdigest():
+        raise ValueError("WorkflowKit review launcher changed; recreate the launch request.")
+    spec = importlib.util.spec_from_file_location("workflowkit_review_launch", module_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.dont_write_bytecode = True
+    spec.loader.exec_module(module)
+    return module, runner
+
+
 def main(argv: list[str] | None = None) -> int:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    options = arguments[:arguments.index("--")] if "--" in arguments else arguments
+    if "--review-request" in options or arguments[:1] == ["--read-only"]:
+        try:
+            structured = "--review-request" in options
+            module, runner = _review_launcher(arguments, request=structured)
+            if structured:
+                return module.launch(arguments, runner, runtime_paths, child_environment)
+            requested, command = _split_arguments(arguments[1:])
+            if requested is not None:
+                raise ValueError("Read-only inspection does not accept a scratch runtime override.")
+            command = module.trusted_readonly(command, runner)
+            return subprocess.run(command, env=module.readonly_environment(), check=False).returncode
+        except (OSError, ValueError, KeyError, TypeError, subprocess.TimeoutExpired) as error:
+            sys.stderr.write(json.dumps({"schema": "ReviewLaunchError/v1", "code": "launch.invalid-request",
+                                         "error": str(error)}, ensure_ascii=False) + "\n")
+            return 2
     try:
-        requested, command = _split_arguments(list(sys.argv[1:] if argv is None else argv))
+        requested, command = _split_arguments(arguments)
         # run.py is installed under <workspace>/.agents/gitlab-workspace-kit/.
         install_root = Path(__file__).resolve().parents[2]
         temporary, cache = runtime_paths(install_root, requested, command)

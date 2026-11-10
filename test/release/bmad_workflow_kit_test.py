@@ -38,11 +38,6 @@ class BmadWorkflowKitTests(unittest.TestCase):
     snapshot = harness.WorkflowKitInstallerTests.snapshot
 
     def setUp(self):
-        self.original_tempdir = tempfile.tempdir
-        temp_root = (ROOT / ".tmp").resolve()
-        temp_root.mkdir(parents=True, exist_ok=True)
-        tempfile.tempdir = str(temp_root)
-        self.addCleanup(setattr, tempfile, "tempdir", self.original_tempdir)
         temporary = tempfile.TemporaryDirectory(prefix="bmad workflow kit ")
         self.addCleanup(temporary.cleanup)
         self.base = Path(temporary.name).resolve()

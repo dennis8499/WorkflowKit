@@ -24,9 +24,7 @@ RUNNER_SOURCE = ROOT / "resources/workflow-kit/common/run.py"
 
 class WorkflowKitRuntimeTests(unittest.TestCase):
     def setUp(self):
-        temporary_root = ROOT / ".tmp"
-        temporary_root.mkdir(parents=True, exist_ok=True)
-        self.temporary = tempfile.TemporaryDirectory(prefix="kit-runtime-", dir=temporary_root)
+        self.temporary = tempfile.TemporaryDirectory(prefix="kit-runtime-")
         self.addCleanup(self.temporary.cleanup)
         self.base = Path(self.temporary.name)
         self.install_root = self.base / "工作區 with spaces"
@@ -174,9 +172,7 @@ class WorkflowKitWikiRuntimeTests(unittest.TestCase):
     create_group = harness.WorkflowKitInstallerTests.create_group
 
     def setUp(self):
-        temporary_root = ROOT / ".tmp"
-        temporary_root.mkdir(parents=True, exist_ok=True)
-        self.temporary = tempfile.TemporaryDirectory(prefix="kit-wiki-runtime-", dir=temporary_root)
+        self.temporary = tempfile.TemporaryDirectory(prefix="kit-wiki-runtime-")
         self.addCleanup(self.temporary.cleanup)
         self.base = Path(self.temporary.name)
         self.group = self.create_group(self.base, wiki="# Workflow Wiki\n")

@@ -33,6 +33,7 @@ class InstalledReviewerSessionTests(unittest.TestCase):
         self.git('config', 'user.name', 'Session fixture')
         self.git('config', 'user.email', 'fixture@example.invalid')
         self.git('config', 'core.autocrlf', 'false')
+        self.git('config', 'core.longpaths', 'true')
         self.git('config', 'commit.gpgsign', 'false')
         self.git('config', 'core.hooksPath', str(self.root / 'no-hooks'))
         (self.repo / 'app.py').write_text('value = 1\n', encoding='utf-8')
@@ -87,6 +88,66 @@ with patch.object(Path, "open", denied):
             cwd=self.repo, env=self.environment, capture_output=True, text=True, encoding='utf-8', timeout=30)
         self.assertEqual(0, process.returncode, process.stdout + process.stderr)
         return json.loads(process.stdout)
+
+    def test_bound_launch_uses_real_native_preflight_resume_and_readonly_inspection(self):
+        tool = 'merge-reviewer'
+        skill = self.group / '.agents/skills' / tool
+        script = skill / 'scripts/review_session.py'
+        runner = self.group / '.agents/gitlab-workspace-kit/run.py'
+        launch_script = runner.with_name('review_launch.py')
+        digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+        rows = [[path.relative_to(skill).as_posix(), digest(path)] for path in skill.rglob('*')
+                if path.is_file() and not any(part in ('__pycache__', '.pytest_cache', '.git') for part in path.parts)
+                and path.suffix != '.pyc']
+        rows.sort(key=lambda row: row[0].encode('utf-8'))
+        binding = {'schema': 'InstalledReviewerBinding/v1', 'tool': tool,
+            'version': (skill / 'VERSION').read_text(encoding='utf-8').strip(),
+            'script_path': str(script), 'script_sha256': digest(script), 'skill_sha256': digest(skill / 'SKILL.md'),
+            'payload_sha256': hashlib.sha256(json.dumps(rows, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest(),
+            'payload_files': len(rows), 'workflow_kit_runner': {'script_path': str(runner),
+                'script_sha256': digest(runner), 'review_launch_sha256': digest(launch_script),
+                'review_launch_request': 1, 'read_only_inspection': True}}
+        runtime = self.root / 'bound-runtime'
+        identifier = 'd' * 32
+        request = {'schema': 'ReviewLaunchRequest/v1', 'tool': tool, 'request_id': identifier,
+                   'workspace': str(self.repo), 'project': str(self.repo), 'base': 'main', 'head': 'feature',
+                   'runtime_root': str(runtime), 'binding': binding, 'draft_format': 'compact', 'no_fetch': True}
+        path = runtime.with_name(runtime.name + '-workflow-kit') / 'launch' / (identifier + '.json')
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps(request, ensure_ascii=False), encoding='utf-8')
+        request_hash = digest(path)
+
+        def invoke(action, *extra, code=0):
+            process = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(runner), '--review-request', str(path),
+                '--expected-request-sha256', request_hash, '--action', action, *map(str, extra)],
+                cwd=self.repo, env=self.environment, capture_output=True, text=True, encoding='utf-8', timeout=90)
+            self.assertEqual(code, process.returncode, process.stderr or process.stdout)
+            return json.loads(process.stdout)
+
+        def snapshot():
+            return {str(item): (item.stat().st_mtime_ns, digest(item)) for item in self.root.rglob('*') if item.is_file()}
+
+        before = snapshot()
+        self.assertTrue(invoke('preflight')['valid'])
+        self.assertEqual(before, snapshot())
+        self.assertFalse(runtime.exists())
+        started = invoke('start')
+        context = Path(started['context_dir'])
+        self.assertEqual('merge-reviewer-authoring/v1', json.loads((context / 'draft.json').read_text(encoding='utf-8'))['schema'])
+        self.assertEqual(str(context), invoke('start')['context_dir'])
+        self.assertEqual(1, len(list((runtime / 'jobs').glob('*.json'))))
+        request_file = self.root / 'read-evidence.json'
+        request_file.write_text(json.dumps([{'id': 'bound-read', 'op': 'read', 'repo': started['selected_repo'],
+                                            'source': 'head', 'path': 'app.py'}]), encoding='utf-8')
+        stepped = self.cli(tool, 'step', '--runtime-root', runtime, '--request-id', identifier,
+                           '--requests-file', request_file)
+        before = snapshot()
+        self.assertEqual('MergeReviewStatusSummary/v1', invoke('status')['schema'])
+        viewed = invoke('view', '--', '--artifact', stepped['operations'][0]['artifact'])
+        self.assertTrue(viewed)
+        self.assertEqual(before, snapshot())
+        self.assertFalse(invoke('check', code=3)['expected_outcome']['review_complete'])
+        invoke('cancel')
 
     def test_both_installed_facades_check_resume_publish_retry_and_cancel_independently(self):
         before = self.git('status', '--porcelain')

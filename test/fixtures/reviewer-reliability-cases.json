@@ -1,0 +1,16 @@
+{
+  "schema": "ReviewerReliabilityCases/v1",
+  "provenance": "Sanitized interaction patterns from eight supplied sessions; original business findings are not an oracle.",
+  "sessions": [
+    {"id": "393-28d5", "scenario": "reviewed-null-reason", "expected": "Normalize optional reviewed reason; publish without losing captured evidence."},
+    {"id": "393-b9bb", "scenario": "launch-argument-drift", "expected": "Execute the bound Project path unchanged; invalid input creates no native job."},
+    {"id": "3d4-4e42", "scenario": "required-consumer-gap", "expected": "Continue available evidence work; retain a justified unresolved required-consumer gap."},
+    {"id": "3dc-a52c", "scenario": "scope-note", "expected": "Declared scope notes alone do not block review completion."},
+    {"id": "3f0-1bcf", "scenario": "readonly-query", "expected": "Inspect saved evidence without scratch probes or metadata writes."},
+    {"id": "3f2-42dc", "scenario": "invalid-workspace-preflight", "expected": "Invalid workspace is rejected before capture and request allocation."},
+    {"id": "434-986d", "scenario": "tests-note-and-progress", "expected": "Unexecuted tests remain explicit without a fabricated gap; completed batches show N/N."},
+    {"id": "434-fee3", "scenario": "compact-repair-and-replay", "expected": "Repair the saved draft without recapture; retain complete search verification."}
+  ],
+  "semantic_cases": ["date-boundary", "cache-date", "duplicate-key", "empty-query", "consumer-contract", "safe-existing", "required-consumer-gap"],
+  "gates": {"minimum_pairs": 3, "prompt_ratio_max": 0.5, "tool_calls_ratio_max": 0.8, "elapsed_ratio_max": 1.1, "quality_regressions_max": 0}
+}

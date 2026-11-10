@@ -22,9 +22,7 @@ PREFIX = "codebase-llm-wiki-codex-0.7.2/.agents/skills/codebase-wiki/vendor/arch
 class ArchifyAtomicOverlayTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Release CI provides Node.js for Wiki visualization checks.")
     def test_windows_no_replace_move_replaces_outputs_after_hard_link_denial(self):
-        temp_root = ROOT / ".tmp"
-        temp_root.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix="kit-archify-overlay-", dir=temp_root) as temporary:
+        with tempfile.TemporaryDirectory(prefix="kit-archify-overlay-") as temporary:
             base = Path(temporary)
             shared = base / "shared"
             shared.mkdir()
@@ -110,7 +108,7 @@ try {
             result = subprocess.run(
                 [shutil.which("node"), str(runner), str(shared / "atomic-output.mjs"), str(output_root)],
                 cwd=ROOT,
-                env={**os.environ, "TEMP": str(temp_root), "TMP": str(temp_root), "TMPDIR": str(temp_root)},
+                env={**os.environ, "TEMP": str(base), "TMP": str(base), "TMPDIR": str(base)},
                 capture_output=True,
                 text=True,
                 encoding="utf-8",

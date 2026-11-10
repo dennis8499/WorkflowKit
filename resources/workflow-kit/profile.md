@@ -35,7 +35,7 @@ to check the installed MergeReviewer capabilities while keeping its arguments:
 
 ```powershell
 $runner = (Resolve-Path ".agents\gitlab-workspace-kit\run.py").Path
-python -X utf8 -B $runner -- python .agents\skills\merge-reviewer\scripts\review_session.py capabilities
+python -X utf8 -B $runner --read-only -- python -X utf8 -B .agents\skills\merge-reviewer\scripts\review_session.py capabilities
 ```
 
 For Node.js or `uv`, replace the command after `--` with the original executable
@@ -71,58 +71,24 @@ complete result. Wiki work does not publish Issues or remote Git operations.
 ## Branch review
 
 Use `$merge-reviewer` or `$release-reviewer` with exactly one Repo and explicit
-base/head branches. For a new or resumed review first use the installed
-`$model-routing` Skill with `effort=auto` (or this request's explicit low, medium,
-high, xhigh or max). It binds one native capture, selects GPT-6 Luna from frozen
-changes and dispatches the selected effort. An already-routed reviewer continuation
-uses the saved request, draft and checkpoint directly; it never routes recursively.
-Auto may checkpoint and strictly raise effort; manual effort stays fixed. In the
-workbench the host controls model/effort per turn; direct Skills use one reviewer
-child at a time. Preserve missing evidence and stop if the exact model/effort is
-unavailable. Routing records do not establish semantic coverage.
- Load that installed Skill's rules, then use its own
-`scripts/review_session.py`: `start`, necessary ordered `step` batches, `check`,
-then `finish`. Save request ID, runtime, draft and artifact paths. After context
-compression use `status` and its remaining work to resume the same frozen review;
-use `cancel` with the same ID to abandon it. The two tools keep independent
-runtime markers, job schemas, drafts and caches; route by the selected tool.
+base/head branches. Read `.agents/skills/model-routing/SKILL.md` and select the
+current role: assessment, executing reviewer, or recovery. It owns model choice,
+effort selection and handoff. Workbench selections remain fixed to the supplied
+model and supported efforts; a direct call keeps the installed default.
 
-The first helper freezes base/head and fresh local peer HEADs within the declared
-VSCode workspace, including its saved `.code-workspace`. Local branches, peer
-HEADs, preview and copying require zero network calls; frozen review stays offline.
-MergeReviewer may share in-flight synchronization or complete results younger than
-300 seconds; ReleaseReviewer fetches explicit remote inputs independently. Stop
-on failure without stale-ref fallback. New versions require `start --refresh`.
-Group roots default to `.review-runtime/` for Merge and `.release-review-runtime/`
-for Release. Single-Repo roots require an external `--runtime-root`; the workbench
-uses `gitlabWorkspace.reviewRuntimePath` and a separate `release-reviewer/` child
-for Release. Keep runtime outside every Git Repo.
+For a supplied `ReviewLaunchRequest/v1`, use its bound runner command verbatim;
+`.agents/gitlab-workspace-kit/references/review-launch.md` defines launch,
+preflight and read-only inspection. Otherwise use the installed native helper's
+capabilities and documented arguments. New Merge drafts prefer supported compact
+format; existing sessions retain their saved format and fixed evidence.
 
-The Skill agent applies Codex Code Review criteria to the Code Diff and follows
-fixed evidence to necessary contracts and direct/indirect consumers. Merge keeps
-`merge-reviewer-workspace-result/v3`, P0-P3 findings and pending confirmations.
-Release keeps `ReleaseReviewDraft/v3`, direct P0/P1 blockers, evidence gaps and new
-deployment dependencies; compare resource use with the entry Repo's fixed base.
-Use each Skill's own evidence and result contract; helper success does not complete
-semantic review. `check` gathers authoring gaps without Git; exit 3 repairs the same
-frozen draft and exit 2 stops. `finish` validates evidence and saves publication
-before cleanup, then safely returns that existing report when retried.
-
-Write one Markdown report under the selected Repo's `review-reports/`, titled
-`合併審查: {Repo}` for Merge or `上版檢查: {Repo}` for Release. Keep incomplete
-coverage visible. Release includes an editable manual Checklist while fixed
-report content stays intact. Existing reports and manual checklist entries survive
-Skills updates and rollback. MR handoff supplies editable branch candidates;
-posting a report remains a separate user-authorized action.
-
-Both reviewer reports use exactly these five H2 headings, in order: `審查結論`,
-`問題總攬`, `問題詳情（工程師參考）`, `範圍與限制`, `技術審查紀錄（工程師參考）`.
-Problem details show name, impact, operation scenario and suggested action, then trigger,
-technical explanation, impact scope, engineering fix and fixed evidence. New drafts use
-Merge `report_layout=engineering-review/v1` or Release `report_layout=engineering-review/v2`
-and complete that Skill's engineering fields, including Release expected/actual.
-Comparison and coverage records belong in the technical section; Release dependencies
-and the editable Checklist belong in scope and limitations.
+The native Skill owns review criteria, coverage, authoring and report layout.
+Load its stage-specific reference when entering that stage. A successful helper
+operation is not a semantic judgment. Preserve the same request and snapshot on
+recovery; save concrete progress before handoff. Keep genuine evidence gaps
+visible, and publish only the native outcome verified by its receipt. Reports
+stay under the selected Repo's `review-reports/`; posting remains a separately
+authorized action. Reviewer runtime must remain outside every Git Repo.
 
 ## Installation and recovery
 

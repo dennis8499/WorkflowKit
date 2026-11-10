@@ -174,6 +174,34 @@ def validate(record, root, tool, identifier, job, context):
         raise ValueError("Active native evidence is missing.")
     if digest(record.get("fixed_sources")) != record.get("snapshot_hash"):
         raise ValueError("Saved routing source identity is corrupt.")
+    saved_checkpoint = record.get("execution_checkpoint")
+    if saved_checkpoint is not None:
+        validate_checkpoint(saved_checkpoint, saved=True)
+        if (saved_checkpoint["request_id"] != identifier
+                or saved_checkpoint["snapshot_hash"] != record["snapshot_hash"]):
+            raise ValueError("Execution checkpoint belongs to another fixed review.")
+
+
+def validate_checkpoint(value, *, saved=False):
+    """A bounded navigation checkpoint, never a semantic coverage assertion."""
+    required = {"schema", "completed_operation_ids", "unread_evidence", "open_questions", "next_action"}
+    allowed = required | ({"request_id", "snapshot_hash", "draft_sha256"} if saved else set())
+    if (not isinstance(value, dict) or set(value) != allowed
+            or value.get("schema") != "ReviewExecutionCheckpoint/v1"):
+        raise ValueError("Execution checkpoint needs the ReviewExecutionCheckpoint/v1 fields.")
+    for key, count, length in (("completed_operation_ids", 1000, 200), ("unread_evidence", 200, 2000),
+                               ("open_questions", 100, 2000)):
+        rows = value[key]
+        if (not isinstance(rows, list) or len(rows) > count
+                or any(not isinstance(row, str) or not row.strip() or len(row) > length for row in rows)
+                or len(set(rows)) != len(rows)):
+            raise ValueError(f"Execution checkpoint {key} must contain bounded unique text entries.")
+    if not isinstance(value["next_action"], str) or not value["next_action"].strip() or len(value["next_action"]) > 4000:
+        raise ValueError("Execution checkpoint needs a concrete next_action.")
+    if saved and (not re.fullmatch(r"[a-f0-9]{32}", value["request_id"])
+                  or any(not re.fullmatch(r"[a-f0-9]{64}", value[key]) for key in ("snapshot_hash", "draft_sha256"))):
+        raise ValueError("Execution checkpoint identity is invalid.")
+    return value
 
 
 def operate(args):
@@ -231,13 +259,23 @@ def operate(args):
             if not existing:
                 raise ValueError("Bind the native session before changing routing.")
             record = existing
-            decision = read(args.decision_file) if args.command != "complete" else {}
+            decision = (read(args.checkpoint_file) if args.command == "checkpoint" else
+                        read(args.decision_file) if args.command != "complete" else {})
             operation_hash = digest({"command": args.command, "revision": args.revision, "decision": decision})
             if record.get("last_operation") == operation_hash:
                 return record
             if args.revision != record["revision"]:
                 raise ValueError("Routing revision conflict; reload status and reconcile.")
-            if args.command == "complete":
+            if args.command == "checkpoint":
+                if record["phase"] != "reviewing" or job.get("state") == "published":
+                    raise ValueError("Execution checkpoints require an active native review.")
+                saved = validate_checkpoint(decision)
+                draft = plain(record["draft_path"])
+                if not draft.is_file():
+                    raise ValueError("Save the native draft before checkpointing progress.")
+                record["execution_checkpoint"] = {**saved, "request_id": identifier,
+                    "snapshot_hash": record["snapshot_hash"], "draft_sha256": hashlib.sha256(draft.read_bytes()).hexdigest()}
+            elif args.command == "complete":
                 if job.get("state") != "published" or not job.get("report_path"):
                     raise ValueError("Only a published native review can complete routing.")
                 if record["phase"] != "reviewing":
@@ -292,7 +330,7 @@ def operate(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    for command in ("bind", "status", "decide", "escalate", "complete"):
+    for command in ("bind", "status", "decide", "escalate", "checkpoint", "complete"):
         sub = commands.add_parser(command)
         sub.add_argument("--tool", choices=tuple(TOOLS), required=True)
         sub.add_argument("--runtime-root", required=True)
@@ -303,7 +341,9 @@ def main(argv=None):
             sub.add_argument("--supported-efforts", help="Comma-separated model/list reasoning efforts; frozen for this request")
         elif command != "status":
             sub.add_argument("--revision", type=int, required=True)
-            if command != "complete":
+            if command == "checkpoint":
+                sub.add_argument("--checkpoint-file", required=True)
+            elif command != "complete":
                 sub.add_argument("--decision-file", required=True)
     try:
         result = operate(parser.parse_args(argv))

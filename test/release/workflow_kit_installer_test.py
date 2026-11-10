@@ -271,9 +271,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         self.assertEqual(len(SKILLS), data["skills"])
 
     def test_visualization_capability_is_installed_for_group_and_repository_profiles(self) -> None:
-        fixture_parent = ROOT / ".tmp"
-        fixture_parent.mkdir(exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix="kit-visualization-", dir=fixture_parent) as temporary:
+        with tempfile.TemporaryDirectory(prefix="kit-visualization-") as temporary:
             base = Path(temporary)
             targets = [(self.create_group(base, wiki="# Group Wiki\n"), "group")]
             repository_parent = base / "repository"
@@ -459,7 +457,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                         self.assertEqual(profile, status["profile"])
                         expected_versions = {
                             "codebase-wiki": "0.7.2",
-                            "merge-reviewer": "0.20.6",
+                            "merge-reviewer": CURRENT_SOURCES["merge-reviewer"]["version"],
                             "release-reviewer": CURRENT_SOURCES["release-reviewer"]["version"],
                         }
                         for skill, version in expected_versions.items():

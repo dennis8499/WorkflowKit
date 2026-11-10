@@ -35,10 +35,10 @@ PINNED_SOURCES = ({'id': 'codebase-wiki',
   'root': 'codebase-llm-wiki-codex-0.7.2'},
  {'id': 'merge-reviewer',
   'repository': 'MergeReviewer',
-  'asset': 'merge-reviewer-0.20.6.zip',
-  'filename': 'merge-reviewer-0.20.6.zip',
-  'version': '0.20.6',
-  'sha256': '0e893102f4213285880fed59558bdbd4ff962390b8302fb3e7a3fc66028092c3'},
+  'asset': 'merge-reviewer-0.21.0.zip',
+  'filename': 'merge-reviewer-0.21.0.zip',
+  'version': '0.21.0',
+  'sha256': 'ee2000a83d922ebd161246709b2a89f6edf634135d4d3f233279ecebdaace54e'},
  {'id': 'release-reviewer',
   'repository': 'ReleaseReviewer',
   'asset': 'release-reviewer-0.12.0.zip',
@@ -204,7 +204,8 @@ def sync_installer_metadata(manifest: dict, payload_files: dict[str, bytes]) -> 
         "PROFILE_MANIFESTS": manifest["profiles"],
         "WIKI_INSTALLED_VERSION_SHA256": manifest["wikiInstalledVersionSha256"],
         "KIT_EXTENSION_FILES": {p: h for p, h in manifest["files"].items()
-                                if p == ".agents/gitlab-workspace-kit/run.py"
+                                if p in (".agents/gitlab-workspace-kit/run.py", ".agents/gitlab-workspace-kit/review_launch.py",
+                                         ".agents/gitlab-workspace-kit/runner-capabilities.json")
                                 or p.startswith((".agents/gitlab-workspace-kit/scripts/", ".agents/gitlab-workspace-kit/references/"))},
         "WIKI_CONFIG_FILES": {name: content.decode("utf-8").replace('mode = "framework"', 'mode = "coexist"').replace('mode = "target"', 'mode = "coexist"')
                               for name, content in _wiki_config_files().items()},

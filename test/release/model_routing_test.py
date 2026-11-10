@@ -49,7 +49,45 @@ class ModelRoutingTests(unittest.TestCase):
         if decision is not None:
             self.write(decision_path, decision)
         return routing.operate(SimpleNamespace(command=command, tool=root.name, request_id=self.identifier,
-            runtime_root=str(root), effort=effort, revision=revision, decision_file=str(decision_path), model=model, supported_efforts=efforts))
+            runtime_root=str(root), effort=effort, revision=revision, decision_file=str(decision_path),
+            checkpoint_file=str(decision_path), model=model, supported_efforts=efforts))
+
+    def progress(self):
+        return {'schema': 'ReviewExecutionCheckpoint/v1', 'completed_operation_ids': ['initial-001'],
+                'unread_evidence': ['artifact sha /operations/2/result/lines offset 100'],
+                'open_questions': ['Trace the fixed consumer before deciding compatibility.'],
+                'next_action': 'Read the saved continuation, then save the consumer judgment.'}
+
+    def test_checkpoint_binds_saved_progress_without_changing_routing(self):
+        root, context, _ = self.native()
+        state = self.command(root, 'bind', effort='high')
+        saved = self.command(root, 'checkpoint', revision=state['revision'], decision=self.progress())
+        self.assertEqual(('high', 'reviewing'), (saved['effort'], saved['phase']))
+        self.assertEqual(state['history'], saved['history'])
+        self.assertEqual(state['snapshot_hash'], saved['execution_checkpoint']['snapshot_hash'])
+        self.assertEqual(self.identifier, saved['execution_checkpoint']['request_id'])
+        self.assertEqual(saved, self.command(root, 'checkpoint', revision=state['revision'], decision=self.progress()))
+        self.assertEqual(saved, self.command(root, 'status'))
+        (context / 'draft.json').write_text('{"coverage": []}')
+        newer = self.command(root, 'checkpoint', revision=saved['revision'], decision=self.progress())
+        self.assertNotEqual(saved['execution_checkpoint']['draft_sha256'], newer['execution_checkpoint']['draft_sha256'])
+
+    def test_checkpoint_rejects_unknown_identity_and_wrong_phase(self):
+        root, _, job = self.native()
+        state = self.command(root, 'bind')
+        with self.assertRaisesRegex(ValueError, 'active native review'):
+            self.command(root, 'checkpoint', revision=state['revision'], decision=self.progress())
+        state = self.command(root, 'decide', revision=state['revision'], decision=self.decision('high'))
+        invalid = {**self.progress(), 'request_id': 'b' * 32}
+        with self.assertRaisesRegex(ValueError, 'fields'):
+            self.command(root, 'checkpoint', revision=state['revision'], decision=invalid)
+        invalid = {**self.progress(), 'next_action': ''}
+        with self.assertRaisesRegex(ValueError, 'next_action'):
+            self.command(root, 'checkpoint', revision=state['revision'], decision=invalid)
+        job.update(state='published', report_path=str(self.root / 'report.md'))
+        self.write(root / 'jobs' / (self.identifier + '.json'), job)
+        with self.assertRaisesRegex(ValueError, 'active native review'):
+            self.command(root, 'checkpoint', revision=state['revision'], decision=self.progress())
 
     def test_selected_model_and_sparse_efforts_are_frozen_and_round_trip(self):
         root, _, _ = self.native()
