@@ -17,6 +17,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / "test/fixtures/reviewer-reliability-cases.json"
 DATE = "2026-11-10T00:00:00+00:00"
+PROMPT_PROFILE = "native-review-no-routing/v2"
 
 CASES = {
     "date-boundary": {
@@ -162,6 +163,8 @@ def score(manifest, oracle, runs):
             raise ValueError("Run source identity differs")
         if not all(isinstance(row.get(field), str) and row[field] for field in ("model", "effort", "skill_sha256", "execution_id", "trace_path", "trace_sha256")):
             raise ValueError("Model, effort, skill identity and trace path are required")
+        if row.get("prompt_profile") != PROMPT_PROFILE:
+            raise ValueError("Run does not use the frozen native-review prompt profile")
         if row["execution_id"] in executions or row["trace_sha256"] in traces:
             raise ValueError("Each run needs an independent execution and raw trace; reused observations are not pairs")
         executions.add(row["execution_id"])
@@ -179,6 +182,18 @@ def score(manifest, oracle, runs):
             raise ValueError("Adjudicated omitted evidence count is required")
         if not isinstance(review.get("matched_findings"), list) or not all(isinstance(x, str) for x in review["matched_findings"]):
             raise ValueError("Adjudicated finding identifiers are required")
+        if row.get("status") != "completed" or type(row.get("exit_code")) is not int or row["exit_code"] != 0:
+            raise ValueError(f"{variant} execution did not complete successfully")
+        if row.get("native_state") != "published":
+            raise ValueError(f"{variant} native review was not published")
+        drift = row.get("source_drift")
+        if not isinstance(drift, list) or any(not isinstance(name, str) for name in drift) or drift:
+            raise ValueError(f"{variant} frozen sources are missing or changed")
+        native_outcome = row.get("native_outcome")
+        if not isinstance(native_outcome, dict) or type(native_outcome.get("review_complete")) is not bool:
+            raise ValueError(f"{variant} native review outcome is missing or invalid")
+        if native_outcome["review_complete"] != review["review_complete"]:
+            raise ValueError(f"{variant} native outcome differs from independent adjudication")
         for field in ("prompt_chars", "tool_calls", "elapsed_seconds", "first_draft_seconds", "duplicate_document_bytes", "authoring_retries"):
             number(row.get(field), field)
         if row.get("tokens") is not None:

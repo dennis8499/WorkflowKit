@@ -6,13 +6,19 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location("reviewer_reliability_benchmark", ROOT / "scripts/benchmark-reviewer-reliability.py")
 BENCH = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(BENCH)
+RUNNER_SPEC = importlib.util.spec_from_file_location("run_reviewer_reliability", ROOT / "scripts/run-reviewer-reliability.py")
+RUNNER = importlib.util.module_from_spec(RUNNER_SPEC)
+RUNNER_SPEC.loader.exec_module(RUNNER)
 
 
 class ReliabilityBenchmarkTests(unittest.TestCase):
@@ -69,6 +75,9 @@ class ReliabilityBenchmarkTests(unittest.TestCase):
                 runs.append({"case": "case", "trial": trial, "variant": variant, "source_identity": identity,
                              "execution_id": f"test-only-{variant}-{trial}",
                              "model": "test-model", "effort": "high", "skill_sha256": variant,
+                             "prompt_profile": BENCH.PROMPT_PROFILE,
+                             "status": "completed", "exit_code": 0, "native_state": "published",
+                             "native_outcome": {"review_complete": True}, "source_drift": [],
                              "trace_path": str(trace), "trace_sha256": hashlib.sha256(trace.read_bytes()).hexdigest(),
                              "prompt_chars": 100 if variant == "baseline" else 40,
                              "tool_calls": 10 if variant == "baseline" else 8,
@@ -122,6 +131,7 @@ class ReliabilityBenchmarkTests(unittest.TestCase):
                      lambda r: r[1].update(source_identity="new-source"),
                      lambda r: r[1].update(tool_calls=None),
                      lambda r: r[1].update(elapsed_seconds=float("nan")),
+                     lambda r: r[1].update(prompt_profile="native-review-with-routing/v1"),
                      lambda r: r[1].update(trace_sha256="wrong"),
                      lambda r: r[1]["adjudication"].update(verified=False),
                      lambda r: r[3].update(skill_sha256="changed-during-run")]
@@ -134,15 +144,128 @@ class ReliabilityBenchmarkTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         BENCH.score(manifest, oracle, changed)
 
+    def test_execution_and_publication_failures_cannot_pass(self):
+        mutations = [lambda row: row.update(status="timed-out"),
+                     lambda row: row.update(status="failed"),
+                     lambda row: row.update(status="native-incomplete"),
+                     lambda row: row.update(exit_code=1),
+                     lambda row: row.update(native_state="failed"),
+                     lambda row: row.update(native_state=None),
+                     lambda row: row.update(native_outcome=None),
+                     lambda row: row.pop("native_outcome"),
+                     lambda row: row.update(source_drift=["service"]),
+                     lambda row: row.update(native_outcome={"review_complete": False})]
+        with tempfile.TemporaryDirectory() as directory:
+            manifest, oracle, runs = self.records(directory)
+            for variant_index in (0, 1):
+                for mutate in mutations:
+                    with self.subTest(variant=runs[variant_index]["variant"], mutate=mutate):
+                        changed = copy.deepcopy(runs)
+                        mutate(changed[variant_index])
+                        with self.assertRaises(ValueError):
+                            BENCH.score(manifest, oracle, changed)
+
     def test_required_gap_must_not_be_marked_complete(self):
         with tempfile.TemporaryDirectory() as directory:
             manifest, oracle, runs = self.records(directory)
             oracle["cases"][0].update(expected_findings=[], expected_complete=False)
             for row in runs:
                 row["adjudication"].update(matched_findings=[], review_complete=False)
+                row["native_outcome"]["review_complete"] = False
             self.assertTrue(BENCH.score(manifest, oracle, runs)["accepted"])
             runs[1]["adjudication"]["review_complete"] = True
+            runs[1]["native_outcome"]["review_complete"] = True
             self.assertFalse(BENCH.score(manifest, oracle, runs)["accepted"])
+
+
+class EngineFreezeTests(unittest.TestCase):
+    def repository(self, root, files):
+        root.mkdir(parents=True)
+        subprocess.run(["git", "init", "-b", "main", str(root)], check=True, capture_output=True,
+                       text=True, encoding="utf-8")
+        for key, value in {"user.name": "Fixture", "user.email": "fixture@example.invalid",
+                           "core.longpaths": "true", "gc.auto": "0", "maintenance.auto": "false"}.items():
+            subprocess.run(["git", "-C", str(root), "config", key, value], check=True, capture_output=True)
+        for name, value in files.items():
+            target = root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(value, encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "."], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(root), "commit", "-m", "baseline"], check=True, capture_output=True)
+        baseline = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], check=True,
+                                  capture_output=True, text=True, encoding="utf-8").stdout.strip()
+        return baseline
+
+    def update_repository(self, root, updates):
+        for name, value in updates.items():
+            (root / name).write_text(value, encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "."], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(root), "commit", "-m", "candidate"], check=True, capture_output=True)
+        return subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], check=True,
+                              capture_output=True, text=True, encoding="utf-8").stdout.strip()
+
+    def test_freeze_pins_all_three_repositories_and_checks_every_payload_file(self):
+        with tempfile.TemporaryDirectory(prefix="reviewer-engine-freeze-") as directory:
+            parent = Path(directory)
+            merge = parent / "MergeReviewer"
+            kit = parent / "WorkflowKit"
+            workspace = parent / "GitlabWorkSpace"
+            merge_base = self.repository(merge, {
+                "skills/merge-reviewer/VERSION": "0.20.6\n",
+                "skills/merge-reviewer/scripts/review_session.py": "# baseline helper\n",
+            })
+            kit_base = self.repository(kit, {
+                "VERSION": "1.7.0\n",
+                "resources/workflow-kit/common/profile.md": "baseline workflow\n",
+            })
+            workspace_base = self.repository(workspace, {
+                "package.json": '{"name":"gitlab-workspace","version":"0.47.0"}\n',
+                "src/codex/launch.ts": "export const version = 'baseline';\n",
+            })
+            merge_head = self.update_repository(merge, {
+                "skills/merge-reviewer/VERSION": "0.21.1\n",
+                "skills/merge-reviewer/scripts/review_session.py": "# candidate helper\n",
+            })
+            kit_head = self.update_repository(kit, {
+                "VERSION": "1.8.0\n",
+                "resources/workflow-kit/common/profile.md": "candidate workflow\n",
+            })
+            workspace_head = self.update_repository(workspace, {
+                "package.json": '{"name":"gitlab-workspace","version":"0.48.0"}\n',
+                "src/codex/launch.ts": "export const version = 'candidate';\n",
+            })
+            with mock.patch.object(RUNNER, "ROOT", kit), \
+                 mock.patch.object(RUNNER, "PARENT", parent), \
+                 mock.patch.object(RUNNER, "transpile_typescript", side_effect=lambda source, _compiler:
+                    [(path.with_suffix(".js")).write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+                     for path in source.rglob("*.ts")]):
+                baseline = SimpleNamespace(variant="baseline", output=parent / "engines/baseline",
+                    merge_ref=merge_base, workflowkit_ref=kit_base, gitlab_workspace_ref=workspace_base)
+                candidate = SimpleNamespace(variant="candidate", output=parent / "engines/candidate",
+                    merge_ref=merge_head, workflowkit_ref=kit_head, gitlab_workspace_ref=workspace_head)
+                RUNNER.freeze(baseline)
+                RUNNER.freeze(candidate)
+                mismatched = SimpleNamespace(variant="baseline", output=parent / "engines/mismatched",
+                    merge_ref=merge_base, workflowkit_ref=kit_head, gitlab_workspace_ref=workspace_base)
+                with self.assertRaisesRegex(ValueError, "acceptance pair"):
+                    RUNNER.freeze(mismatched)
+                self.assertFalse(mismatched.output.exists())
+                baseline_engine, candidate_engine = baseline.output, candidate.output
+                baseline_metadata = RUNNER.load_engine(baseline_engine)
+                candidate_metadata = RUNNER.load_engine(candidate_engine)
+            self.assertEqual(baseline_metadata["source_revisions"], {
+                "merge_reviewer": merge_base, "workflow_kit": kit_base, "gitlab_workspace": workspace_base})
+            self.assertEqual(candidate_metadata["source_revisions"], {
+                "merge_reviewer": merge_head, "workflow_kit": kit_head, "gitlab_workspace": workspace_head})
+            self.assertEqual((baseline_metadata["merge_version"], baseline_metadata["kit_version"],
+                              baseline_metadata["gitlab_workspace_version"]), ("0.20.6", "1.7.0", "0.47.0"))
+            self.assertEqual((candidate_metadata["merge_version"], candidate_metadata["kit_version"],
+                              candidate_metadata["gitlab_workspace_version"]), ("0.21.1", "1.8.0", "0.48.0"))
+            self.assertIn("baseline workflow", (baseline_engine / "kit-source/resources/workflow-kit/common/profile.md").read_text(encoding="utf-8"))
+            self.assertIn("candidate workflow", (candidate_engine / "kit-source/resources/workflow-kit/common/profile.md").read_text(encoding="utf-8"))
+            (candidate_engine / "gws/src/codex/launch.ts").write_text("tampered\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "payload changed"):
+                RUNNER.load_engine(candidate_engine)
 
 
 if __name__ == "__main__":

@@ -24,6 +24,11 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 PARENT = ROOT.parent
+ENGINE_SCHEMA = 'ReviewerReliabilityEngine/v2'
+EXPECTED_VERSIONS = {
+    'baseline': {'merge': '0.20.6', 'workflowkit': '1.7.0', 'gitlab_workspace': '0.47.0'},
+    'candidate': {'merge': '0.21.1', 'workflowkit': '1.8.0', 'gitlab_workspace': '0.48.0'},
+}
 
 
 def sha(data):
@@ -43,40 +48,120 @@ def source_rows(root):
 
 def archive(repository, revision, paths, destination):
     raw = subprocess.run(['git', '-C', str(repository), 'archive', revision, *paths], check=True, capture_output=True).stdout
+    destination.mkdir(parents=True, exist_ok=True)
     with tarfile.open(fileobj=io.BytesIO(raw)) as bundle:
         bundle.extractall(destination, filter='data')
+
+
+def resolve_commit(repository, revision):
+    if not isinstance(revision, str) or not revision.strip():
+        raise ValueError('Every frozen component needs an explicit Git revision.')
+    result = subprocess.run(['git', '-C', str(repository), 'rev-parse', '--verify', revision.strip() + '^{commit}'],
+                            check=True, capture_output=True, text=True, encoding='utf-8')
+    commit = result.stdout.strip().lower()
+    if not re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', commit):
+        raise ValueError(f'Git did not resolve a full commit identity for {revision!r}.')
+    return commit
+
+
+def read_git_file(repository, revision, relative_path):
+    result = subprocess.run(['git', '-C', str(repository), 'show', f'{revision}:{relative_path}'],
+                            check=True, capture_output=True, text=True, encoding='utf-8')
+    return result.stdout
+
+
+def transpile_typescript(source, compiler):
+    script = """const fs=require('fs'),path=require('path'),ts=require(process.argv[1]);
+function walk(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p);else if(p.endsWith('.ts')&&!p.endsWith('.d.ts')){const out=ts.transpileModule(fs.readFileSync(p,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;fs.writeFileSync(p.slice(0,-3)+'.js',out)}}}walk(process.argv[2]);"""
+    subprocess.run(['node', '-e', script, str(compiler), str(source)], check=True)
+
+
+def engine_files(root):
+    """Hash all frozen payload files; engine.json contains this ledger itself."""
+    return [row for row in source_rows(root) if row[0] != 'engine.json']
 
 
 def freeze(args):
     target = args.output.resolve()
     if target.exists():
         raise ValueError('Use a fresh engine directory; frozen engines are never overwritten.')
+    repositories = {
+        'merge_reviewer': (PARENT / 'MergeReviewer', args.merge_ref, ['skills/merge-reviewer'], target / 'native'),
+        'workflow_kit': (ROOT, args.workflowkit_ref, ['VERSION', 'resources/workflow-kit'], target / 'kit-source'),
+        'gitlab_workspace': (PARENT / 'GitlabWorkSpace', args.gitlab_workspace_ref,
+                             ['package.json', 'src'], target / 'gws'),
+    }
+    revisions = {name: resolve_commit(repository, revision)
+                 for name, (repository, revision, _, _) in repositories.items()}
+    versions = {
+        'merge': read_git_file(repositories['merge_reviewer'][0], revisions['merge_reviewer'],
+                               'skills/merge-reviewer/VERSION').strip(),
+        'workflowkit': read_git_file(repositories['workflow_kit'][0], revisions['workflow_kit'], 'VERSION').strip(),
+        'gitlab_workspace': json.loads(read_git_file(repositories['gitlab_workspace'][0],
+                                                      revisions['gitlab_workspace'], 'package.json')).get('version'),
+    }
+    if args.variant not in EXPECTED_VERSIONS or versions != EXPECTED_VERSIONS[args.variant]:
+        raise ValueError(f'Frozen source versions do not match the {args.variant!r} acceptance pair: {versions!r}.')
     target.mkdir(parents=True)
-    if args.variant == 'baseline':
-        archive(PARENT / 'MergeReviewer', args.merge_ref, ['skills/merge-reviewer'], target / 'native')
-        archive(ROOT, 'HEAD', ['resources/workflow-kit'], target / 'kit-source')
-        archive(PARENT / 'GitlabWorkSpace', 'HEAD', ['src'], target / 'gws')
-    else:
-        shutil.copytree(PARENT / 'MergeReviewer/skills/merge-reviewer', target / 'native/skills/merge-reviewer',
-                        ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
-        shutil.copytree(ROOT / 'resources/workflow-kit', target / 'kit-source/resources/workflow-kit',
-                        ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
-        shutil.copytree(PARENT / 'GitlabWorkSpace/src', target / 'gws/src')
-    # Transpile the frozen TS sources with the existing pinned local compiler.
+    for name, (repository, _, paths, destination) in repositories.items():
+        archive(repository, revisions[name], paths, destination)
+
+    # Transpile the frozen TypeScript with the local compiler used by the workspace.
     compiler = PARENT / 'GitlabWorkSpace/node_modules/typescript'
-    script = """const fs=require('fs'),path=require('path'),ts=require(process.argv[1]);
-function walk(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p);else if(p.endsWith('.ts')&&!p.endsWith('.d.ts')){const out=ts.transpileModule(fs.readFileSync(p,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;fs.writeFileSync(p.slice(0,-3)+'.js',out)}}}walk(process.argv[2]);"""
-    subprocess.run(['node', '-e', script, str(compiler), str(target / 'gws/src')], check=True)
+    transpile_typescript(target / 'gws/src', compiler)
     skill = target / 'native/skills/merge-reviewer'
     rows = source_rows(skill)
-    result = {'schema': 'ReviewerReliabilityEngine/v1', 'variant': args.variant,
-              'merge_ref': args.merge_ref if args.variant == 'baseline' else 'working-tree-snapshot',
-              'merge_version': (skill / 'VERSION').read_text(encoding='utf-8').strip(),
+    package = json.loads((target / 'gws/package.json').read_text(encoding='utf-8'))
+    archived_versions = {'merge': (skill / 'VERSION').read_text(encoding='utf-8').strip(),
+                          'workflowkit': (target / 'kit-source/VERSION').read_text(encoding='utf-8').strip(),
+                          'gitlab_workspace': package.get('version')}
+    if archived_versions != versions:
+        raise ValueError('Archived source versions differ from their resolved Git commits.')
+    result = {'schema': ENGINE_SCHEMA, 'variant': args.variant,
+              'source_revisions': revisions,
+              'merge_ref': revisions['merge_reviewer'],
+              'merge_version': versions['merge'],
               'skill_sha256': sha(json.dumps(rows, ensure_ascii=False, separators=(',', ':')).encode()),
-              'skill_files': rows, 'engine_files': source_rows(target),
-              'kit_version': '1.7.0' if args.variant == 'baseline' else (ROOT / 'VERSION').read_text().strip()}
+              'skill_files': rows, 'engine_files': engine_files(target),
+              'kit_version': versions['workflowkit'],
+              'gitlab_workspace_version': versions['gitlab_workspace']}
     save(target / 'engine.json', result)
     return {'engine': str(target), 'variant': args.variant, 'skill_sha256': result['skill_sha256']}
+
+
+def load_engine(engine):
+    """Reject mislabeled or modified frozen components before any model run."""
+    metadata = json.loads((engine / 'engine.json').read_text(encoding='utf-8'))
+    if metadata.get('schema') != ENGINE_SCHEMA:
+        raise ValueError('Unsupported frozen Reviewer engine schema.')
+    variant = metadata.get('variant')
+    if variant not in EXPECTED_VERSIONS:
+        raise ValueError('Frozen Reviewer engine variant is invalid.')
+    revisions = metadata.get('source_revisions')
+    expected_components = {'merge_reviewer', 'workflow_kit', 'gitlab_workspace'}
+    if not isinstance(revisions, dict) or set(revisions) != expected_components or any(
+            not isinstance(value, str) or not re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', value)
+            for value in revisions.values()):
+        raise ValueError('Frozen engine must pin all three source commits.')
+    if engine_files(engine) != metadata.get('engine_files'):
+        raise ValueError('Frozen Reviewer engine payload changed.')
+    skill = engine / 'native/skills/merge-reviewer'
+    actual_skill = source_rows(skill)
+    if actual_skill != metadata.get('skill_files'):
+        raise ValueError('Frozen Reviewer skill changed.')
+    skill_digest = sha(json.dumps(actual_skill, ensure_ascii=False, separators=(',', ':')).encode())
+    if skill_digest != metadata.get('skill_sha256'):
+        raise ValueError('Frozen Reviewer skill digest does not match.')
+    actual_merge = (skill / 'VERSION').read_text(encoding='utf-8').strip()
+    actual_kit = (engine / 'kit-source/VERSION').read_text(encoding='utf-8').strip()
+    actual_workspace = json.loads((engine / 'gws/package.json').read_text(encoding='utf-8')).get('version')
+    if (actual_merge != metadata.get('merge_version') or actual_kit != metadata.get('kit_version')
+            or actual_workspace != metadata.get('gitlab_workspace_version')):
+        raise ValueError('Frozen engine versions do not match their archived source files.')
+    actual_versions = {'merge': actual_merge, 'workflowkit': actual_kit, 'gitlab_workspace': actual_workspace}
+    if actual_versions != EXPECTED_VERSIONS[variant]:
+        raise ValueError('Frozen engine versions do not match the selected acceptance pair.')
+    return metadata
 
 
 def install_fixture(engine, workspace, metadata):
@@ -146,8 +231,8 @@ def run_trial(args, fixture, trial, executable, metadata):
     save(setup_file, setup)
     built = json.loads(subprocess.run(['node', str(ROOT / 'scripts/reviewer-reliability-prompt.cjs'), str(setup_file)],
                                      capture_output=True, text=True, encoding='utf-8', check=True).stdout)
-    guard = (f'\n\nExecution context: routing_adapter=workbench routing_phase=review. The host has selected {args.model} / {args.effort}, manual and fixed. '
-             'You are the executing reviewer: complete native capture, semantic review, draft, check, finish and routing completion in this turn. '
+    guard = (f'\n\nExecution context: isolated native review. The host has fixed {args.model} / {args.effort}; keep these settings and do not route this request. '
+             'You are the executing reviewer: complete native capture, semantic review, draft, check and finish in this turn. '
              'Use real installed Skill helper tools; do not spawn another reviewer. All branches are local; remain offline. '
              f'Only this isolated fixture root is authorized for output: {workroot}. Preserve all inspected source files and commits. '
              'Read only this fixture and its installed Skills/runtime; do not inspect parent directories or unrelated repositories. '
@@ -162,7 +247,8 @@ def run_trial(args, fixture, trial, executable, metadata):
            'skill_sha256': metadata['skill_sha256'], 'prompt_chars': len(prompt), 'tool_calls': 0, 'tokens': None,
            'first_draft_seconds': None, 'duplicate_document_bytes': 0, 'authoring_retries': 0,
            'status': 'running', 'request_id': request_id, 'workspace': str(workspace), 'runtime': str(runtime),
-           'metrics_method': {'prompt_chars': 'Exact product-generated initial prompt plus identical isolation instructions.',
+           'prompt_profile': 'native-review-no-routing/v2',
+           'metrics_method': {'prompt_chars': 'Versioned product prompt plus identical fixed-model native-review instructions.',
                               'tool_calls': 'Observed item.started tool events.',
                               'duplicate_document_bytes': 'Bytes of identical repeated completed Markdown-read command outputs.',
                               'authoring_retries': 'Observed native check/finish command failures with exit code 3.',
@@ -269,7 +355,9 @@ def main():
     frozen = sub.add_parser('freeze')
     frozen.add_argument('--variant', choices=('baseline', 'candidate'), required=True)
     frozen.add_argument('--output', type=Path, required=True)
-    frozen.add_argument('--merge-ref', default='baaa033da81e6814bdbf9bf13b16fe801a4d4f6b')
+    frozen.add_argument('--merge-ref', required=True)
+    frozen.add_argument('--workflowkit-ref', required=True)
+    frozen.add_argument('--gitlab-workspace-ref', required=True)
     run = sub.add_parser('run')
     run.add_argument('--manifest', type=Path, required=True)
     run.add_argument('--engine', type=Path, required=True)
@@ -286,10 +374,7 @@ def main():
         print(json.dumps(freeze(args), ensure_ascii=False))
         return 0
     manifest = json.loads(args.manifest.read_text(encoding='utf-8'))
-    metadata = json.loads((args.engine / 'engine.json').read_text(encoding='utf-8'))
-    actual = source_rows(args.engine / 'native/skills/merge-reviewer')
-    if actual != metadata['skill_files']:
-        raise ValueError('Frozen Reviewer engine changed.')
+    metadata = load_engine(args.engine)
     selected = [row for row in manifest['cases'] if not args.case or row['case'] in args.case]
     if not selected or args.case and set(args.case) != {row['case'] for row in selected}:
         raise ValueError('Unknown fixture case.')
