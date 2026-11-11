@@ -733,6 +733,8 @@ class ResumeTests(GitFixture):
         fields = {'agentBlockSha256': 'a', 'capabilities': [], 'payloadSha256': 'b', 'profileHashes': {},
                   'skills': [], 'overlays': {}, 'files': {'.agents/skills/retired/x': 'c',
                       '.agents/gitlab-workspace-kit/run.py': 'e',
+                        '.agents/gitlab-workspace-kit/review_launch.py': 'g',
+                        '.agents/gitlab-workspace-kit/runner-capabilities.json': 'h',
                       '.agents/gitlab-workspace-kit/references/guide.md': 'f'}}
         manifest = {'version': '1.0.0', 'upstream': {}, 'wikiInstalledVersionSha256': 'd',
                     'profiles': {'group': fields, 'repository': fields}}
@@ -743,6 +745,8 @@ class ResumeTests(GitFixture):
         self.assertEqual({'group', 'repository'}, {item['profile'] for item in trusted['packages']})
         for item in trusted['packages']:
             self.assertEqual({'.agents/gitlab-workspace-kit/run.py': 'e',
+                              '.agents/gitlab-workspace-kit/review_launch.py': 'g',
+                              '.agents/gitlab-workspace-kit/runner-capabilities.json': 'h',
                               '.agents/gitlab-workspace-kit/references/guide.md': 'f'}, item['extensionFiles'])
         with self.assertRaisesRegex(release.ReleaseError, 'conflicts'):
             release.freeze_predecessor(root, '1.0.0', 'a' * 40, files, b'changed installer')

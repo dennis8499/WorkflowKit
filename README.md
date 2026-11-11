@@ -1,6 +1,8 @@
 # WorkflowKit
 
-WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.2、MergeReviewer 0.21.0、ReleaseReviewer 0.12.0、Model Routing、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
+WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.2、MergeReviewer 0.22.0、ReleaseReviewer 0.12.0、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
+
+1.9.0 移除 Auto 與路由子代理，審查使用固定模型設定，並整合原子草稿與搜尋範圍修正。詳見 [1.9.0 發行說明](docs/releases/v1.9.0.md)。
 
 1.8.0 加入固定啟動請求、唯讀審查查詢及 compact 能力協商，整合完成判定、報告渲染與進度修正。新功能由安裝能力啟用，既有 CLI 與歷史收據保持相容。詳見 [1.8.0 發行說明](docs/releases/v1.8.0.md)與[可靠性驗收](docs/reviewer-reliability.md)。
 
@@ -12,7 +14,7 @@ WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM
 
 需要 Python 3.11+。安裝器不需要 Node.js 或網路；若環境沒有 `uv`，安裝仍會完成並提示你在執行 BMAD 工作流程前備妥它。
 
-下載 `gitlab-workspace-kit-1.8.0.zip`，解壓後執行：
+下載 `gitlab-workspace-kit-1.9.0.zip`，解壓後執行：
 
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyProject
@@ -23,7 +25,7 @@ python -X utf8 -B install.py --target C:\projects\MyProject
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyGroup --profile group
 python -X utf8 -B install.py --target C:\projects\MyRepo --profile repository
-python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.8.0
+python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.9.0
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易路徑>
 ```
 
@@ -31,15 +33,12 @@ Group profile 在選定的 Group 根目錄安裝一份共用 BMAD runtime。從�
 
 整合後的 Skills 透過 `.agents/gitlab-workspace-kit/run.py` 啟動本機 Python、Node.js 與 `uv` 輔助工具。它會把暫存檔和 `uv` 快取放在安裝根目錄的 `.gitlab-workspace/runtime/`；單 Repo 的 Reviewer 仍須使用 Git Repo 外已授權可寫的 `--runtime-root`。
 
-## Reviewer Model Routing
+## Reviewer 固定模型設定
 
-`$merge-reviewer`、`$release-reviewer` 先由共用 `$model-routing` 根據本次固定 diff、必要上下文及風險選擇思考強度。直接呼叫預設 GPT-6 Luna；支援 `model-routing-model-selection` 的 GitLab 工作台可在建立前選擇模型與強度，評估、正式審查與升級都使用該模型。預設 `effort=auto`：純敘述文件建議 low、明確局部邏輯建議 medium、一般程式變更建議 high；契約、權限、資料或部署風險提高到 xhigh，大範圍破壞性變更或交織風險建議 max。檔案數與行數只作輔助。
+`$merge-reviewer`、`$release-reviewer` 由目前 agent 執行完整原生審查。工作台在建立任務時選擇模型與固定強度；複製提示詞沿用目前 CLI 設定。審查以原生發布收據和必要缺口判斷完成，不再呼叫 Router。
 
-模型選擇以 `ReviewModelRouting/v2` 保存模型、能力快照、建議及實際強度。Auto 選擇達到建議值的最低可用強度；超出上限時使用模型最高強度並顯示原因，不重複啟動同強度升級。無法排序的強度可手動選擇。舊 v1 紀錄及未提供模型參數的直接呼叫保留 Luna 協定；恢復不更換模型或固定證據。
+恢復保留原 request、固定 SHA、草稿及操作紀錄。GitLab Workspace 0.49.0 可將舊路由工作轉為原保存模型及最後強度；尚未選定強度時先完成手動設定。歷史 JSON 保留作稽核，不補跑 routing complete。正在執行或派送不明的任務須先確認停止，才能切換套件。
 
-可在提示詞指定本次 `effort=low|medium|high|xhigh|max`，例如 `$merge-reviewer effort=xhigh`，再提供 Repo、基礎分支與比較分支。手動指定固定到本次結束；auto 遇到具體新風險時，保存草稿與 checkpoint 後提高強度。直接 Skill 使用一個 Luna reviewer 子 agent；支援此能力的 GitLab 工作台以明確模型／強度啟動各回合，並顯示理由與歷程。
-
-路由及升級沿用一次 capture 的 request ID、SHA、證據與草稿；恢復不重建快照，refresh 使用新 request。紀錄保存在原生 runtime 的 `routing/<tool>/<request-id>.json`，發布後仍可讀取。缺少 Luna 或所需強度時保存進度並回報；一般 Codex 任務的模型設定沿用原設定。
 
 ## BMAD 設定與外部安裝
 

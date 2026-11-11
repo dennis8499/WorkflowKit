@@ -42,10 +42,11 @@ Preserve user-authored Wiki content, synchronize `wiki/index.md` and append
 `wiki/log.md` for durable updates. Raw sources remain read-only during Wiki work.
 
 Use `$merge-reviewer` or `$release-reviewer` with exactly one Repo and explicit
-base/head branches. Read `.agents/skills/model-routing/SKILL.md` and select the
-current role: assessment, executing reviewer, or recovery. It owns model choice,
-effort selection and handoff. Workbench selections remain fixed to the supplied
-model and supported efforts; a direct call keeps the installed default.
+base/head branches. Execute the native Reviewer in the current agent using fixed
+model settings. Workbench supplies the task model and effort; copied prompts
+inherit the current CLI settings. Use
+`.agents/gitlab-workspace-kit/references/reviewer-execution.md` for saving progress,
+same-request recovery and publication checks.
 
 For a supplied `ReviewLaunchRequest/v1`, use its bound runner command verbatim;
 `.agents/gitlab-workspace-kit/references/review-launch.md` defines launch,

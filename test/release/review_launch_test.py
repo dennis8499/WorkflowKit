@@ -204,6 +204,9 @@ class ReviewLaunchTests(unittest.TestCase):
         self.assertEqual(0, self.raw("capabilities").returncode)
         self.assertEqual(0, self.raw("capabilities", "--workspace", str(self.install)).returncode)
         self.assertEqual(2, self.raw("capabilities", "--project", str(self.project)).returncode)
+        inspected = self.raw("preflight", "--workspace", str(self.install), "--project", str(self.project),
+                             "--base", "main", "--head", "feature", "--runtime-root", str(self.runtime), "--request-id", "a" * 32)
+        self.assertEqual(0, inspected.returncode, inspected.stderr)
         result = self.raw("status", "--summary", "--runtime-root", str(self.runtime), "--request-id", "a" * 32)
         self.assertEqual(0, result.returncode, result.stderr)
         for action in ("start", "step", "finish", "cancel", "check"):

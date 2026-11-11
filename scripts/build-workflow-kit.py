@@ -24,7 +24,7 @@ ROOT_NAME = "workflow-kit"
 MAX_FILES = 12000
 MAX_FILE_BYTES = 64 * 1024 * 1024
 MAX_EXPANDED_BYTES = 400 * 1024 * 1024
-KIT_SKILLS = ("output-style", "model-routing")
+KIT_SKILLS = ("output-style",)
 
 PINNED_SOURCES = ({'id': 'codebase-wiki',
   'repository': 'code-base-llm-wiki',
@@ -35,10 +35,10 @@ PINNED_SOURCES = ({'id': 'codebase-wiki',
   'root': 'codebase-llm-wiki-codex-0.7.2'},
  {'id': 'merge-reviewer',
   'repository': 'MergeReviewer',
-  'asset': 'merge-reviewer-0.21.0.zip',
-  'filename': 'merge-reviewer-0.21.0.zip',
-  'version': '0.21.0',
-  'sha256': 'ee2000a83d922ebd161246709b2a89f6edf634135d4d3f233279ecebdaace54e'},
+  'asset': 'merge-reviewer-0.22.0.zip',
+  'filename': 'merge-reviewer-0.22.0.zip',
+  'version': '0.22.0',
+  'sha256': '75f42d03a555b9035f5e27151a1161813b56e6a46b4f0580232861d75aa11d2b'},
  {'id': 'release-reviewer',
   'repository': 'ReleaseReviewer',
   'asset': 'release-reviewer-0.12.0.zip',
@@ -480,7 +480,7 @@ def build() -> dict[str, object]:
     ).encode("utf-8"))
     capabilities = sorted(["functional-exploration", "ingest", "query", "lint", "audit", "adr", "synthesis",
                            "business-analysis", "system-analysis", "system-design", "notebooklm-export", "archaeology",
-                           "merge-repo", "release-review", "commit-draft", "mr-precheck", "model-routing", "model-routing-model-selection", "bmad-workflow", "visualize", "syntax-context"])
+                           "merge-repo", "release-review", "commit-draft", "mr-precheck", "bmad-workflow", "visualize", "syntax-context"])
     native_hashes = {name: digest(data) for name, data in sorted(native_payload.items())}
     manifest["capabilities"] = capabilities
     manifest["wikiInstalledVersionSha256"] = digest(files["framework/VERSION"])
@@ -582,7 +582,7 @@ def build() -> dict[str, object]:
         release = {
             'schema': 'workflowkit-release/v1', 'package': PACKAGE_ID,
             'version': KIT_VERSION, 'workspaceContract': 2, 'installerApi': 1, 'statusApi': 1,
-            'minimumExtensionVersion': '0.40.0',
+            'minimumExtensionVersion': '0.49.0',
             'profiles': ['group', 'repository'], 'skills': skill_names,
             'assets': {
                 'package': {'name': external_zip.name, 'size': temporary_zip.stat().st_size, 'sha256': zip_sha},

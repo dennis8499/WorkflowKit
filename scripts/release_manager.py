@@ -481,7 +481,9 @@ def freeze_predecessor(root, version, source_sha, files, installer):
             record['wikiFiles'] = {key: value for key, value in all_files.items()
                                    if key.startswith('.agents/skills/codebase-wiki/')}
             record['extensionFiles'] = {key: value for key, value in all_files.items()
-                                        if key == '.agents/gitlab-workspace-kit/run.py'
+                                        if key in ('.agents/gitlab-workspace-kit/run.py',
+                                                   '.agents/gitlab-workspace-kit/review_launch.py',
+                                                   '.agents/gitlab-workspace-kit/runner-capabilities.json')
                                         or key.startswith(('.agents/gitlab-workspace-kit/scripts/', '.agents/gitlab-workspace-kit/references/'))}
             if mode != 'external':
                 record.update(legacy_bmad)

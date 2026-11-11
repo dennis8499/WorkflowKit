@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import tarfile
 import unittest
 from unittest import mock
@@ -37,8 +38,23 @@ class TransactionTests(unittest.TestCase):
 
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(prefix="kit-transaction-")
-        self.addCleanup(temporary.cleanup)
-        self.root = Path(temporary.name).resolve()
+        owned_root = Path(temporary.name).resolve()
+        def cleanup():
+            if Path(temporary.name).resolve() != owned_root:
+                raise AssertionError('Test temporary root changed; preserving it.')
+            if os.name == 'nt' and owned_root.drive and not str(owned_root).startswith('\\\\'):
+                # Transaction backups retain long vendor license paths.
+                temporary.name = "\\\\?\\" + str(owned_root)
+            for attempt in range(20):
+                try:
+                    temporary.cleanup()
+                    return
+                except OSError as error:
+                    if os.name != 'nt' or getattr(error, 'winerror', None) not in (32, 145) or attempt == 19:
+                        raise
+                    time.sleep(.15)
+        self.addCleanup(cleanup)
+        self.root = owned_root
         self.group = self.create_group(self.root, wiki="# User Wiki\n")
         self.predecessor_assets = {}
 
@@ -126,6 +142,10 @@ class TransactionTests(unittest.TestCase):
             ("1.6.0", "group", "external"),
             ("1.6.0", "repository", "bundled"),
             ("1.6.0", "repository", "external"),
+            ("1.8.0", "group", "bundled"),
+            ("1.8.0", "group", "external"),
+            ("1.8.0", "repository", "bundled"),
+            ("1.8.0", "repository", "external"),
         )
         selected_version = os.environ.get("WORKFLOW_KIT_TEST_PREDECESSOR_VERSION")
         if selected_version:
@@ -168,12 +188,19 @@ class TransactionTests(unittest.TestCase):
                 legacy_manifest = json.loads((target / MARKER).read_text(encoding="utf-8"))
                 self.assertEqual((version, profile, bmad_mode),
                                  (legacy_manifest["version"], legacy_manifest["profile"], legacy_manifest["bmadMode"]))
-                source_wiki_version = {"1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2", "1.3.5": "0.7.2", "1.3.6": "0.7.2", "1.5.0": "0.7.2", "1.6.0": "0.7.2"}.get(version, "0.6.4")
+                source_wiki_version = {"1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2", "1.3.5": "0.7.2", "1.3.6": "0.7.2", "1.5.0": "0.7.2", "1.6.0": "0.7.2", "1.8.0": "0.7.2"}.get(version, "0.6.4")
                 self.assertEqual(source_wiki_version, legacy_manifest["upstream"]["codebase-wiki"]["version"])
                 custom = target / "_bmad/custom/user-choice.md"
                 if bmad_mode == "bundled":
                     custom.parent.mkdir(parents=True, exist_ok=True)
                     custom.write_text("User BMAD custom content stays.\n", encoding="utf-8")
+                if version == '1.8.0':
+                    for name in ('routing/merge-reviewer/prior.json', 'sessions/prior/draft.json', 'jobs/prior.json'):
+                        path = target / '.review-runtime' / name
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        path.write_bytes(b'{"historical":"preserve without rewriting"}\n')
+                audit = {path.relative_to(target).as_posix(): path.read_bytes()
+                         for path in (target / '.review-runtime').rglob('*.json')}
                 previous = self.snapshot(target)
 
                 upgraded, data = self.install(target, profile=profile)
@@ -187,6 +214,10 @@ class TransactionTests(unittest.TestCase):
                                  status["upstreamVersions"]["merge-reviewer"])
                 self.assertEqual("0.12.0", status["upstreamVersions"]["release-reviewer"])
                 self.assertIn("visualize", status["capabilities"])
+                self.assertNotIn("model-routing", status["capabilities"])
+                self.assertFalse((target / '.agents/skills/model-routing').exists())
+                self.assertEqual(audit, {path.relative_to(target).as_posix(): path.read_bytes()
+                                        for path in (target / '.review-runtime').rglob('*.json')})
                 self.assertEqual(b"user-owned earlier visualization\n", prior_diagram.read_bytes())
                 self.assertEqual("Prior review report stays.\n", report.read_text(encoding="utf-8"))
                 if bmad_mode == "bundled":
@@ -215,6 +246,94 @@ class TransactionTests(unittest.TestCase):
                 if bmad_mode == "external":
                     self.assertEqual("External BMAD configuration stays.\n",
                                      (target / "_bmad/custom/external.md").read_text(encoding="utf-8"))
+
+    def test_user_modified_retired_router_is_preserved_and_upgrade_is_rejected(self):
+        package, old_installer = self.assets_for_predecessor('1.8.0')
+        target = self.create_group(self.root / 'modified-router')
+        legacy = subprocess.run([sys.executable, '-X', 'utf8', '-B',
+            str(ROOT / 'test/release/frozen_installer_runner.py'), str(old_installer), 'install', str(package),
+            str(target), '1.8.0', 'bundled', '--format', 'zip', '--entry-root', 'workflow-kit',
+            '--archive-sha256', hashlib.sha256(package.read_bytes()).hexdigest(), '--profile', 'group'],
+            capture_output=True, text=True, encoding='utf-8', check=False)
+        self.assertEqual(0, legacy.returncode, legacy.stdout + legacy.stderr)
+        modified = target / '.agents/skills/model-routing/references/execution.md'
+        modified.write_bytes(modified.read_bytes() + b'\nUser-owned routing customization.\n')
+        before = self.snapshot(target)
+        upgraded, data = self.install(target)
+        self.assertNotEqual(0, upgraded.returncode, data)
+        self.assertEqual(before, self.snapshot(target))
+
+    def test_1_8_native_review_resume_survives_router_retirement(self):
+        package, old_installer = self.assets_for_predecessor('1.8.0')
+        for profile in ('group', 'repository'):
+            with self.subTest(profile=profile):
+                target = self.create_group(self.root / ('native-' + profile))
+                custom = target / '_bmad/custom/user.md'; custom.parent.mkdir(parents=True)
+                custom.write_text('External BMAD stays.\n', encoding='utf-8')
+                repo = target / 'service' if profile == 'group' else target
+                repo.mkdir(exist_ok=True)
+                def git(*arguments):
+                    result = subprocess.run(['git', '-C', str(repo), *arguments], capture_output=True,
+                                            text=True, encoding='utf-8', check=False)
+                    self.assertEqual(0, result.returncode, result.stderr)
+                git('init', '-q', '-b', 'main')
+                for key, value in (('user.name', 'Native upgrade'), ('user.email', 'fixture@example.invalid'),
+                                   ('core.longpaths', 'true'), ('core.autocrlf', 'false'), ('commit.gpgsign', 'false')):
+                    git('config', key, value)
+                (repo / 'app.py').write_text('value = 1\n', encoding='utf-8')
+                git('add', 'app.py'); git('commit', '-qm', 'base'); git('switch', '-qc', 'feature')
+                (repo / 'app.py').write_text('value = 2\n', encoding='utf-8')
+                git('add', 'app.py'); git('commit', '-qm', 'head')
+                installed = subprocess.run([sys.executable, '-X', 'utf8', '-B',
+                    str(ROOT / 'test/release/frozen_installer_runner.py'), str(old_installer), 'install', str(package),
+                    str(target), '1.8.0', 'bundled', '--format', 'zip', '--entry-root', 'workflow-kit',
+                    '--archive-sha256', hashlib.sha256(package.read_bytes()).hexdigest(), '--profile', profile],
+                    capture_output=True, text=True, encoding='utf-8', check=False)
+                self.assertEqual(0, installed.returncode, installed.stdout + installed.stderr)
+                runtime, identifier = self.root / ('native-runtime-' + profile), 'f' * 32
+                runner = target / '.agents/gitlab-workspace-kit/run.py'
+                helper = target / '.agents/skills/merge-reviewer/scripts/review_session.py'
+                def native(action, *arguments):
+                    result = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(runner), '--',
+                        sys.executable, '-X', 'utf8', '-B', str(helper), action, *map(str, arguments)],
+                        cwd=repo, capture_output=True, text=True, encoding='utf-8', check=False, timeout=90)
+                    self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                    return json.loads(result.stdout)
+                arguments = ['--workspace', target, '--project', repo, '--base', 'main', '--head', 'feature',
+                             '--runtime-root', runtime, '--request-id', identifier, '--draft-format', 'compact', '--no-fetch']
+                started = native('start', *arguments); context = Path(started['context_dir'])
+                operations = [{'id': 'read-before-upgrade', 'op': 'read', 'repo': started['selected_repo'],
+                               'source': 'head', 'path': 'app.py'}]
+                requests = context / 'prior-operations.json'; requests.write_text(json.dumps(operations), encoding='utf-8')
+                first = native('step', '--runtime-root', runtime, '--request-id', identifier, '--requests-file', requests)
+                self.assertTrue(first['complete'])
+                job_path = runtime / 'jobs' / (identifier + '.json')
+                prior_job = json.loads(job_path.read_text(encoding='utf-8'))
+                draft = (context / 'draft.json').read_bytes()
+                manifest = json.loads((context / 'manifest.json').read_text(encoding='utf-8'))
+                route = runtime / 'routing/merge-reviewer' / (identifier + '.json')
+                route.parent.mkdir(parents=True)
+                route.write_bytes(b'{"historical":"read-only route audit"}\n')
+                routing_bytes = route.read_bytes()
+                upgraded, data = self.install(target, profile=profile)
+                self.assertEqual(0, upgraded.returncode, data)
+                resumed = native('start', *arguments)
+                self.assertEqual(started['context_dir'], resumed['context_dir'])
+                self.assertEqual(draft, (context / 'draft.json').read_bytes())
+                resumed_job = json.loads(job_path.read_text(encoding='utf-8'))
+                self.assertEqual(prior_job['input_digest'], resumed_job['input_digest'])
+                self.assertEqual(prior_job['started_at'], resumed_job['started_at'])
+                resumed_manifest = json.loads((context / 'manifest.json').read_text(encoding='utf-8'))
+                self.assertEqual({row['id']: row['sources'] for row in manifest['repositories']},
+                                 {row['id']: row['sources'] for row in resumed_manifest['repositories']})
+                self.assertEqual(manifest['operations'], resumed_manifest['operations'])
+                replayed = native('step', '--runtime-root', runtime, '--request-id', identifier, '--requests-file', requests)
+                self.assertTrue(replayed['operations'][0]['reused'])
+                self.assertEqual(first['operations'][0]['result'], replayed['operations'][0]['result'])
+                self.assertEqual(routing_bytes, route.read_bytes())
+                self.assertFalse((target / '.agents/skills/model-routing').exists())
+                self.assertEqual(1, len(list((runtime / 'jobs').glob('*.json'))))
+                native('cancel', '--runtime-root', runtime, '--request-id', identifier)
 
     def preview(self):
         return self.execute("install", ARCHIVE, self.group, harness.VERSION, "bundled",

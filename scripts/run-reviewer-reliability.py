@@ -26,8 +26,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PARENT = ROOT.parent
 ENGINE_SCHEMA = 'ReviewerReliabilityEngine/v2'
 EXPECTED_VERSIONS = {
-    'baseline': {'merge': '0.20.6', 'workflowkit': '1.7.0', 'gitlab_workspace': '0.47.0'},
-    'candidate': {'merge': '0.21.1', 'workflowkit': '1.8.0', 'gitlab_workspace': '0.48.0'},
+    'baseline': {'merge': '0.21.1', 'workflowkit': '1.8.0', 'gitlab_workspace': '0.48.0'},
+    'candidate': {'merge': '0.22.0', 'workflowkit': '1.9.0', 'gitlab_workspace': '0.49.0'},
 }
 
 
@@ -93,6 +93,9 @@ def freeze(args):
     }
     revisions = {name: resolve_commit(repository, revision)
                  for name, (repository, revision, _, _) in repositories.items()}
+    working = getattr(args, 'working_tree', False)
+    if working and args.variant != 'candidate':
+        raise ValueError('Only candidate may snapshot an explicit working tree.')
     versions = {
         'merge': read_git_file(repositories['merge_reviewer'][0], revisions['merge_reviewer'],
                                'skills/merge-reviewer/VERSION').strip(),
@@ -100,11 +103,23 @@ def freeze(args):
         'gitlab_workspace': json.loads(read_git_file(repositories['gitlab_workspace'][0],
                                                       revisions['gitlab_workspace'], 'package.json')).get('version'),
     }
+    if working:
+        versions = {'merge': (PARENT / 'MergeReviewer/skills/merge-reviewer/VERSION').read_text(encoding='utf-8').strip(),
+                    'workflowkit': (ROOT / 'VERSION').read_text(encoding='utf-8').strip(),
+                    'gitlab_workspace': json.loads((PARENT / 'GitlabWorkSpace/package.json').read_text(encoding='utf-8'))['version']}
     if args.variant not in EXPECTED_VERSIONS or versions != EXPECTED_VERSIONS[args.variant]:
         raise ValueError(f'Frozen source versions do not match the {args.variant!r} acceptance pair: {versions!r}.')
     target.mkdir(parents=True)
     for name, (repository, _, paths, destination) in repositories.items():
-        archive(repository, revisions[name], paths, destination)
+        if working:
+            for relative in paths:
+                source, output = repository / relative, destination / relative
+                if source.is_dir():
+                    shutil.copytree(source, output, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+                else:
+                    output.parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(source, output)
+        else:
+            archive(repository, revisions[name], paths, destination)
 
     # Transpile the frozen TypeScript with the local compiler used by the workspace.
     compiler = PARENT / 'GitlabWorkSpace/node_modules/typescript'
@@ -118,7 +133,7 @@ def freeze(args):
     if archived_versions != versions:
         raise ValueError('Archived source versions differ from their resolved Git commits.')
     result = {'schema': ENGINE_SCHEMA, 'variant': args.variant,
-              'source_revisions': revisions,
+              'source_revisions': revisions, 'source_mode': 'working-tree-snapshot' if working else 'committed',
               'merge_ref': revisions['merge_reviewer'],
               'merge_version': versions['merge'],
               'skill_sha256': sha(json.dumps(rows, ensure_ascii=False, separators=(',', ':')).encode()),
@@ -172,13 +187,13 @@ def install_fixture(engine, workspace, metadata):
     for name in ('profile.md', 'group-instructions.md', 'legacy-cleanup.md'):
         shutil.copyfile(kit / name, common / name)
     shutil.copytree(engine / 'native/skills/merge-reviewer', workspace / '.agents/skills/merge-reviewer')
-    for name in ('model-routing', 'output-style'):
+    for name in ('output-style',):
         shutil.copytree(kit / 'skills' / name, workspace / '.agents/skills' / name)
     (workspace / 'AGENTS.md').write_bytes((kit / 'group-instructions.md').read_bytes())
     # This is a synthetic fixture ownership marker, not a distribution installer.
     files = {'.agents/' + name: digest for name, digest in source_rows(workspace / '.agents')}
     save(workspace / '.gitlab-workspace/tool-manifests/workflow-kit.json',
-         {'version': metadata['kit_version'], 'files': files, 'capabilities': ['model-routing', 'syntax-context']})
+         {'version': metadata['kit_version'], 'files': files, 'capabilities': ['syntax-context']})
 
 
 def resolve_codex(explicit):
@@ -229,8 +244,13 @@ def run_trial(args, fixture, trial, executable, metadata):
              'repositories': [{'name': item.name, 'path': str(item)} for item in sorted(workspace.iterdir()) if (item / '.git').is_dir()]}
     setup_file = directory / 'prompt-input.json'
     save(setup_file, setup)
-    built = json.loads(subprocess.run(['node', str(ROOT / 'scripts/reviewer-reliability-prompt.cjs'), str(setup_file)],
-                                     capture_output=True, text=True, encoding='utf-8', check=True).stdout)
+    built_process = subprocess.run(['node', str(ROOT / 'scripts/reviewer-reliability-prompt.cjs'), str(setup_file)],
+                                   capture_output=True, text=True, encoding='utf-8', check=False)
+    if built_process.returncode:
+        save(directory / 'setup-error.json', {'status': 'setup-failed', 'model_calls': 0,
+                                            'error': built_process.stderr, 'exit_code': built_process.returncode})
+        raise ValueError('Product prompt preparation failed; see setup-error.json.')
+    built = json.loads(built_process.stdout)
     guard = (f'\n\nExecution context: isolated native review. The host has fixed {args.model} / {args.effort}; keep these settings and do not route this request. '
              'You are the executing reviewer: complete native capture, semantic review, draft, check and finish in this turn. '
              'Use real installed Skill helper tools; do not spawn another reviewer. All branches are local; remain offline. '
@@ -355,6 +375,7 @@ def main():
     frozen = sub.add_parser('freeze')
     frozen.add_argument('--variant', choices=('baseline', 'candidate'), required=True)
     frozen.add_argument('--output', type=Path, required=True)
+    frozen.add_argument('--working-tree', action='store_true', help='Freeze explicit candidate working bytes with the base commits and full payload hashes.')
     frozen.add_argument('--merge-ref', required=True)
     frozen.add_argument('--workflowkit-ref', required=True)
     frozen.add_argument('--gitlab-workspace-ref', required=True)

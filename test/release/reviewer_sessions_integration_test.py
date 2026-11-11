@@ -81,14 +81,6 @@ with patch.object(Path, "open", denied):
             self.assertLessEqual(len(process.stdout.encode('utf-8')), 24 * 1024)
         return json.loads(process.stdout)
 
-    def routing(self, tool, command, runtime, identifier, *args):
-        script = self.group / '.agents/skills/model-routing/scripts/routing.py'
-        process = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(script), command,
-            '--tool', tool, '--runtime-root', str(runtime), '--request-id', identifier, *map(str, args)],
-            cwd=self.repo, env=self.environment, capture_output=True, text=True, encoding='utf-8', timeout=30)
-        self.assertEqual(0, process.returncode, process.stdout + process.stderr)
-        return json.loads(process.stdout)
-
     def test_bound_launch_uses_real_native_preflight_resume_and_readonly_inspection(self):
         tool = 'merge-reviewer'
         skill = self.group / '.agents/skills' / tool
@@ -183,9 +175,7 @@ with patch.object(Path, "open", denied):
                     *draft_arguments)
                 self.assertEqual(0, start['network_activity']['fetch_attempt_count'])
                 context = Path(start['context_dir'])
-                route = self.routing(tool, 'bind', runtime, identifier, '--effort', 'high')
-                self.assertEqual('high', route['effort'])
-                self.assertEqual('reviewing', route['phase'])
+                self.assertFalse((self.group / '.agents/skills/model-routing').exists())
                 if tool == 'merge-reviewer':
                     draft = json.loads(Path(start['draft_path']).read_text(encoding='utf-8'))
                     self.assertEqual('merge-reviewer-authoring/v1', draft['schema'])
@@ -282,9 +272,7 @@ with patch.object(Path, "open", denied):
                 self.assertEqual(0, retry_status['network_activity']['fetch_attempt_count'])
                 self.assertEqual(draft, json.loads(draft_path.read_text(encoding='utf-8')))
                 published = self.cli(tool, 'finish', *arguments)
-                route = self.routing(tool, 'complete', runtime, identifier, '--revision', route['revision'])
-                self.assertEqual('complete', route['phase'])
-                self.assertEqual(route['snapshot_hash'], self.routing(tool, 'status', runtime, identifier)['snapshot_hash'])
+                self.assertFalse((runtime / 'routing').exists())
                 report = Path(published['report_path']); outputs.append(report)
                 body = report.read_text(encoding='utf-8')
                 self.assertEqual(['## ' + heading for heading in ('審查結論', '問題總攬', '問題詳情（工程師參考）', '範圍與限制', '技術審查紀錄（工程師參考）')],
@@ -439,7 +427,7 @@ with patch.object(Path, "open", denied):
         root = next(row for row in manifest['required_coverage'] if row['path'] == 'app.py')
         evidence = {'repo': selected, 'source': 'head', 'path': 'app.py',
                     'ref': seed['sources']['head']['ref'], 'line_start': 1, 'line_end': 1}
-        contract = {'id': 'C-001', 'root': root, 'kind': 'behavior', 'symbol': 'value', 'evidence': evidence,
+        contract = {'id': 'C-001', 'root': root, 'kind': 'behavior', 'symbol': 'value', 'search_scope': 'repo-local', 'evidence': evidence,
                     'search_terms': [{'query': value, 'reason': 'Fixed constant name and complete changed line.'}
                                      for value in ('value', 'value = 2')]}
         requests = context / 'contract-round.json'

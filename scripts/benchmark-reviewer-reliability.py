@@ -91,7 +91,7 @@ def initialize(repo, files):
     git(repo, "commit", "-m", "fixed baseline")
 
 
-def prepare(destination, selected=None):
+def prepare(destination, selected=None, changed_files=None):
     destination = Path(destination).resolve()
     if destination.exists():
         raise ValueError("Use a fresh output directory; existing results are never overwritten")
@@ -100,14 +100,21 @@ def prepare(destination, selected=None):
         raise ValueError("Choose unique supported cases")
     destination.mkdir(parents=True)
     fixtures, oracles = [], []
-    for name in chosen:
-        case = CASES[name]
+    plans = [(name, size) for name in chosen for size in (changed_files or [1])]
+    if any(size not in (1, 6, 7, 11, 20) for _, size in plans):
+        raise ValueError('Changed-file sizes must match the observed 1/6/7/11/20-file shapes.')
+    for source_case, size in plans:
+        name = source_case if changed_files is None else f'{source_case}-files-{size}'
+        case = CASES[source_case]
         workspace = destination / name / "Project" / "review workspace"
         project = workspace / "service"
-        initialize(project, {"app.py": case["base"], "CONTRACT.md": case["contract"] + "\n"})
+        additional = {f'local_{i:02}.py': f'def calculate_{i}(value):\n    return value * 2\n' for i in range(1, size)}
+        initialize(project, {"app.py": case["base"], "CONTRACT.md": case["contract"] + "\n", **additional})
         base = git(project, "rev-parse", "HEAD")
         git(project, "switch", "-c", "feature/review")
         (project / "app.py").write_text(case["head"], encoding="utf-8", newline="\n")
+        for filename, content in additional.items():
+            (project / filename).write_text(content.replace('return value * 2', 'return (value * 2)'), encoding='utf-8', newline='\n')
         git(project, "add", ".")
         git(project, "commit", "-m", "comparison change")
         peers = []
@@ -120,7 +127,7 @@ def prepare(destination, selected=None):
             peers.append({"name": peer.name, "sha": git(peer, "rev-parse", "HEAD")})
         source = {"base_sha": base, "head_sha": git(project, "rev-parse", "HEAD"), "peers": peers}
         identity = hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest()
-        fixture = {"case": name, "schema": "ReviewerReliabilitySource/v1", "source_only": True,
+        fixture = {"case": name, "schema": "ReviewerReliabilitySource/v1", "source_only": True, "changed_files": size,
                    "workspace": str(workspace), "project": str(project), "base": "main", "head": "feature/review",
                    "source_identity": identity, **source}
         save(destination / name / "source.json", fixture)
@@ -226,12 +233,13 @@ def score(manifest, oracle, runs):
                     or cq["false_positives"] > bq["false_positives"]):
                 failures.append(f"{case}: quality regression")
         ratios = {}
-        for field, limit in (("prompt_chars", .5), ("tool_calls", .8), ("elapsed_seconds", 1.1)):
+        changed_files = next(row.get('changed_files', 1) for row in manifest['cases'] if row['case'] == case)
+        for field, limit in (("prompt_chars", None), ("tool_calls", None), ("elapsed_seconds", .5 if changed_files >= 6 else 1.0)):
             before = statistics.median(pair["baseline"][field] for pair in pairs)
             after = statistics.median(pair["candidate"][field] for pair in pairs)
             ratio = after / before if before else (1.0 if after == 0 else None)
             ratios[field] = ratio
-            if ratio is None or (before > 0 and ratio > limit):
+            if limit is not None and (ratio is None or (before > 0 and ratio > limit)):
                 failures.append(f"{case}: {field} target missed")
         per_case.append({"case": case, "pairs": len(pairs), "ratios": ratios,
                          "tokens_observed": all(p[v].get("tokens") is not None for p in pairs for v in p)})
@@ -248,9 +256,10 @@ def main():
     grade = sub.add_parser("score")
     for name in ("manifest", "oracle", "runs", "output"):
         grade.add_argument("--" + name, type=Path, required=True)
+    prep.add_argument('--changed-files', action='append', type=int, choices=(1, 6, 7, 11, 20))
     args = parser.parse_args()
     if args.command == "prepare":
-        result = prepare(args.output, args.case)
+        result = prepare(args.output, args.case, args.changed_files)
     else:
         read = lambda p: json.loads(p.read_text(encoding="utf-8"))
         result = score(read(args.manifest), read(args.oracle), read(args.runs))

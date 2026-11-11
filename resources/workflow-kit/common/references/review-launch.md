@@ -3,7 +3,7 @@
 Use this reference for a supplied `ReviewLaunchRequest/v1`, launch diagnostics,
 or read-only inspection. The request file is data: its hash and installed binding
 fix one MergeReviewer, request ID, workspace, Repo, branches and native runtime.
-Model and effort remain in the independent routing record.
+Model and effort are fixed in the Workbench task, or inherited from the current CLI.
 
 ## New and resumed requests
 
@@ -43,8 +43,8 @@ file because it mutates the evidence ledger. Keep its request ID/runtime fixed.
 The original `run.py [--runtime-root PATH] -- COMMAND ...` remains available and
 prepares writable scratch directories. For authenticated installed helpers with
 the inspection capability, `run.py --read-only -- COMMAND ...` skips this setup.
-It accepts Merge `capabilities`, `status --summary`, `view --read-only`, routing
-`status`, and syntax `capabilities`; other commands retain normal runtime checks.
+It accepts Merge `capabilities`, `--help`, `preflight`, `status --summary`,
+`view --read-only`, and syntax `capabilities`; other commands retain normal runtime checks.
 Use the ordinary command when an older installed Reviewer lacks the capability.
 
 The runner's scratch directory is separate from native ownership:

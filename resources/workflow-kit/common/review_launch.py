@@ -322,12 +322,18 @@ def trusted_readonly(command: list[str], runner: Path) -> list[str]:
                 len(helper_args) == 3 and helper_args[1] == "--workspace" and helper_args[2]):
             return command
         options = helper_args[1:]
-        if action == "status" and options.count("--summary") == 1 and "--artifact" not in options:
+        if action == "--help" and not options:
+            return command
+        if action == "preflight":
+            allowed = {"--workspace", "--project", "--base", "--head", "--workspace-file",
+                       "--runtime-root", "--request-id", "--auth-scope", "--draft-format", "--git-timeout",
+                       "--no-fetch", "--refresh"}
+        elif action == "status" and options.count("--summary") == 1 and "--artifact" not in options:
             allowed = {"--runtime-root", "--request-id", "--workspace", "--summary"}
         elif action == "view" and options.count("--read-only") == 1:
             allowed = VIEW_OPTIONS | {"--runtime-root", "--request-id", "--workspace", "--read-only"}
         else:
-            raise ValueError("Read-only runner accepts capabilities, status --summary, or view --read-only.")
+            raise ValueError("Read-only runner accepts capabilities, --help, preflight, status --summary, or view --read-only.")
         seen = set()
         offset = 0
         while offset < len(options):
@@ -335,7 +341,7 @@ def trusted_readonly(command: list[str], runner: Path) -> list[str]:
             if option not in allowed or option in seen:
                 raise ValueError("Unsupported or duplicate read-only helper option.")
             seen.add(option)
-            offset += 1 if option in ("--read-only", "--summary") else 2
+            offset += 1 if option in ("--read-only", "--summary", "--no-fetch", "--refresh") else 2
             if offset > len(options):
                 raise ValueError("Read-only helper option needs a value.")
         return command

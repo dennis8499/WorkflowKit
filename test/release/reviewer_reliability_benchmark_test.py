@@ -126,6 +126,22 @@ class ReliabilityBenchmarkTests(unittest.TestCase):
             runs[1]["adjudication"]["required_evidence_omitted"] = 1
             self.assertFalse(BENCH.score(manifest, oracle, runs)["accepted"])
 
+    def test_large_shapes_require_half_time_and_small_shapes_cannot_slow_down(self):
+        with tempfile.TemporaryDirectory() as directory:
+            manifest, oracle, runs = self.records(directory)
+            for pair in runs:
+                pair['elapsed_seconds'] = 100 if pair['variant'] == 'baseline' else 80
+            for size in (6, 7, 11, 20):
+                manifest['cases'][0]['changed_files'] = size
+                self.assertFalse(BENCH.score(manifest, oracle, runs)['accepted'])
+            for pair in runs:
+                if pair['variant'] == 'candidate': pair['elapsed_seconds'] = 50
+            self.assertTrue(BENCH.score(manifest, oracle, runs)['accepted'])
+            manifest['cases'][0]['changed_files'] = 1
+            for pair in runs:
+                if pair['variant'] == 'candidate': pair['elapsed_seconds'] = 101
+            self.assertFalse(BENCH.score(manifest, oracle, runs)['accepted'])
+
     def test_incompatible_or_unobserved_runs_are_rejected(self):
         mutations = [lambda r: r[1].update(model="another-model"),
                      lambda r: r[1].update(source_identity="new-source"),
@@ -211,27 +227,27 @@ class EngineFreezeTests(unittest.TestCase):
             kit = parent / "WorkflowKit"
             workspace = parent / "GitlabWorkSpace"
             merge_base = self.repository(merge, {
-                "skills/merge-reviewer/VERSION": "0.20.6\n",
+                "skills/merge-reviewer/VERSION": "0.21.1\n",
                 "skills/merge-reviewer/scripts/review_session.py": "# baseline helper\n",
             })
             kit_base = self.repository(kit, {
-                "VERSION": "1.7.0\n",
+                "VERSION": "1.8.0\n",
                 "resources/workflow-kit/common/profile.md": "baseline workflow\n",
             })
             workspace_base = self.repository(workspace, {
-                "package.json": '{"name":"gitlab-workspace","version":"0.47.0"}\n',
+                "package.json": '{"name":"gitlab-workspace","version":"0.48.0"}\n',
                 "src/codex/launch.ts": "export const version = 'baseline';\n",
             })
             merge_head = self.update_repository(merge, {
-                "skills/merge-reviewer/VERSION": "0.21.1\n",
+                "skills/merge-reviewer/VERSION": "0.22.0\n",
                 "skills/merge-reviewer/scripts/review_session.py": "# candidate helper\n",
             })
             kit_head = self.update_repository(kit, {
-                "VERSION": "1.8.0\n",
+                "VERSION": "1.9.0\n",
                 "resources/workflow-kit/common/profile.md": "candidate workflow\n",
             })
             workspace_head = self.update_repository(workspace, {
-                "package.json": '{"name":"gitlab-workspace","version":"0.48.0"}\n',
+                "package.json": '{"name":"gitlab-workspace","version":"0.49.0"}\n',
                 "src/codex/launch.ts": "export const version = 'candidate';\n",
             })
             with mock.patch.object(RUNNER, "ROOT", kit), \
@@ -258,9 +274,9 @@ class EngineFreezeTests(unittest.TestCase):
             self.assertEqual(candidate_metadata["source_revisions"], {
                 "merge_reviewer": merge_head, "workflow_kit": kit_head, "gitlab_workspace": workspace_head})
             self.assertEqual((baseline_metadata["merge_version"], baseline_metadata["kit_version"],
-                              baseline_metadata["gitlab_workspace_version"]), ("0.20.6", "1.7.0", "0.47.0"))
+                              baseline_metadata["gitlab_workspace_version"]), ("0.21.1", "1.8.0", "0.48.0"))
             self.assertEqual((candidate_metadata["merge_version"], candidate_metadata["kit_version"],
-                              candidate_metadata["gitlab_workspace_version"]), ("0.21.1", "1.8.0", "0.48.0"))
+                              candidate_metadata["gitlab_workspace_version"]), ("0.22.0", "1.9.0", "0.49.0"))
             self.assertIn("baseline workflow", (baseline_engine / "kit-source/resources/workflow-kit/common/profile.md").read_text(encoding="utf-8"))
             self.assertIn("candidate workflow", (candidate_engine / "kit-source/resources/workflow-kit/common/profile.md").read_text(encoding="utf-8"))
             (candidate_engine / "gws/src/codex/launch.ts").write_text("tampered\n", encoding="utf-8")

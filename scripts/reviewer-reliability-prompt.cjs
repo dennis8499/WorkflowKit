@@ -20,6 +20,9 @@ const { execFileSync } = require('node:child_process');
   }
   const card = guide.getSkillGuideCard('merge-reviewer', 'merge-repo');
   const prompt = guide.buildSkillGuideContext(card, context) + '\n\n' + guide.buildSkillGuidePrompt(card,
-    { 'merge-repo.repo': input.project, 'merge-repo.base': input.base, 'merge-repo.head': input.head, 'merge-repo.effort': 'auto' }, context);
+    { 'merge-repo.repo': input.project, 'merge-repo.base': input.base, 'merge-repo.head': input.head,
+      // The legacy form uses "auto" for inheritance when routing is disabled.
+      // Both executions still receive the host's explicit identical model/effort.
+      'merge-repo.effort': input.variant === 'baseline' ? 'auto' : 'xhigh' }, context);
   process.stdout.write(JSON.stringify({ prompt, binding, capabilities }));
 })().catch(error => { process.stderr.write(error.stack + '\n'); process.exitCode = 1; });
