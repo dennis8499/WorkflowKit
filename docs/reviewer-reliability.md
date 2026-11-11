@@ -57,4 +57,4 @@ python -X utf8 -B scripts/benchmark-reviewer-reliability.py score --manifest .tm
 
 helper 重播、prompt 長度測試、模型判斷小測試與完整模型審查分開紀錄。只有完整配對且品質及成本門檻全數通過，才能宣稱本輪端到端驗收通過。Syntax context 預設仍為 off。
 
-本輪實際命令及結果見 [1.8.0 驗證紀錄](validation/reviewer-reliability-20261110.md)。
+本輪實際命令及結果見 [2026-11-11 驗證紀錄](validation/reviewer-reliability-20261111.md)。
