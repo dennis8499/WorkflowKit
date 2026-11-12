@@ -1,9 +1,9 @@
 {
-  "candidate": "4b974b123d9cc5b504997aa949451ddfccf5ad8b",
+  "candidate": "451c9473bae6e4d7b3c5e051da5ef826dd4e8a18",
   "dependencies": {},
   "previousTag": "v1.8.0",
   "repository": "WorkflowKit",
-  "runId": "20261112T023715Z-aa614c6b",
+  "runId": "20261112T032455Z-60b0d5dc",
   "schema": "workspace-release/v1",
   "targetVersion": "1.9.0"
 }
