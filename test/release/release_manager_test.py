@@ -677,27 +677,31 @@ def install_payload():
         with self.assertRaisesRegex(release.ReleaseError, 'downgrade'):
             runner.prepare('code-base-llm-wiki')
 
-    def published_upstream_promotion(self, snapshot_version='1.0.0', archive_version=b'1.0.0\n'):
+    def published_upstream_promotion(self, snapshot_version='1.0.0', archive_version=b'1.0.0\n', repository='MergeReviewer'):
         plan, api = self.plan(changed=('WorkflowKit',))
         journal = release.Journal(self.root / 'evidence', plan=plan)
         runner = release.Runner(journal, api)
         runner.checkout('WorkflowKit')
         root = runner.tree('WorkflowKit')
         snapshot = {'sources': {release.SPECS[name]['tool']: {
-            'sourceKind': 'local-snapshot' if name == 'MergeReviewer' else 'official-release',
-            'version': snapshot_version if name == 'MergeReviewer' else '1.0.0'}
+            'sourceKind': 'local-snapshot' if name == repository else 'official-release',
+            'version': snapshot_version if name == repository else '1.0.0'}
             for name in release.WORKSPACE_UPSTREAMS}, 'workspaceFiles': {}}
         release.atomic_write(root / 'resources/offline-tools/source-snapshots.json', release.encoded(snapshot))
+        tool = release.SPECS[repository]['tool']
+        pin = {'id': tool, 'version': '1.0.0'}
+        if repository == 'ReleaseReviewer':
+            pin.update(minimum_version='1.0.0', payload_sha256='0' * 64)
         release.atomic_write(root / 'scripts/build-workflow-kit.py',
-            b"PINNED_SOURCES = ({'id': 'merge-reviewer', 'version': '1.0.0'},)\n")
+            ('PINNED_SOURCES = (' + repr(pin) + ',)\n').encode('utf-8'))
         release.atomic_write(root / 'resources/workflow-kit/trusted-predecessors.json', b'{"packages": []}')
-        data = zip_bytes({'merge-reviewer/VERSION': archive_version})
+        data = zip_bytes({tool + '/VERSION': archive_version})
         calls = []
 
         def downloads(name, version, sha, destination):
             calls.append((name, version, sha))
-            if name == 'MergeReviewer':
-                return {'merge-reviewer-1.0.0.zip': data}, {'sourceSha': sha}
+            if name == repository:
+                return {tool + '-1.0.0.zip': data}, {'sourceSha': sha}
             self.assertEqual('WorkflowKit', name)
             return {'workflowkit-installer-1.0.0.py': zip_bytes({
                 'extension/resources/workflow-kit-installer.py': b'installer'})}, {}
@@ -720,6 +724,19 @@ def install_payload():
             'resources/offline-tools/sources/merge-reviewer-1.0.0.zip').read_bytes())
         self.assertEqual(['MergeReviewer', 'WorkflowKit'], [row[0] for row in calls])
         self.assertTrue((runner.directory / 'verification/MergeReviewer-reused.json').is_file())
+
+    def test_release_reviewer_promotion_refreshes_compatibility_identity_from_verified_files(self):
+        runner, _, _ = self.published_upstream_promotion(repository='ReleaseReviewer')
+        with patch.object(release, 'freeze_predecessor'):
+            runner.sync_workflowkit()
+        builder = runner.tree('WorkflowKit') / 'scripts/build-workflow-kit.py'
+        namespace = {}
+        exec(builder.read_text(encoding='utf-8'), namespace)
+        pin = namespace['PINNED_SOURCES'][0]
+        expected = release.digest(json.dumps([['VERSION', release.digest(b'1.0.0\n')]],
+            ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+        self.assertEqual(expected, pin['payload_sha256'])
+        self.assertEqual('1.0.0', pin['minimum_version'])
 
     def test_reused_upstream_rejects_nonmatching_version_before_download(self):
         runner, _, calls = self.published_upstream_promotion(snapshot_version='1.0.1')

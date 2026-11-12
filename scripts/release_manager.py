@@ -756,6 +756,9 @@ class Runner:
                 pin['root'] = prefix
             atomic_write(root / 'resources/offline-tools/sources' / filename, data)
             hashes = {key: digest(value) for key, value in sorted(entries.items())}
+            if name == 'ReleaseReviewer':
+                rows = [[key, value] for key, value in sorted(hashes.items(), key=lambda item: item[0].encode('utf-8'))]
+                pin['payload_sha256'] = digest(json.dumps(rows, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
             snapshot['sources'][tool] = {'repository': name, 'version': version, 'filename': filename,
                 'entryRoot': prefix, 'sourceKind': 'official-release', 'commit': sha, 'dirty': False,
                 'archiveSha256': digest(data), 'treeSha256': digest(json.dumps(hashes, sort_keys=True, separators=(',', ':')).encode()), 'files': hashes}
