@@ -1,0 +1,9 @@
+{
+  "candidate": "4b974b123d9cc5b504997aa949451ddfccf5ad8b",
+  "dependencies": {},
+  "previousTag": "v1.8.0",
+  "repository": "WorkflowKit",
+  "runId": "20261112T023715Z-aa614c6b",
+  "schema": "workspace-release/v1",
+  "targetVersion": "1.9.0"
+}
