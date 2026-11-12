@@ -762,6 +762,8 @@ class Runner:
             snapshot['sources'][tool] = {'repository': name, 'version': version, 'filename': filename,
                 'entryRoot': prefix, 'sourceKind': 'official-release', 'commit': sha, 'dirty': False,
                 'archiveSha256': digest(data), 'treeSha256': digest(json.dumps(hashes, sort_keys=True, separators=(',', ':')).encode()), 'files': hashes}
+            if name == 'ReleaseReviewer':
+                snapshot['sources'][tool]['payloadSha256'] = pin['payload_sha256']
         rewrite_pins(builder, pins)
         # Refresh owned overlay/profile fingerprints without consulting dirty sibling checkouts.
         snapshot['workspaceFiles'] = {path.relative_to(root).as_posix(): digest(path.read_bytes())

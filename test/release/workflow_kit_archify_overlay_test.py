@@ -13,10 +13,11 @@ import workflow_kit_installer_test as harness
 
 
 ROOT = harness.ROOT
-ARCHIVE = ROOT / "resources/offline-tools/sources/codebase-llm-wiki-codex-0.7.2.zip"
+WIKI_SOURCE = harness.CURRENT_SOURCES["codebase-wiki"]
+ARCHIVE = ROOT / "resources/offline-tools/sources" / WIKI_SOURCE["filename"]
 OVERLAY = (ROOT / "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/"
            "codebase-wiki/vendor/archify/renderers/shared/atomic-output.mjs")
-PREFIX = "codebase-llm-wiki-codex-0.7.2/.agents/skills/codebase-wiki/vendor/archify/renderers/shared/"
+PREFIX = WIKI_SOURCE["entryRoot"] + "/.agents/skills/codebase-wiki/vendor/archify/renderers/shared/"
 
 
 class ArchifyAtomicOverlayTests(unittest.TestCase):

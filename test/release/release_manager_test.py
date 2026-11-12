@@ -737,6 +737,9 @@ def install_payload():
             ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
         self.assertEqual(expected, pin['payload_sha256'])
         self.assertEqual('1.0.0', pin['minimum_version'])
+        snapshot = json.loads((runner.tree('WorkflowKit') /
+            'resources/offline-tools/source-snapshots.json').read_text(encoding='utf-8'))
+        self.assertEqual(expected, snapshot['sources']['release-reviewer']['payloadSha256'])
 
     def test_reused_upstream_rejects_nonmatching_version_before_download(self):
         runner, _, calls = self.published_upstream_promotion(snapshot_version='1.0.1')

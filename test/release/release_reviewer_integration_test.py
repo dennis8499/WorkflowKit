@@ -94,7 +94,9 @@ class ReleaseReviewerIntegrationTests(unittest.TestCase):
         source = harness.CURRENT_SOURCES["release-reviewer"]
         self.assertEqual("0.12.0", requirement["minimumVersion"])
         self.assertEqual(source["payloadSha256"], requirement["payloadSha256"])
-        self.assertEqual("0.12.0", source["version"])
+        self.assertEqual(source["version"], manifest["upstream"]["release-reviewer"]["version"])
+        with zipfile.ZipFile(harness.ROOT / "resources/offline-tools/sources" / source["filename"]) as archive:
+            self.assertEqual(source["version"], archive.read("release-reviewer/VERSION").decode("utf-8").strip())
 
     def test_installed_reviewer_payloads_match_pinned_archives(self):
         for tool in ("merge-reviewer", "release-reviewer"):

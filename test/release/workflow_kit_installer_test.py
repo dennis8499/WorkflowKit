@@ -240,7 +240,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
         self.assertEqual(list(SKILLS), manifest["skills"])
         self.assertEqual({name: item['version'] for name, item in CURRENT_SOURCES.items()},
                          {name: item["version"] for name, item in manifest["upstream"].items()})
-        self.assertEqual("0.7.2", manifest["upstream"]["codebase-wiki"]["version"])
+        self.assertEqual(CURRENT_SOURCES["codebase-wiki"]["version"], manifest["upstream"]["codebase-wiki"]["version"])
         self.assertEqual(2, manifest["workspaceContract"])
         self.assertEqual({"codebase-wiki", "archify-no-hardlink", "bmad-runner"}, set(manifest["overlays"]))
         self.assertTrue(all(overlay["added"] or overlay["replaced"]
@@ -293,7 +293,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                     self.assertEqual(0, installed.returncode, installed.stderr or installed.stdout)
                     self.assertEqual(expected_profile, result["profile"])
                     status = self.status(target)
-                    self.assertEqual("0.7.2", status["upstreamVersions"]["codebase-wiki"])
+                    self.assertEqual(CURRENT_SOURCES["codebase-wiki"]["version"], status["upstreamVersions"]["codebase-wiki"])
                     self.assertIn("visualize", status["capabilities"])
                     wiki_capabilities = json.loads(
                         (target / ".agents/skills/codebase-wiki/capabilities.json").read_text(encoding="utf-8")
@@ -480,7 +480,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                         for tool in ('merge-reviewer', 'release-reviewer'):
                             self.assertFalse((target / '.agents/skills' / tool / 'scripts/_workflow_kit_syntax.py').exists())
                         expected_versions = {
-                            "codebase-wiki": "0.7.2",
+                            "codebase-wiki": CURRENT_SOURCES["codebase-wiki"]["version"],
                             "merge-reviewer": CURRENT_SOURCES["merge-reviewer"]["version"],
                             "release-reviewer": CURRENT_SOURCES["release-reviewer"]["version"],
                         }

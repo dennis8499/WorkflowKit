@@ -240,10 +240,10 @@ class TransactionTests(unittest.TestCase):
                 self.assertEqual(bmad_mode, data["bmadMode"])
                 status = self.status(target)
                 self.assertEqual("installed", status.get("status"), status)
-                self.assertEqual("0.7.2", status["upstreamVersions"]["codebase-wiki"])
+                self.assertEqual(harness.CURRENT_SOURCES["codebase-wiki"]["version"], status["upstreamVersions"]["codebase-wiki"])
                 self.assertEqual(harness.CURRENT_SOURCES["merge-reviewer"]["version"],
                                  status["upstreamVersions"]["merge-reviewer"])
-                self.assertEqual("0.12.0", status["upstreamVersions"]["release-reviewer"])
+                self.assertEqual(harness.CURRENT_SOURCES["release-reviewer"]["version"], status["upstreamVersions"]["release-reviewer"])
                 self.assertIn("visualize", status["capabilities"])
                 self.assertNotIn("model-routing", status["capabilities"])
                 self.assertNotIn('syntax-context', status['capabilities'])
