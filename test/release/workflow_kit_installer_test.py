@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.util
+import io
 import json
 import os
 import shutil
@@ -241,7 +242,7 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                          {name: item["version"] for name, item in manifest["upstream"].items()})
         self.assertEqual("0.7.2", manifest["upstream"]["codebase-wiki"]["version"])
         self.assertEqual(2, manifest["workspaceContract"])
-        self.assertEqual({"codebase-wiki", "archify-no-hardlink", "bmad-runner", "syntax-context"}, set(manifest["overlays"]))
+        self.assertEqual({"codebase-wiki", "archify-no-hardlink", "bmad-runner"}, set(manifest["overlays"]))
         self.assertTrue(all(overlay["added"] or overlay["replaced"]
                             for overlay in manifest["overlays"].values()))
         self.assertEqual(64, len(manifest["payloadSha256"]))
@@ -417,6 +418,26 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                     self.assertEqual(0, verify_run.returncode, verify_run.stderr or verify_run.stdout)
                     self.assertTrue(json.loads(verify_run.stdout)["evidence_fresh"])
 
+    def test_both_payloads_keep_native_reviewers_without_syntax_assets(self) -> None:
+        with zipfile.ZipFile(RELEASE_ZIP) as archive:
+            manifest = json.loads(archive.read('workflow-kit/manifest.json'))
+            self.assertNotIn('syntax-context', manifest['capabilities'])
+            self.assertFalse(any('syntax-context' in name or '_workflow_kit_syntax' in name
+                                 for name in archive.namelist()))
+            for tool in ('merge-reviewer', 'release-reviewer'):
+                asset = manifest['upstream'][tool]['asset']
+                with zipfile.ZipFile(io.BytesIO(archive.read('workflow-kit/sources/' + asset))) as native:
+                    original = {name.removeprefix(tool + '/'): native.read(name)
+                                for name in native.namelist() if not name.endswith('/')}
+                for profile in ('payload', 'repository-payload'):
+                    with self.subTest(tool=tool, profile=profile):
+                        prefix = 'workflow-kit/' + profile + '/.agents/skills/' + tool + '/'
+                        installed = {name.removeprefix(prefix): archive.read(name)
+                                     for name in archive.namelist() if name.startswith(prefix)}
+                        self.assertEqual(original.keys(), installed.keys())
+                        for name, content in original.items():
+                            self.assertEqual(content, installed[name], name)
+
     def test_bundled_and_external_profiles_install_with_current_native_versions(self) -> None:
         with tempfile.TemporaryDirectory(prefix="kit-profile-matrix-") as temporary:
             base = Path(temporary)
@@ -441,13 +462,11 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                         self.assertEqual(0, installed.returncode, installed.stderr or installed.stdout)
                         self.assertEqual((profile, bmad_mode), (receipt["profile"], receipt["bmadMode"]))
                         manifest = json.loads((target / MARKER).read_text(encoding="utf-8"))
-                        expected_overlays = {"archify-no-hardlink", "syntax-context"}
+                        expected_overlays = {"archify-no-hardlink"}
                         if bmad_mode == "bundled":
                             expected_overlays.add("bmad-runner")
                         if profile == "group":
                             expected_overlays.add("codebase-wiki")
-                        else:
-                            expected_overlays.add("syntax-wiki")
                         self.assertEqual(expected_overlays, set(manifest["overlays"]))
                         archify = manifest["overlays"]["archify-no-hardlink"]
                         for relative, record in archify["replaced"].items():
@@ -455,6 +474,11 @@ class WorkflowKitInstallerTests(unittest.TestCase):
                                              hashlib.sha256((target / relative).read_bytes()).hexdigest())
                         status = self.status(target)
                         self.assertEqual(profile, status["profile"])
+                        self.assertNotIn('syntax-context', status['capabilities'])
+                        self.assertFalse((target / '.agents/gitlab-workspace-kit/scripts/syntax-context').exists())
+                        self.assertFalse((target / '.agents/gitlab-workspace-kit/references/syntax-context.md').exists())
+                        for tool in ('merge-reviewer', 'release-reviewer'):
+                            self.assertFalse((target / '.agents/skills' / tool / 'scripts/_workflow_kit_syntax.py').exists())
                         expected_versions = {
                             "codebase-wiki": "0.7.2",
                             "merge-reviewer": CURRENT_SOURCES["merge-reviewer"]["version"],

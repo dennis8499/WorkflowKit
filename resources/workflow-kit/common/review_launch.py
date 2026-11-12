@@ -76,36 +76,6 @@ def verify_managed_directory(directory: Path, install_root: Path, files: dict) -
         raise ValueError("Installed helper payload differs from the managed manifest.")
 
 
-def verify_syntax(binding: dict, install_root: Path) -> None:
-    if not isinstance(binding, dict) or binding.get("schema") != "SyntaxAnalysisBinding/v1":
-        raise ValueError("Invalid bound syntax analysis identity.")
-    directory = install_root / ".agents/gitlab-workspace-kit/scripts/syntax-context"
-    if plain(binding.get("script_path"), file=True) != directory / "cli.py":
-        raise ValueError("Bound syntax entrypoint is outside this installation.")
-    bundle_path = plain(directory / "bundle.json", file=True)
-    raw = bundle_path.read_bytes()
-    if sha(raw) != binding.get("engine_sha256"):
-        raise ValueError("Bound syntax engine changed; recreate the launch request.")
-    bundle = json.loads(raw)
-    if (not isinstance(bundle, dict) or bundle.get("schema") != "SyntaxBundle/v1"
-            or not isinstance(bundle.get("files"), dict) or bundle.get("languages") != binding.get("languages")):
-        raise ValueError("Invalid bound syntax bundle.")
-    for name, expected in bundle["files"].items():
-        if (not isinstance(name, str) or "\\" in name or ":" in name
-                or any(part in ("", ".", "..") for part in name.split("/"))
-                or not isinstance(expected, str) or not SHA.fullmatch(expected)):
-            raise ValueError("Invalid bound syntax asset path or digest.")
-        path = plain(directory / name, file=True)
-        if path.stat().st_size > 64 * 1024 * 1024 or sha(path.read_bytes()) != expected:
-            raise ValueError("Bound syntax asset changed; recreate the launch request.")
-    if not {"cli.py", "acceptance.json"} <= set(bundle["files"]):
-        raise ValueError("Bound syntax bundle is missing required assets.")
-    acceptance = read_object(directory / "acceptance.json")
-    if (acceptance.get("schema") != "SyntaxAcceptance/v1" or acceptance.get("default_mode") not in ("off", "auto")
-            or acceptance["default_mode"] != binding.get("default_mode")):
-        raise ValueError("Bound syntax acceptance mode changed.")
-
-
 def verify_binding(binding: dict, runner: Path) -> Path:
     if not isinstance(binding, dict) or binding.get("schema") != "InstalledReviewerBinding/v1" or binding.get("tool") != "merge-reviewer":
         raise ValueError("Review launch needs an installed MergeReviewer binding.")
@@ -132,8 +102,6 @@ def verify_binding(binding: dict, runner: Path) -> Path:
             or wrapper.get("review_launch_sha256") != sha(plain(Path(__file__).absolute(), file=True).read_bytes())
             or wrapper.get("review_launch_request") != 1 or wrapper.get("read_only_inspection") is not True):
         raise ValueError("WorkflowKit runner binding changed or lacks review launch support.")
-    if "syntax_analysis" in wrapper:
-        verify_syntax(wrapper["syntax_analysis"], install_root)
     return script
 
 
@@ -299,15 +267,6 @@ def trusted_readonly(command: list[str], runner: Path) -> list[str]:
         keys = helper_args[1::2]
         if len(set(keys)) != 3 or set(keys) != {"--tool", "--runtime-root", "--request-id"}:
             raise ValueError("Read-only routing options do not match status.")
-        return command
-    if script == install_root / ".agents" / "gitlab-workspace-kit" / "scripts" / "syntax-context" / "cli.py":
-        if helper_args != ["capabilities"] and not (len(helper_args) == 3 and helper_args[:2] == ["capabilities", "--expected-engine-sha256"]):
-            raise ValueError("Read-only syntax inspection accepts capabilities only.")
-        # The CLI imports local Python modules before it validates the bundle.
-        for path in script.parent.glob("*.py"):
-            path = plain(path, file=True)
-            if files.get(path.relative_to(install_root).as_posix()) != sha(path.read_bytes()):
-                raise ValueError("Installed syntax helper differs from the managed manifest.")
         return command
     if script == install_root / ".agents" / "skills" / "merge-reviewer" / "scripts" / "review_session.py":
         # Verify imported native code as well as the small CLI entrypoint.

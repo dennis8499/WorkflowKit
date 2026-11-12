@@ -1,8 +1,6 @@
 dist/
 __pycache__/
 *.py[cod]
-# Pinned offline native bindings are package source, not Python cache output.
-!resources/workflow-kit/common/scripts/syntax-context/vendor/**/*.pyd
 .tmp/
 .verification/
 resources/offline-tools/*.tar.xz

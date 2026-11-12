@@ -1,0 +1,10 @@
+{
+  "archiveSha256": "17b494722f8e268369e471ffb8a58db995bc5894cd09d73fe01e1501f2b809c4",
+  "profiles": [
+    "group",
+    "repository"
+  ],
+  "sourceKind": "verified-local-build-before-tree-sitter-removal",
+  "sourceSha": "1312ddb37e28ac7200c70f16c6d189209d5e38d0",
+  "version": "1.9.0"
+}

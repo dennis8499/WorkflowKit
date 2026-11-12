@@ -177,26 +177,34 @@ class ReviewLaunchTests(unittest.TestCase):
         self.assertIn("lacks the required", result.stderr)
         self.assertFalse(self.runtime.exists())
 
-    def test_bound_syntax_bundle_is_checked_without_loading_or_writing(self):
+    def test_legacy_optional_binding_needs_no_retired_assets_or_request_rewrite(self):
         directory = self.runner.parent / 'scripts/syntax-context'
-        directory.mkdir(parents=True)
-        (directory / 'cli.py').write_text("raise RuntimeError('must not execute')\n")
-        (directory / 'acceptance.json').write_text(json.dumps({'schema': 'SyntaxAcceptance/v1', 'default_mode': 'off'}))
-        bundle = {'schema': 'SyntaxBundle/v1', 'languages': ['csharp'],
-                  'files': {path.name: launch.sha(path.read_bytes()) for path in directory.iterdir()}}
-        (directory / 'bundle.json').write_text(json.dumps(bundle))
         self.request['binding']['workflow_kit_runner']['syntax_analysis'] = {
             'schema': 'SyntaxAnalysisBinding/v1', 'script_path': str(directory / 'cli.py'),
-            'engine_sha256': launch.sha((directory / 'bundle.json').read_bytes()),
+            'engine_sha256': 'b' * 64,
             'languages': ['csharp'], 'default_mode': 'off'}
         self.save()
+        original_request = self.request_path.read_bytes()
         before = self.files()
         self.assertEqual(0, self.invoke().returncode)
         self.assertEqual(before, self.files())
-        (directory / 'cli.py').write_text('changed')
         result = self.invoke('start')
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertFalse(directory.exists())
+        self.assertEqual(original_request, self.request_path.read_bytes())
+
+    def test_readonly_runner_rejects_retired_helper_before_import(self):
+        script = self.runner.parent / 'scripts/syntax-context/cli.py'
+        script.parent.mkdir(parents=True)
+        script.write_text("raise RuntimeError('retired helper executed')\n")
+        self.marker()
+        before = self.files()
+        result = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(self.runner), '--read-only', '--',
+            sys.executable, '-X', 'utf8', '-B', str(script), 'capabilities'], capture_output=True,
+            text=True, encoding='utf-8', check=False, timeout=30)
         self.assertEqual(2, result.returncode)
-        self.assertIn('syntax asset changed', result.stderr)
+        self.assertNotIn('retired helper executed', result.stderr)
+        self.assertEqual(before, self.files())
         self.assertFalse(self.runtime.exists())
 
     def test_raw_readonly_is_capability_gated_and_rejects_mutating_commands(self):

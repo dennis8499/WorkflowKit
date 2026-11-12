@@ -68,7 +68,7 @@ class ProfileTests(unittest.TestCase):
         self.assertNotIn("merge-mr", state["capabilities"])
         wiki_state = json.loads((self.repo / ".agents/skills/codebase-wiki/install-state.json").read_text(encoding="utf-8"))
         marker = json.loads((self.repo / MARKER).read_text(encoding="utf-8"))
-        self.assertEqual({"archify-no-hardlink", "bmad-runner", "syntax-context", "syntax-wiki"}, set(marker["overlays"]))
+        self.assertEqual({"archify-no-hardlink", "bmad-runner"}, set(marker["overlays"]))
         archify_overlay = marker["overlays"]["archify-no-hardlink"]
         self.assertEqual(5, len(archify_overlay["replaced"]))
         for relative, record in archify_overlay["replaced"].items():

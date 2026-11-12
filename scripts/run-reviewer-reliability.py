@@ -193,7 +193,7 @@ def install_fixture(engine, workspace, metadata):
     # This is a synthetic fixture ownership marker, not a distribution installer.
     files = {'.agents/' + name: digest for name, digest in source_rows(workspace / '.agents')}
     save(workspace / '.gitlab-workspace/tool-manifests/workflow-kit.json',
-         {'version': metadata['kit_version'], 'files': files, 'capabilities': ['syntax-context']})
+         {'version': metadata['kit_version'], 'files': files, 'capabilities': []})
 
 
 def resolve_codex(explicit):
@@ -286,7 +286,7 @@ def run_trial(args, fixture, trial, executable, metadata):
     documents = set()
     with raw_path.open('wb') as raw, timeline_path.open('w', encoding='utf-8') as timeline, (directory / 'stderr.log').open('wb') as stderr:
         child = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=stderr,
-                                 cwd=workroot, env={**os.environ, 'WORKFLOW_KIT_SYNTAX_CONTEXT': 'off'}, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+                                 cwd=workroot, env=os.environ.copy(), creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         child.stdin.write(prompt.encode('utf-8'))
         child.stdin.close()
 

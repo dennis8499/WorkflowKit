@@ -2,13 +2,11 @@
 
 WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.2、MergeReviewer 0.22.0、ReleaseReviewer 0.12.0、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
 
-1.9.0 移除 Auto 與路由子代理，審查使用固定模型設定，並整合原子草稿與搜尋範圍修正。詳見 [1.9.0 發行說明](docs/releases/v1.9.0.md)。
+1.9.0 移除 Auto、路由子代理與實驗性 Tree-sitter 整合，審查使用固定模型設定和原生讀取計畫，並整合原子草稿與搜尋範圍修正。詳見 [1.9.0 發行說明](docs/releases/v1.9.0.md)。
 
 1.8.0 加入固定啟動請求、唯讀審查查詢及 compact 能力協商，整合完成判定、報告渲染與進度修正。新功能由安裝能力啟用，既有 CLI 與歷史收據保持相容。詳見 [1.8.0 發行說明](docs/releases/v1.8.0.md)與[可靠性驗收](docs/reviewer-reliability.md)。
 
 1.7.0 新增審查模型選擇：支援此能力的 GitLab 工作台可指定模型與思考強度，評估、正式審查及升級沿用同一模型。未指定模型時保留 Luna 預設。詳見 [1.7.0 發行說明](docs/releases/v1.7.0.md)。
-
-1.6.0 內附 Tree-sitter，支援 Windows x64／Python 3.11–3.14 的 C#、Java、JS／JSX、TS／TSX 結構導航。整合包增強層可讓 Reviewer 優先讀取完整變更函式與必要上下文；原始上游 ZIP 與證據驗證保持可追溯。模型品質與整體耗時門檻尚未完成，正式預設為關閉，明確設定 `WORKFLOW_KIT_SYNTAX_CONTEXT=auto` 可進行評估。詳見 [導入與驗收說明](docs/syntax-context.md)。
 
 ## 安裝
 

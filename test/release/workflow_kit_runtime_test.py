@@ -78,6 +78,16 @@ class WorkflowKitRuntimeTests(unittest.TestCase):
                          default_runtime.stdout.strip())
         self.assertTrue((self.install_root / ".gitlab-workspace/runtime/uv-cache").is_dir())
 
+    def test_legacy_auto_environment_does_not_prepare_a_syntax_runtime(self):
+        environment = {**os.environ, 'WORKFLOW_KIT_SYNTAX_CONTEXT': 'auto'}
+        environment.pop('WORKFLOW_KIT_SYNTAX_RUNTIME', None)
+        runtime = self.base / 'ordinary-runtime'
+        result = self.invoke('--runtime-root', runtime, '--', sys.executable, '-B', '-c',
+            "import os; print(os.environ.get('WORKFLOW_KIT_SYNTAX_RUNTIME', 'absent'))", env=environment)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual('absent', result.stdout.strip())
+        self.assertFalse((runtime / 'syntax-context').exists())
+
         exit_code = self.invoke(
             "--runtime-root", runtime, "--", sys.executable, "-c", "raise SystemExit(37)"
         )

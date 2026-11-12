@@ -33,9 +33,8 @@ directory such as `--context-dir`, place it under the runner's
 Use `$codebase-wiki` for Wiki maintenance, queries, functional exploration,
 static code audit, ADR, Synthesis, BA/SA/SD, NotebookLM export and archaeology.
 Normal queries are Wiki-first; source-first branches follow the Skill's router.
-For source analysis and Reviewer initial context, follow
-`.agents/gitlab-workspace-kit/references/syntax-context.md` and its acceptance
-mode. Preserve all native coverage, fixed evidence and unread obligations.
+Use the native source inventory and Reviewer read plans. Account for all required
+coverage, fixed evidence and unread obligations.
 A selected concrete Query follow-up carries its one confirmation through the
 bounded update/save and checks. Full Ingest uses the scanner inventory and
 per-file coverage ledger; omissions, blocked files or drift remain incomplete.

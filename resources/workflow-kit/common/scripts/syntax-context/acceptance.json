@@ -1,8 +1,0 @@
-{
-  "schema": "SyntaxAcceptance/v1",
-  "default_mode": "off",
-  "reason": "Paired model quality and end-to-end performance gates have not yet passed.",
-  "targets": {"large_input_ratio": 0.8, "large_total_time_ratio": 0.9, "small_total_time_ratio": 1.05},
-  "model_quality_verified": false,
-  "end_to_end_performance_verified": false
-}

@@ -44,7 +44,7 @@ The original `run.py [--runtime-root PATH] -- COMMAND ...` remains available and
 prepares writable scratch directories. For authenticated installed helpers with
 the inspection capability, `run.py --read-only -- COMMAND ...` skips this setup.
 It accepts Merge `capabilities`, `--help`, `preflight`, `status --summary`,
-`view --read-only`, and syntax `capabilities`; other commands retain normal runtime checks.
+and `view --read-only`; other commands retain normal runtime checks.
 Use the ordinary command when an older installed Reviewer lacks the capability.
 
 The runner's scratch directory is separate from native ownership:

@@ -72,8 +72,8 @@ def source_summary(upstream: dict[str, dict[str, str]]) -> list[str]:
     return [
         compatibility,
         f"Native Codebase LLM Wiki {upstream['codebase-wiki']['version']} adds evidence-bound Archify visualizations. Node.js 18+ and a local browser are required to publish diagrams; installation remains offline. The Group overlay applies shared-Wiki and Repo/path evidence rules.",
-        f"Native MergeReviewer {upstream['merge-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps MergeReviewSession/v1 jobs. The Skill agent applies Code Review defect criteria to the diff and evidence-linked consumers after start freezes base/head and all peer Repos' current local HEADs. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout under the selected Repo's review-reports/ with 8-character commit IDs in the filename and full evidence validation. A pinned WorkflowKit syntax overlay can replace initial full-file reads with native ranges; report and evidence validation remain native.",
-        f"Native ReleaseReviewer {upstream['release-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps ReleaseReviewSession/v1 jobs in an independent runtime. The Skill agent reviews diff-linked blockers and deployment dependencies using base/head and all peer Repos' current local HEADs frozen by start. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout with an editable manual checklist under the selected Repo's review-reports/. A pinned WorkflowKit syntax overlay can select native line-range reads without changing report validation.",
+        f"Native MergeReviewer {upstream['merge-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps MergeReviewSession/v1 jobs. The Skill agent applies Code Review defect criteria to the diff and evidence-linked consumers after start freezes base/head and all peer Repos' current local HEADs. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout under the selected Repo's review-reports/ with 8-character commit IDs in the filename and full evidence validation.",
+        f"Native ReleaseReviewer {upstream['release-reviewer']['version']} accepts one Repo and explicit base/head branches. Its own start/step/check/finish/status/cancel facade keeps ReleaseReviewSession/v1 jobs in an independent runtime. The Skill agent reviews diff-linked blockers and deployment dependencies using base/head and all peer Repos' current local HEADs frozen by start. It writes one Traditional Chinese report beginning with the conclusion and following the native five-section layout with an editable manual checklist under the selected Repo's review-reports/.",
         f"Native CommitReviewer {upstream['commit-reviewer']['version']} prepares staged Commit messages and checks MR readiness with its native inspect/verify/report CLI. It preserves fixed SHA evidence and manual confirmations, saves Traditional Chinese reports under the selected Repo review-reports/, and uses the current Codex model settings.",
         f"Official BMAD Method {upstream['bmad-method']['version']} includes the pinned Codex Core and BMM Skills, shared runtime and manifests. Its native `_bmad` runtime and `.agents/skills/bmad-*` entries are a separately verifiable workflow component with a bundled or external installation mode.",
     ]
@@ -415,13 +415,7 @@ def build() -> dict[str, object]:
         files, "archify-no-hardlink", overlay_root / "archify-no-hardlink",
     )
 
-    import importlib.util
-    syntax_spec = importlib.util.spec_from_file_location("kit_syntax_overlay", ROOT / "scripts/syntax-overlay.py")
-    syntax = importlib.util.module_from_spec(syntax_spec)
-    syntax_spec.loader.exec_module(syntax)
-    syntax_overlay = syntax.apply_reviewers(files, PROFILE)
     native_payload = {name[len("payload/"):]: data for name, data in files.items() if name.startswith("payload/")}
-    repository_wiki_syntax = syntax.wiki_repository(native_payload)
     for source, destination in (("repository-profile.md", "profile.md"), ("repository-instructions.md", "group-instructions.md"), ("legacy-cleanup.md", "legacy-cleanup.md")):
         native_payload[".agents/gitlab-workspace-kit/" + destination] = (PROFILE / source).read_bytes()
 
@@ -431,9 +425,7 @@ def build() -> dict[str, object]:
         ),
         "archify-no-hardlink": archify_no_hardlink_overlay,
         "bmad-runner": bmad_runner_overlay,
-        "syntax-context": syntax_overlay,
     }
-    syntax.wiki_group(files, overlays["codebase-wiki"])
 
     for name in ("profile.md", "group-instructions.md", "legacy-cleanup.md"):
         source_path = PROFILE / name
@@ -480,7 +472,7 @@ def build() -> dict[str, object]:
     ).encode("utf-8"))
     capabilities = sorted(["functional-exploration", "ingest", "query", "lint", "audit", "adr", "synthesis",
                            "business-analysis", "system-analysis", "system-design", "notebooklm-export", "archaeology",
-                           "merge-repo", "release-review", "commit-draft", "mr-precheck", "bmad-workflow", "visualize", "syntax-context"])
+                           "merge-repo", "release-review", "commit-draft", "mr-precheck", "bmad-workflow", "visualize"])
     native_hashes = {name: digest(data) for name, data in sorted(native_payload.items())}
     manifest["capabilities"] = capabilities
     manifest["wikiInstalledVersionSha256"] = digest(files["framework/VERSION"])
@@ -495,9 +487,7 @@ def build() -> dict[str, object]:
     repository_profile = {"files": native_hashes,
                           "payloadSha256": digest(json.dumps(native_hashes, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")),
                           "overlays": {"archify-no-hardlink": archify_no_hardlink_overlay,
-                                       "bmad-runner": bmad_runner_overlay,
-                                       "syntax-context": syntax_overlay,
-                                       "syntax-wiki": repository_wiki_syntax}, **base_profile_metadata,
+                                       "bmad-runner": bmad_runner_overlay}, **base_profile_metadata,
                           "profileHashes": {name: native_hashes[".agents/gitlab-workspace-kit/" + name] for name in ("profile.md", "group-instructions.md", "legacy-cleanup.md")},
                           "bmadFiles": bmad_files,
                           "agentBlockSha256": digest(native_payload[".agents/gitlab-workspace-kit/group-instructions.md"].decode("utf-8").replace('\r\n', '\n').replace('\r', '\n').strip().encode("utf-8"))}

@@ -110,6 +110,26 @@ class TransactionTests(unittest.TestCase):
                 identities.add((row["version"], row["profile"], row["bmadMode"]))
         self.assertEqual(28, len(identities))
 
+    def test_same_version_predecessors_require_an_exact_frozen_identity(self):
+        rows = [row for row in TRUST['packages'] if row['version'] == harness.VERSION]
+        self.assertEqual(4, len(rows))
+        for row in rows:
+            with self.subTest(profile=row['profile'], bmadMode=row['bmadMode']):
+                raw = {key: copy.deepcopy(row[key]) for key in
+                       ('version', 'profile', 'bmadMode', 'payloadSha256', 'upstream', 'overlays', 'skills')}
+                raw.update(installedRoot=str(self.group), files={**row['files'], **row['wikiFiles']})
+                if row['bmadMode'] == 'bundled':
+                    raw['files'].update(installer.legacy_bmad_identity(raw, row))
+                self.assertEqual(row['payloadSha256'], installer.trusted_package(raw)['payloadSha256'])
+                unknown = copy.deepcopy(raw)
+                unknown['payloadSha256'] = 'f' * 64
+                with self.assertRaises(installer.KitError):
+                    installer.trusted_package(unknown)
+                changed = copy.deepcopy(raw)
+                changed['files'][next(iter(row['files']))] = 'e' * 64
+                with self.assertRaises(installer.KitError):
+                    installer.trusted_package(changed)
+
     def test_real_predecessors_upgrade_repeat_and_rollback_from_versioned_fixtures(self):
         cases = (
             ("1.2.0", "group", "bundled"),
@@ -146,6 +166,10 @@ class TransactionTests(unittest.TestCase):
             ("1.8.0", "group", "external"),
             ("1.8.0", "repository", "bundled"),
             ("1.8.0", "repository", "external"),
+            ("1.9.0", "group", "bundled"),
+            ("1.9.0", "group", "external"),
+            ("1.9.0", "repository", "bundled"),
+            ("1.9.0", "repository", "external"),
         )
         selected_version = os.environ.get("WORKFLOW_KIT_TEST_PREDECESSOR_VERSION")
         if selected_version:
@@ -188,13 +212,13 @@ class TransactionTests(unittest.TestCase):
                 legacy_manifest = json.loads((target / MARKER).read_text(encoding="utf-8"))
                 self.assertEqual((version, profile, bmad_mode),
                                  (legacy_manifest["version"], legacy_manifest["profile"], legacy_manifest["bmadMode"]))
-                source_wiki_version = {"1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2", "1.3.5": "0.7.2", "1.3.6": "0.7.2", "1.5.0": "0.7.2", "1.6.0": "0.7.2", "1.8.0": "0.7.2"}.get(version, "0.6.4")
+                source_wiki_version = {"1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2", "1.3.5": "0.7.2", "1.3.6": "0.7.2", "1.5.0": "0.7.2", "1.6.0": "0.7.2", "1.8.0": "0.7.2", "1.9.0": "0.7.2"}.get(version, "0.6.4")
                 self.assertEqual(source_wiki_version, legacy_manifest["upstream"]["codebase-wiki"]["version"])
                 custom = target / "_bmad/custom/user-choice.md"
                 if bmad_mode == "bundled":
                     custom.parent.mkdir(parents=True, exist_ok=True)
                     custom.write_text("User BMAD custom content stays.\n", encoding="utf-8")
-                if version == '1.8.0':
+                if version in ('1.8.0', '1.9.0'):
                     for name in ('routing/merge-reviewer/prior.json', 'sessions/prior/draft.json', 'jobs/prior.json'):
                         path = target / '.review-runtime' / name
                         path.parent.mkdir(parents=True, exist_ok=True)
@@ -202,6 +226,13 @@ class TransactionTests(unittest.TestCase):
                 audit = {path.relative_to(target).as_posix(): path.read_bytes()
                          for path in (target / '.review-runtime').rglob('*.json')}
                 previous = self.snapshot(target)
+
+                if version == '1.9.0':
+                    environment = {**os.environ, 'GITLAB_WORKSPACE_KIT_TESTING': '1',
+                                   'GITLAB_WORKSPACE_KIT_TEST_FAIL_AFTER': 'last'}
+                    failed, failure = self.install(target, profile=profile, env=environment)
+                    self.assertNotEqual(0, failed.returncode, failure)
+                    self.assertEqual(previous, self.snapshot(target))
 
                 upgraded, data = self.install(target, profile=profile)
                 self.assertEqual(0, upgraded.returncode, upgraded.stderr or upgraded.stdout)
@@ -215,6 +246,11 @@ class TransactionTests(unittest.TestCase):
                 self.assertEqual("0.12.0", status["upstreamVersions"]["release-reviewer"])
                 self.assertIn("visualize", status["capabilities"])
                 self.assertNotIn("model-routing", status["capabilities"])
+                self.assertNotIn('syntax-context', status['capabilities'])
+                self.assertFalse((target / '.agents/gitlab-workspace-kit/scripts/syntax-context').exists())
+                self.assertFalse((target / '.agents/gitlab-workspace-kit/references/syntax-context.md').exists())
+                for tool in ('merge-reviewer', 'release-reviewer'):
+                    self.assertFalse((target / '.agents/skills' / tool / 'scripts/_workflow_kit_syntax.py').exists())
                 self.assertFalse((target / '.agents/skills/model-routing').exists())
                 self.assertEqual(audit, {path.relative_to(target).as_posix(): path.read_bytes()
                                         for path in (target / '.review-runtime').rglob('*.json')})
@@ -246,6 +282,32 @@ class TransactionTests(unittest.TestCase):
                 if bmad_mode == "external":
                     self.assertEqual("External BMAD configuration stays.\n",
                                      (target / "_bmad/custom/external.md").read_text(encoding="utf-8"))
+
+    def test_retired_engine_modifications_and_unowned_files_block_upgrade(self):
+        package, old_installer = self.assets_for_predecessor('1.9.0')
+        for profile in ('group', 'repository'):
+            for mutation in ('modified', 'unowned'):
+                with self.subTest(profile=profile, mutation=mutation):
+                    target = self.create_group(self.root / (profile + '-' + mutation))
+                    if profile == 'repository':
+                        subprocess.run(['git', 'init', '-q', '-b', 'main', str(target)], check=True, capture_output=True)
+                    custom = target / '_bmad/custom/external.md'
+                    custom.parent.mkdir(parents=True)
+                    custom.write_text('Keep external BMAD.\n', encoding='utf-8')
+                    legacy = subprocess.run([sys.executable, '-X', 'utf8', '-B',
+                        str(ROOT / 'test/release/frozen_installer_runner.py'), str(old_installer),
+                        'install', str(package), str(target), '1.9.0', 'bundled', '--format', 'zip',
+                        '--entry-root', 'workflow-kit', '--archive-sha256', hashlib.sha256(package.read_bytes()).hexdigest(),
+                        '--profile', profile], capture_output=True, text=True, encoding='utf-8', check=False)
+                    self.assertEqual(0, legacy.returncode, legacy.stdout + legacy.stderr)
+                    directory = target / '.agents/gitlab-workspace-kit/scripts/syntax-context'
+                    path = directory / ('engine.py' if mutation == 'modified' else 'personal.md')
+                    path.write_bytes((path.read_bytes() if path.exists() else b'') + b'\nUser customization.\n')
+                    before = self.snapshot(target)
+                    upgraded, data = self.install(target, profile=profile)
+                    self.assertNotEqual(0, upgraded.returncode, data)
+                    self.assertIn('modified or unowned', str(data))
+                    self.assertEqual(before, self.snapshot(target))
 
     def test_user_modified_retired_router_is_preserved_and_upgrade_is_rejected(self):
         package, old_installer = self.assets_for_predecessor('1.8.0')
@@ -463,7 +525,7 @@ class TransactionTests(unittest.TestCase):
     def test_windows_checkout_and_git_archive_have_identical_bundle_digests(self):
         source = self.root / "source"
         source.mkdir()
-        paths = [ROOT / p for p in (".gitattributes", "VERSION", "README.md", "scripts/build-workflow-kit.py", "scripts/syntax-overlay.py",
+        paths = [ROOT / p for p in (".gitattributes", "VERSION", "README.md", "scripts/build-workflow-kit.py",
                                     "resources/workflow-kit-installer.py")]
         paths.extend(p for p in (ROOT / "resources/workflow-kit").rglob("*")
                      if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc")
