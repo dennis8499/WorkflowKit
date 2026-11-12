@@ -392,7 +392,9 @@ def refresh_workspace_readme(root, changes, predecessor_versions):
     if not path.is_file():
         return
     sections = re.split(r'(?m)(?=^## )', path.read_text(encoding='utf-8'))
-    current_version = json.loads((root / 'package.json').read_text(encoding='utf-8'))['version']
+    version_file = root / 'VERSION'
+    current_version = (version_file.read_text(encoding='utf-8').strip() if version_file.is_file()
+                       else json.loads((root / 'package.json').read_text(encoding='utf-8'))['version'])
     supported = '、'.join(sorted(set(predecessor_versions), key=version_tuple))
     for index, section in enumerate(sections):
         heading = re.match(r'^##\s+v?(\d+\.\d+\.\d+)\b', section)
@@ -808,6 +810,10 @@ class Runner:
         if name == 'WorkflowKit':
             self.sync_workflowkit()
             self.command(name, 'assemble-kit', [sys.executable, '-X', 'utf8', '-B', 'scripts/build-workflow-kit.py'])
+        if name == 'GitlabWorkSpace' and self.spec('WorkflowKit')['selected']:
+            self.command(name, 'export-status-helper', [sys.executable, '-X', 'utf8', '-B',
+                str(self.tree('WorkflowKit') / 'scripts/export-status-helper.py'),
+                '--output', str(root / 'resources/workflow-kit-status.py')])
         notes = {'schema': SCHEMA, 'runId': self.plan['id'], 'repository': name, 'targetVersion': row['targetVersion'],
                  'candidate': row['candidate'], 'previousTag': row['baselineTag'],
                  'dependencies': {dep: self.journal.state['repositories'][dep]['releaseSha'] for dep in row['dependencies']}}

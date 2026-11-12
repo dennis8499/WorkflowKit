@@ -213,6 +213,16 @@ class PlanningTests(GitFixture):
         self.assertIn('## 1.0.0 更新\nWiki 0.6.4', text)
         self.assertIn('## 0.9.0 更新\nWiki 0.6.3', text)
 
+    def test_standalone_kit_readme_uses_version_file_without_extension_manifest(self):
+        root = self.workspace / 'WorkflowKit'
+        (root / 'README.md').write_text('# WorkflowKit\n\nWiki 0.7.2\n\n## 1.0.0 更新\nWiki 0.7.2\n\n## 0.9.0 更新\nWiki 0.7.2\n', encoding='utf-8')
+        self.assertFalse((root / 'package.json').exists())
+        release.refresh_workspace_readme(root, [('Wiki', '0.7.2', '0.7.3')], [])
+        text = (root / 'README.md').read_text(encoding='utf-8')
+        self.assertIn('# WorkflowKit\n\nWiki 0.7.3', text)
+        self.assertIn('## 1.0.0 更新\nWiki 0.7.3', text)
+        self.assertIn('## 0.9.0 更新\nWiki 0.7.2', text)
+
 
 class JournalTests(unittest.TestCase):
     def setUp(self):
@@ -586,6 +596,34 @@ class ResumeTests(GitFixture):
         self.assertEqual('1.0.1\n', (runner.tree('MergeReviewer') / 'skills/merge-reviewer/VERSION').read_text())
         # Recovery after commit but before journal step completion returns exactly the same commit.
         self.assertEqual(result, runner.prepare('MergeReviewer'))
+
+    def test_extension_release_exports_status_from_prepared_standalone_kit(self):
+        plan, api = self.plan(changed=('WorkflowKit', 'GitlabWorkSpace'))
+        journal = release.Journal(self.root / 'evidence', plan=plan)
+        runner = release.Runner(journal, api)
+        runner.checkout('WorkflowKit')
+        runner.checkout('GitlabWorkSpace')
+        kit = runner.tree('WorkflowKit')
+        release.atomic_write(kit / 'scripts/export-status-helper.py',
+            Path(release.__file__).with_name('export-status-helper.py').read_bytes())
+        release.atomic_write(kit / 'resources/workflow-kit-installer.py', b'''import argparse
+import json
+from pathlib import Path
+VERSION = '1.0.1'
+IDENTITY = 'verified-kit'
+def inspect_status(root, version):
+    return {'version': version, 'identity': IDENTITY}
+def install_payload():
+    raise RuntimeError('Installation must not be exported')
+''')
+        runner.prepare('GitlabWorkSpace')
+        helper = runner.tree('GitlabWorkSpace') / 'resources/workflow-kit-status.py'
+        result = subprocess.run([sys.executable, str(helper), 'status', str(self.root)],
+                                capture_output=True, text=True, check=True)
+        self.assertEqual({'version': '1.0.1', 'identity': 'verified-kit'}, json.loads(result.stdout))
+        self.assertNotIn('install_payload', helper.read_text(encoding='utf-8'))
+        self.assertEqual('', release.git(runner.tree('GitlabWorkSpace'), 'status', '--porcelain'))
+        self.assertFalse((self.workspace / 'GitlabWorkSpace/resources/workflow-kit-status.py').exists())
 
     def test_wiki_preparation_refreshes_only_metadata_and_keeps_notes_external(self):
         plan, api = self.plan(changed=('code-base-llm-wiki',))
