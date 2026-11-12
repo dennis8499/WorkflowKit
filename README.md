@@ -1,6 +1,6 @@
 # WorkflowKit
 
-WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.2、MergeReviewer 0.22.0、ReleaseReviewer 0.12.0、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
+WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.3、MergeReviewer 0.22.0、ReleaseReviewer 0.12.1、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
 
 1.9.0 移除 Auto、路由子代理與實驗性 Tree-sitter 整合，審查使用固定模型設定和原生讀取計畫，並整合原子草稿與搜尋範圍修正。詳見 [1.9.0 發行說明](docs/releases/v1.9.0.md)。
 
