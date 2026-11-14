@@ -1,13 +1,14 @@
 ---
 name: output-style
-description: Choose concise, explanatory, learning or formal presentation for GitLab Workspace answers, progress and work artifacts. Apply when using the installed Wiki, merge or release workflow, or when the user invokes $output-style or requests an output style.
+description: Choose concise, explanatory, learning or formal presentation when the user explicitly invokes or selects Output Style for the current task.
 ---
 
 # Output Style
 
-Adapt human-readable output to the current task. This installed Skill replaces the
-other workflow Skills' fallback presentation rules; their workflow, evidence and
-artifact contracts still govern the work. It does not change host settings.
+Use this Skill when explicitly requested or selected for the current task. Other
+tasks keep their workflow Skill's presentation rules. Once selected, adapt
+human-readable output while preserving that workflow's evidence and artifact
+contracts. It does not change host settings.
 
 ## Choose the mode
 

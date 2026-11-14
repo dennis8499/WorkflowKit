@@ -252,6 +252,8 @@ def freeze(selected_tools: list[str] | None = None) -> dict:
                          **({'payloadSha256': payload_sha} if payload_sha else {}), 'files': hashes}
         pin.update(version=version, filename=filename, sha256=records[tool]['archiveSha256'],
                    asset='codebase-llm-wiki-codex.zip' if tool == 'codebase-wiki' else filename)
+        if payload_sha:
+            pin['payload_sha256'] = payload_sha
         if tool == 'codebase-wiki':
             pin['root'] = prefix
     builder_path = ROOT / 'scripts/build-workflow-kit.py'

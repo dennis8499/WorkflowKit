@@ -24,29 +24,29 @@ ROOT_NAME = "workflow-kit"
 MAX_FILES = 12000
 MAX_FILE_BYTES = 64 * 1024 * 1024
 MAX_EXPANDED_BYTES = 400 * 1024 * 1024
-KIT_SKILLS = ("output-style",)
+KIT_SKILLS = ("output-style", "wk-goal", "wk-plan", "wk-build", "wk-verify", "wk-project")
 
 PINNED_SOURCES = ({'id': 'codebase-wiki',
   'repository': 'code-base-llm-wiki',
   'asset': 'codebase-llm-wiki-codex.zip',
   'filename': 'codebase-llm-wiki-codex-0.7.3.zip',
   'version': '0.7.3',
-  'sha256': '986667b1299dadb55ab3e5ab279c75849f7948ab66df6123efb927ea7d34f4a0',
+  'sha256': '9c249d2123811d949e18e30edb7b4cb0d2b7c825e82c2f4a062586a75bfa6685',
   'root': 'codebase-llm-wiki-codex-0.7.3'},
  {'id': 'merge-reviewer',
   'repository': 'MergeReviewer',
   'asset': 'merge-reviewer-0.22.0.zip',
   'filename': 'merge-reviewer-0.22.0.zip',
   'version': '0.22.0',
-  'sha256': '3d8637be140f5e16b93e52bd8042a130a745b9df162720a3da5f805639e813d7'},
+  'sha256': 'd3e17abfcc49cdd3435f6ca0c57776e193746581a63ca6ddb13566d2a34ce847'},
  {'id': 'release-reviewer',
   'repository': 'ReleaseReviewer',
   'asset': 'release-reviewer-0.12.1.zip',
   'filename': 'release-reviewer-0.12.1.zip',
   'version': '0.12.1',
-  'sha256': '6447fcb134a0f8115f7a055456dc9675fa204c009cff8597fdfcc60bd608fd79',
+  'sha256': '4801734b71a4a842d53113c95241835215dec53880bce342cf6b6ce0fb224c5a',
   'minimum_version': '0.12.0',
-  'payload_sha256': '5988157fdb62df83b90f3d840a97c91467d41431b0488f1fff86a53dd39b8004'},
+  'payload_sha256': '8198e8d1f812283e77b43efcf3f31f2f767c9844c0a22fccc5fa68008c6d5ab0'},
  {'id': 'commit-reviewer',
   'repository': 'CommitReviewer',
   'asset': 'commit-reviewer-0.1.0.zip',
@@ -472,7 +472,7 @@ def build() -> dict[str, object]:
     ).encode("utf-8"))
     capabilities = sorted(["functional-exploration", "ingest", "query", "lint", "audit", "adr", "synthesis",
                            "business-analysis", "system-analysis", "system-design", "notebooklm-export", "archaeology",
-                           "merge-repo", "release-review", "commit-draft", "mr-precheck", "bmad-workflow", "visualize"])
+                           "merge-repo", "release-review", "commit-draft", "mr-precheck", "bmad-workflow", "bmad-entrypoints", "visualize"])
     native_hashes = {name: digest(data) for name, data in sorted(native_payload.items())}
     manifest["capabilities"] = capabilities
     manifest["wikiInstalledVersionSha256"] = digest(files["framework/VERSION"])
@@ -496,7 +496,7 @@ def build() -> dict[str, object]:
             external_files = {name: value for name, value in profile["files"].items()
                               if not name.startswith(("_bmad/", ".agents/skills/bmad-"))}
             external_skills = [name for name in profile["skills"] if not name.startswith("bmad-")]
-            external_capabilities = [name for name in profile["capabilities"] if name != "bmad-workflow"]
+            external_capabilities = [name for name in profile["capabilities"] if name not in ("bmad-workflow", "bmad-entrypoints")]
             external_overlays = {name: value for name, value in profile["overlays"].items()
                                  if name != "bmad-runner"}
             profile["variants"] = {"external": {
@@ -510,7 +510,7 @@ def build() -> dict[str, object]:
             external_files = {name: value for name, value in profile["files"].items()
                               if not name.startswith(("_bmad/", ".agents/skills/bmad-"))}
             external_skills = [name for name in profile["skills"] if not name.startswith("bmad-")]
-            external_capabilities = [name for name in profile["capabilities"] if name != "bmad-workflow"]
+            external_capabilities = [name for name in profile["capabilities"] if name not in ("bmad-workflow", "bmad-entrypoints")]
             profile["variants"] = {"external": {
                 "files": external_files,
                 "payloadSha256": digest(json.dumps(external_files, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")),

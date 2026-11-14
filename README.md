@@ -1,6 +1,10 @@
 # WorkflowKit
 
-WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.3、MergeReviewer 0.22.0、ReleaseReviewer 0.12.1、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
+WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.3、MergeReviewer 0.22.0、ReleaseReviewer 0.12.1、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills，另提供五個輕量 BMAD 入口。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
+
+1.10.0 加入 BMAD 五入口、三個常用操作與按階段載入，支援 source-first 需求探索及 GitLab Workspace 的固定來源、獨立任務與人工確認交付流程。Build Auto 須明確選用並通過實際 sandbox 能力檢查；既有 external BMAD 與個人內容保持受保護。詳見 [1.10.0 發行說明](docs/releases/v1.10.0.md)與[整合驗證紀錄](docs/validation/workflow-integration-20261114.md)。
+
+工作台的新管理入口與獨立任務交付需搭配 GitLab Workspace 0.51.0；獨立 CLI Skills 及既有 installer／status API 保持相容。
 
 1.9.0 移除 Auto、路由子代理與實驗性 Tree-sitter 整合，審查使用固定模型設定和原生讀取計畫，並整合原子草稿與搜尋範圍修正。詳見 [1.9.0 發行說明](docs/releases/v1.9.0.md)。
 
@@ -12,7 +16,7 @@ WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM
 
 需要 Python 3.11+。安裝器不需要 Node.js 或網路；若環境沒有 `uv`，安裝仍會完成並提示你在執行 BMAD 工作流程前備妥它。
 
-下載 `gitlab-workspace-kit-1.9.0.zip`，解壓後執行：
+下載 `gitlab-workspace-kit-1.10.0.zip`，解壓後執行：
 
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyProject
@@ -23,7 +27,7 @@ python -X utf8 -B install.py --target C:\projects\MyProject
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyGroup --profile group
 python -X utf8 -B install.py --target C:\projects\MyRepo --profile repository
-python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.9.0
+python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.10.0
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易路徑>
 ```
 
@@ -40,9 +44,23 @@ Group profile 在選定的 Group 根目錄安裝一份共用 BMAD runtime。從�
 
 ## BMAD 設定與外部安裝
 
-BMAD 入口是 `$bmad-help`；使用者選擇 BMAD 工作流程後，再執行相應 Skill，例如 `$bmad-build`。預設設定位於 `_bmad/config.toml`：專案名稱取安裝根目錄名稱，溝通與文件使用繁體中文，知識來源為 `wiki/`，規劃及實作產出放在 `_bmad-output/`。本機覆寫可放在 `_bmad/config.user.toml` 或 `_bmad/custom/`。
+從 `$wk-goal` 描述目標，由智慧入口選擇流程；已有明確目的時可直接選以下入口。入口只載入目前需要的原生 Skill 與階段參考，不會先讀完整 BMAD 能力集合。
 
-若目標根目錄已有外部 `_bmad/` runtime 或 BMAD Skill，安裝器會保留原內容，將 `bmadMode` 設為 `external`，並略過整個內建 BMAD 元件，其他工具仍會安裝。單獨存在 `_bmad-output/` 不會觸發略過。外部模式不宣告 `bmad-workflow` 能力。使用 `status` 查看目前模式與能力。
+| 工作台入口 | CLI／Codex 聊天 | 用途 |
+|---|---|---|
+| `/goal` | `$wk-goal` | 任務分類、選擇流程與下一步 |
+| `/plan` | `$wk-plan` | 構想、研究、需求、架構與 Story |
+| `/build` | `$wk-build` | 實作、修改與測試 |
+| `/verify` | `$wk-verify` | 審查、測試、驗收與回顧 |
+| `/project` | `$wk-project` | 專案規則、自訂設定與進度 |
+
+工作台另提供「開始明確變更」「繼續既有工作」「查看進度與下一步」三個快捷操作。原生 `$bmad-help`、`$bmad-build` 等能力仍可使用；`/goal`、`/plan` 是工作台標籤，複製時使用 `$wk-*`，避免和 Codex 內建命令混淆。
+
+Build 預設使用一般模式。Build Auto 只有明確選用、同步子代理已開啟，且實際 App Server sandbox 的本機 Git 提交探測通過後才啟用。它會先建立本機 Commit；GitLab 綁定任務的 Push、開卡、Wiki／報告發布及建立 Draft MR，仍由 Host 在人工確認實際成果後執行。
+
+預設設定位於 `_bmad/config.toml`：專案名稱取安裝根目錄名稱，溝通與文件使用繁體中文，知識來源為 `wiki/`，規劃及實作產出放在 `_bmad-output/`。本機覆寫可放在 `_bmad/config.user.toml` 或 `_bmad/custom/`。
+
+若目標根目錄已有外部 `_bmad/` runtime 或 BMAD Skill，安裝器會保留原內容，將 `bmadMode` 設為 `external`，並略過整個內建 BMAD 元件，其他工具與輕量入口仍會安裝。單獨存在 `_bmad-output/` 不會觸發略過。外部模式不宣告內建 `bmad-workflow`／`bmad-entrypoints` 驗證能力；工作台逐入口核對實際存在的原生 Skills 後才啟用。使用 `status` 查看目前模式與能力。
 
 升級會逐檔管理內建 runtime，只覆寫已驗證且未修改的受管檔案。使用者設定、記憶、render snapshots、Wiki、工作產出與不屬於套件的檔案會保留；BMAD Skill 目錄若有修改或未知檔案，安裝器會停止覆寫。包含舊版 BMAD 操作的未完成交易，請使用建立該交易的原安裝器復原。
 

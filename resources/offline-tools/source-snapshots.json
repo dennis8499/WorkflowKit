@@ -4,6 +4,7 @@
       "adr",
       "archaeology",
       "audit",
+      "bmad-entrypoints",
       "bmad-workflow",
       "business-analysis",
       "commit-draft",
@@ -24,6 +25,7 @@
       "adr",
       "archaeology",
       "audit",
+      "bmad-entrypoints",
       "bmad-workflow",
       "business-analysis",
       "commit-draft",
@@ -294,13 +296,13 @@
       "version": "6.12.4"
     },
     "codebase-wiki": {
-      "archiveSha256": "986667b1299dadb55ab3e5ab279c75849f7948ab66df6123efb927ea7d34f4a0",
+      "archiveSha256": "9c249d2123811d949e18e30edb7b4cb0d2b7c825e82c2f4a062586a75bfa6685",
       "commit": "73292f71b14935d1748dddb00b28161dcaa4358b",
-      "dirty": false,
+      "dirty": true,
       "entryRoot": "codebase-llm-wiki-codex-0.7.3",
       "filename": "codebase-llm-wiki-codex-0.7.3.zip",
       "files": {
-        ".agents/skills/codebase-wiki/SKILL.md": "3d8e93505640b92257b5555970db44628292aaedd405ff1fd344ee12b2bf00db",
+        ".agents/skills/codebase-wiki/SKILL.md": "2c5155b723eeafe95ebff7df62588ca17b3c194c46aebf7b66896cde3e9f1b2a",
         ".agents/skills/codebase-wiki/VERSION": "967d9afb101346667166f2e76e81910bc190488d7d41d50ca0072e9d92f00e32",
         ".agents/skills/codebase-wiki/agents/openai.yaml": "9271764c5926e0b6bdbdb6dc3c85b993239457af0fd8afb1bf5d4eb5ff69f16f",
         ".agents/skills/codebase-wiki/assets/adr-template.md": "997ef0b94714ec9f4f55eb76c5b8f90f1b8a662e12f6e0d003c1ed8bf7abac76",
@@ -613,8 +615,8 @@
         "VERSION": "9c788a838dc1f6bfd80fa39757a95f94260071c35011c9a05301da1c73507657"
       },
       "repository": "code-base-llm-wiki",
-      "sourceKind": "official-release",
-      "treeSha256": "4c81c0bb06f86a5127a0ef6556e59a6121b22efba7e6dfd2d2a0d517e352bd6f",
+      "sourceKind": "local-snapshot",
+      "treeSha256": "a04cb461e7d7c936bc07568d6c8228df0f71a1d5a24799d8c9fa0e2b12e0a4a7",
       "version": "0.7.3"
     },
     "commit-reviewer": {
@@ -638,20 +640,20 @@
       "version": "0.1.0"
     },
     "merge-reviewer": {
-      "archiveSha256": "3d8637be140f5e16b93e52bd8042a130a745b9df162720a3da5f805639e813d7",
+      "archiveSha256": "d3e17abfcc49cdd3435f6ca0c57776e193746581a63ca6ddb13566d2a34ce847",
       "commit": "b9963266432aff75602ae64b385a4dff15cea405",
-      "dirty": false,
+      "dirty": true,
       "entryRoot": "merge-reviewer",
       "filename": "merge-reviewer-0.22.0.zip",
       "files": {
-        "SKILL.md": "2ac86f5af3e9cf01f7056f4a5e0ed57829bca673041df70464ce7400beed50ee",
+        "SKILL.md": "0dec49ec3d45d76fbf40f8c7d5e40af8084e4345edefe001d9a88f756a2b66dc",
         "VERSION": "464863ee696ca862f6ae2bfee9728ebbd84463597825442efc62838d945b00fb",
         "agents/openai.yaml": "b5ed995d59e34d9d8f555a00f1dd30fc6593dda071f16e0eb8e58e4c5f3495f5",
         "references/authoring.md": "5367cba42bca6403e163a3262d6b4115e0d9529d4005f13030478547feeb132f",
         "references/claude-code-style.md": "f730bd868052261947a6e4ae64abf9b419250f30d04c44637459abf8bcf6219e",
         "references/contract-boundaries-v1.md": "6239cc9d2bb2f760f34f6df403aa10947e8c0a5bbb09849f2124f716f05bc061",
         "references/contract-boundaries.md": "2de0ed67dcdad2dab4514468b8326abf9f20e06981368fcc80216e5f0c32afef",
-        "references/report-style.md": "21bd5e766a972d18f76a5f64c20bb5e48ec830760b94a50d55109ff6d21e17ff",
+        "references/report-style.md": "70f307b27554ff73a8173878b321906f7f0d44583d2f4aa8319a44d8ea8279e0",
         "references/review-rules.md": "db76edd3e4d070480b49df4abcca2ce2ea35d2a2a6e30954e80ce3d2f0f99f6c",
         "references/runtime-controls.md": "30f75be67a109ba442f7acde746c9c804bbca9c70f197677c50e28680dd26276",
         "references/session-workflow.md": "b87a7e4e4756511f3f2fe289727b017bc8372c759af6aa9601bcbfaa5b508e90",
@@ -678,14 +680,14 @@
         "scripts/workspace_report.py": "635f8abf43f28aa2279c58d1fb902646f6abad4ddf1026a46a23fe52e98dc4c2"
       },
       "repository": "MergeReviewer",
-      "sourceKind": "official-release",
-      "treeSha256": "c0d26bde2037861db09229abcee4ba90eff2b7ccdd3718db8cd71b0e41639ab8",
+      "sourceKind": "local-snapshot",
+      "treeSha256": "a10a0b0e999f93c97d4284192cb0ec51ec33b2c1d0b5f17475707cc22ad0729c",
       "version": "0.22.0"
     },
     "release-reviewer": {
-      "archiveSha256": "6447fcb134a0f8115f7a055456dc9675fa204c009cff8597fdfcc60bd608fd79",
+      "archiveSha256": "4801734b71a4a842d53113c95241835215dec53880bce342cf6b6ce0fb224c5a",
       "commit": "2964efd74c6e9352581fa73d66733cd0de323975",
-      "dirty": false,
+      "dirty": true,
       "entryRoot": "release-reviewer",
       "filename": "release-reviewer-0.12.1.zip",
       "files": {
@@ -695,7 +697,7 @@
         "references/evidence-workflow.md": "59c2c59a3c4d971f00181caa2c8edd7b077d5978db528c3359c60b0704745783",
         "references/fast-session.md": "320775060cd7cd19f7794821418a4b92c7fc1b72be48cf333aff0753ba8d9a36",
         "references/group-review.md": "14d742125d915a130066231c715e3c7fa0834fd1fc85c596b0ef31312f9260fd",
-        "references/report-style.md": "ff3d8c097a8f4d10cad7646156728c9e0adea1ef4aa86075cc63c457181d651a",
+        "references/report-style.md": "0a143f16d1f4f73a4b57670b796da9b4791e29a757b2adda80eabf16e909660e",
         "references/resource-checks.md": "eb18793661cba97181a75f135e0ad6e5809fa99195ec97878b33e432d0f27bef",
         "references/review-examples.md": "728f70a1ead228556fa9c7841f3e5351c07a6286b71dd240d73e1c4f6c8823be",
         "references/review-rules.md": "9b807c27be7b938394161d3dfa284fdac3ca7590064b9544c7f1e8e3a3d82896",
@@ -720,33 +722,41 @@
         "scripts/review_session.py": "64b90cc1e7fafc5535e21a61dcb3707eac6d1552bacc3e35d6c9718f824e9dfd",
         "scripts/review_worklist.py": "f11a87fb7cf7bd4e19ec3c09b03cabdf9c9f843bbe713494d5f9ef564e923fae"
       },
-      "payloadSha256": "5988157fdb62df83b90f3d840a97c91467d41431b0488f1fff86a53dd39b8004",
+      "payloadSha256": "8198e8d1f812283e77b43efcf3f31f2f767c9844c0a22fccc5fa68008c6d5ab0",
       "repository": "ReleaseReviewer",
-      "sourceKind": "official-release",
-      "treeSha256": "143277a1dccca8edf87785b3eefceb431fcf4f0330d7010981c92e2252134f20",
+      "sourceKind": "local-snapshot",
+      "treeSha256": "4b7e4e49199b61e4cab699bc54e9fceb8dab68baaba794c5c7a51d2214e95941",
       "version": "0.12.1"
     }
   },
   "workspaceFiles": {
+    "resources/workflow-kit/common/references/bmad-entrypoints.json": "e9d5dd547592d601706bd248b8810859918957f2330acd8a552d39797457d472",
     "resources/workflow-kit/common/references/review-launch.md": "91f11106fe449740906e664ae415eba25088b80b344601f87d045b69dcb1499e",
     "resources/workflow-kit/common/references/reviewer-execution.md": "1ddf416d5b6a1ffc9184f330137a3bc1986b6b5b6ce414c890d8669bc17fd3b2",
+    "resources/workflow-kit/common/references/workflow-group.md": "4b39855b7085f3f95fc2bd43b2fa6c2b92fbe04148a713fd33abdd89b2540c4e",
+    "resources/workflow-kit/common/references/workflow-repository.md": "9092cf4299bebf3b380fd9016cf11c3e197c8c28602488f23d81c9c9ab2376cc",
     "resources/workflow-kit/common/review_launch.py": "f89005af4186556a485e23510647a972759aedc08478497439a8fc4adb83aad8",
     "resources/workflow-kit/common/run.py": "3d8e66acc40151afa5f0f0f16c033a5a686d7eee0ec23afa8dbc886fbca10137",
     "resources/workflow-kit/common/runner-capabilities.json": "46a186cb6ca37caa33704f52aa3fe283e4781aa0c0635ec19c1b53fa9bfbd639",
-    "resources/workflow-kit/group-instructions.md": "4b39855b7085f3f95fc2bd43b2fa6c2b92fbe04148a713fd33abdd89b2540c4e",
+    "resources/workflow-kit/group-instructions.md": "7de1c4efa40723fe5014593c766e141ee45e25e3460e47eca0faa361cba57049",
     "resources/workflow-kit/legacy-cleanup.md": "cd9abd025fd748b71bfed3b1179834bac7a956280b62e7ff825810b0894e43ff",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/scripts/wiki-visualize.py": "6f7161a2b2549a0919e199ad5f3a27e39e35ff40216ce3f9fd2795307dd38946",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify-manifest.json": "ce7ba82b274e1847693bbbc75d547c0001b11fd4d4bcccfdea5d9acd7d11a419",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify/bin/archify.mjs": "175906c2287e86667ea7b23c829d2beecf8d62c920cabdc81579ee1cd8395206",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify/bin/visual-check.mjs": "37e25a57912c122f6113304463b0636ce7f8f0510eaec038535e46b6842eec0c",
     "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/codebase-wiki/vendor/archify/renderers/shared/atomic-output.mjs": "3e0031540454442120046a54c53c39e56feb231264fa2a3ad25ac53523d4e58a",
-    "resources/workflow-kit/overlays/codebase-wiki/.agents/skills/codebase-wiki/SKILL.md": "1ced07ac751257938a95e05523c9baced9224059d752b9eb99502a8ce5ba4d08",
+    "resources/workflow-kit/overlays/codebase-wiki/.agents/skills/codebase-wiki/SKILL.md": "287bdd002e6800e40db5a2a7eef16ba08ce8b0d35bb50fe29655faefd88d4769",
     "resources/workflow-kit/profile.md": "023408cc00cc86350ff0ba3dfc29423074e2d4b9d0bb53d2d6da11bd4e48f0ef",
-    "resources/workflow-kit/repository-instructions.md": "9092cf4299bebf3b380fd9016cf11c3e197c8c28602488f23d81c9c9ab2376cc",
+    "resources/workflow-kit/repository-instructions.md": "c90660f0809d9be4c537e74f77d6645c1eb649982edcea05fa563af084c4a259",
     "resources/workflow-kit/repository-profile.md": "bcb89824ba67fc583b9ac30385b69df2a89c38635f4e209e97082df257281c77",
-    "resources/workflow-kit/skills/output-style/SKILL.md": "5506258a0cc2d488eac32d932fae7de65998e0fee87c9fe4576a52bde71d1779",
-    "resources/workflow-kit/skills/output-style/agents/openai.yaml": "9311f7948fcff9ee737b8c0360e198517afcdcda04bc483b072357bce751cbbb",
+    "resources/workflow-kit/skills/output-style/SKILL.md": "4469d8cc40d811ed3dde068ba4b19fa2f9419da28e86389036238dfa334884f1",
+    "resources/workflow-kit/skills/output-style/agents/openai.yaml": "e12a71c6a619ca42cb29bf553959c83ee428cc3e0224e9c3890394a0a4c7c3a3",
     "resources/workflow-kit/skills/output-style/references/examples.md": "dd4ef423b59527199e5edb4de75fb0fba4e43d12704bf6d0cfa9c3dffa51c61a",
-    "resources/workflow-kit/trusted-predecessors.json": "94c3e1fdbec7f97d18bddacf5115290519475bd37b45f56a449bbed3e6e1878c"
+    "resources/workflow-kit/skills/wk-build/SKILL.md": "feeaf7d79e2dab448aa3ce8fcca3e0f9f102d107157e22fcc5aad7ba4a2bf93c",
+    "resources/workflow-kit/skills/wk-goal/SKILL.md": "c0226c1af5f66b114a0a0401d47ce50d4d9a25e9262463717f624951c25fc3ec",
+    "resources/workflow-kit/skills/wk-plan/SKILL.md": "d1d432d31449217eb2e18c979f59dae152cba6752aecff130bcc5f7f994641c5",
+    "resources/workflow-kit/skills/wk-project/SKILL.md": "b069bbbfd017156d3373ff898cbd853dff40189ac4a464150f8e2a18013587ce",
+    "resources/workflow-kit/skills/wk-verify/SKILL.md": "d0e5933fbc2a19a97043440e471c2eaf2a3e43f87159e1bf385769707ba5f396",
+    "resources/workflow-kit/trusted-predecessors.json": "c12c69d8531f6b51dbb814e5bec5b5f95783237a1f8e4115088d31a2e16d36ab"
   }
 }

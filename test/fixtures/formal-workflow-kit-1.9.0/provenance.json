@@ -1,0 +1,15 @@
+{
+  "archiveSha256": "a4231c42228f8dfd1c430efb9aaa50a9259f7d2c1d08a3245527b9bb7bc12211",
+  "bmadRuntimeFilesSha256": "b8493855b69a822fadc31f690ff91650ef9ce42d37eb318aa0a44c6b90a0c863",
+  "fixtureFiles": {
+    "bmad-config.toml": "f22d528a7e5b785da35432799863e3ff941137856e441d1d74e4880f49438643",
+    "bmad-files-manifest.csv": "c380bab3cd663543c4ff639c552396ded7db735f3362c7bf1394c4e1c0d31624",
+    "manifest.json": "99439fa9d90929b7a9c1930c54da6e926b9f91a44cc041bcffe334d8e8a299ea"
+  },
+  "installerSha256": "9fec4ba4b3e6ab1cc07248b3154cac7a0606086a01a8260aeb5ce28aa258141d",
+  "manifestSha256": "99439fa9d90929b7a9c1930c54da6e926b9f91a44cc041bcffe334d8e8a299ea",
+  "release": "https://github.com/dennis8499/WorkflowKit/releases/tag/v1.9.0",
+  "schema": "workflowkit-formal-predecessor/v1",
+  "sourceSha": "943d249d86a5f10ca38e7da07ade691decdc1b2d",
+  "version": "1.9.0"
+}

@@ -148,6 +148,39 @@ class SourcePackageTests(unittest.TestCase):
         self.assertEqual(before, archive.read_bytes())
 
 
+class ReleaseFreezeRegressionTests(unittest.TestCase):
+    def test_scoped_release_freeze_refreshes_compatibility_payload_identity(self):
+        with tempfile.TemporaryDirectory(prefix='kit-release-style-freeze-') as temporary:
+            workspace = Path(temporary).resolve()
+            (workspace / 'scripts').mkdir()
+            (workspace / 'resources/offline-tools/sources').mkdir(parents=True)
+            (workspace / 'resources/workflow-kit').mkdir()
+            shutil.copyfile(ROOT / 'scripts/build-workflow-kit.py', workspace / 'scripts/build-workflow-kit.py')
+            shutil.copyfile(ROOT / 'VERSION', workspace / 'VERSION')
+            original_builder = sources.load_module('original_release_style_pin', workspace / 'scripts/build-workflow-kit.py')
+            original_minimum = next(item for item in original_builder.PINNED_SOURCES
+                                    if item['id'] == 'release-reviewer')['minimum_version']
+            snapshots = workspace / 'resources/offline-tools/source-snapshots.json'
+            snapshots.write_text(json.dumps({'schema': 'GitLabWorkspaceSourceSnapshots/v1',
+                                             'sources': {}, 'workspaceFiles': {}}), encoding='utf-8')
+            entries = {'VERSION': b'0.12.1\n', 'SKILL.md': b'# Release\n',
+                       'references/report-style.md': b'Explicit user selection only.\n'}
+            with mock.patch.multiple(sources, ROOT=workspace, SNAPSHOTS=snapshots), \
+                 mock.patch.object(sources, 'REPOS', {'release-reviewer': 'ReleaseReviewer'}), \
+                 mock.patch.object(sources, 'local_entries', return_value=('0.12.1', entries)), \
+                 mock.patch.object(sources, 'git_info', return_value={'commit': 'a' * 40, 'dirty': True}):
+                self.assertTrue(sources.freeze(['release-reviewer'])['ok'])
+            frozen = json.loads(snapshots.read_text(encoding='utf-8'))['sources']['release-reviewer']
+            rebuilt = sources.load_module('refreshed_release_style_pin', workspace / 'scripts/build-workflow-kit.py')
+            pin = next(item for item in rebuilt.PINNED_SOURCES if item['id'] == 'release-reviewer')
+            rows = [[name, sources.digest(data)] for name, data in sorted(entries.items())]
+            expected = sources.digest(json.dumps(rows, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+            self.assertEqual(expected, frozen['payloadSha256'])
+            self.assertEqual(expected, pin['payload_sha256'])
+            self.assertTrue(frozen['dirty'])
+            self.assertEqual(original_minimum, pin['minimum_version'])
+
+
 class WikiFreezeRegressionTests(unittest.TestCase):
     def test_wiki_freeze_uses_new_root_is_stable_and_preserves_other_sources(self):
         with tempfile.TemporaryDirectory(prefix='kit-wiki-freeze-') as temporary:

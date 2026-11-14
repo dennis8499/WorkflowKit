@@ -17,6 +17,38 @@ spec.loader.exec_module(builder)
 
 
 class OutputStylePackageTests(unittest.TestCase):
+    def test_both_generated_profiles_keep_workflow_style_loading_explicit(self):
+        files = {}
+        for source in builder.PINNED_SOURCES:
+            if source["id"] not in ("codebase-wiki", "merge-reviewer", "release-reviewer"):
+                continue
+            selected, _ = builder.checked_zip(builder.SOURCES / source["filename"], source["sha256"])
+            if source["id"] == "codebase-wiki":
+                files.update({"payload/" + name: data for name, data in selected.items()
+                              if name.startswith(".agents/skills/codebase-wiki/")})
+            else:
+                prefix = source["id"] + "/"
+                files.update({"payload/.agents/skills/" + source["id"] + "/" + name[len(prefix):]: data
+                              for name, data in selected.items() if name.startswith(prefix)})
+        repository = dict(files)
+        builder.apply_overlay(files, "codebase-wiki", builder.PROFILE / "overlays/codebase-wiki")
+        policies = ("codebase-wiki/SKILL.md", "merge-reviewer/SKILL.md",
+                    "merge-reviewer/references/report-style.md", "release-reviewer/references/report-style.md")
+        for profile, payload in (("group", files), ("repository", repository)):
+            for policy in policies:
+                with self.subTest(profile=profile, policy=policy):
+                    text = payload["payload/.agents/skills/" + policy].decode("utf-8")
+                    self.assertNotIn("$output-style", text)
+                    self.assertNotIn("output-style/SKILL.md", text)
+                    self.assertRegex(text, r"explicitly requests or selects|只有使用者明確要求或選取")
+
+    def test_packaged_style_requires_explicit_selection_and_preserves_manual_invocation(self):
+        resources = builder.kit_skill_files()
+        policy = resources[".agents/skills/output-style/agents/openai.yaml"].decode("utf-8")
+        self.assertRegex(policy, r"(?m)^policy:\r?\n  allow_implicit_invocation: false\s*$")
+        self.assertEqual(policy.count("allow_implicit_invocation:"), 1)
+        self.assertRegex(policy, r'(?m)^  default_prompt: ".*\$output-style style=auto')
+
     def test_source_resources_keep_discoverable_paths_and_resolve_local_links(self):
         resources = builder.kit_skill_files()
         prefix = ".agents/skills/output-style/"
