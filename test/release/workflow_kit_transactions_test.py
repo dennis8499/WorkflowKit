@@ -111,24 +111,34 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(28, len(identities))
 
     def test_same_version_predecessors_require_an_exact_frozen_identity(self):
-        rows = [row for row in TRUST['packages'] if row['version'] == harness.VERSION]
-        self.assertEqual(4, len(rows))
+        # 1.9.0 has reviewed candidate and formal identities. Keep exercising
+        # the same-version fallback even when the package's current version advances.
+        historical_version = '1.9.0'
+        rows = [row for row in TRUST['packages'] if row['version'] == historical_version]
+        groups = {}
         for row in rows:
-            with self.subTest(profile=row['profile'], bmadMode=row['bmadMode']):
-                raw = {key: copy.deepcopy(row[key]) for key in
-                       ('version', 'profile', 'bmadMode', 'payloadSha256', 'upstream', 'overlays', 'skills')}
-                raw.update(installedRoot=str(self.group), files={**row['files'], **row['wikiFiles']})
-                if row['bmadMode'] == 'bundled':
-                    raw['files'].update(installer.legacy_bmad_identity(raw, row))
-                self.assertEqual(row['payloadSha256'], installer.trusted_package(raw)['payloadSha256'])
-                unknown = copy.deepcopy(raw)
-                unknown['payloadSha256'] = 'f' * 64
-                with self.assertRaises(installer.KitError):
-                    installer.trusted_package(unknown)
-                changed = copy.deepcopy(raw)
-                changed['files'][next(iter(row['files']))] = 'e' * 64
-                with self.assertRaises(installer.KitError):
-                    installer.trusted_package(changed)
+            groups.setdefault((row['profile'], row['bmadMode']), set()).add(row['payloadSha256'])
+        self.assertEqual({('group', 'bundled'), ('group', 'external'),
+                          ('repository', 'bundled'), ('repository', 'external')}, set(groups))
+        for identity, payloads in groups.items():
+            self.assertGreaterEqual(len(payloads), 2, identity)
+        with mock.patch.object(installer, 'VERSION', historical_version):
+            for row in rows:
+                with self.subTest(profile=row['profile'], bmadMode=row['bmadMode'], payload=row['payloadSha256']):
+                    raw = {key: copy.deepcopy(row[key]) for key in
+                           ('version', 'profile', 'bmadMode', 'payloadSha256', 'upstream', 'overlays', 'skills')}
+                    raw.update(installedRoot=str(self.group), files={**row['files'], **row['wikiFiles']})
+                    if row['bmadMode'] == 'bundled':
+                        raw['files'].update(installer.legacy_bmad_identity(raw, row))
+                    self.assertEqual(row['payloadSha256'], installer.trusted_package(raw)['payloadSha256'])
+                    unknown = copy.deepcopy(raw)
+                    unknown['payloadSha256'] = 'f' * 64
+                    with self.assertRaises(installer.KitError):
+                        installer.trusted_package(unknown)
+                    changed = copy.deepcopy(raw)
+                    changed['files'][next(iter(row['files']))] = 'e' * 64
+                    with self.assertRaises(installer.KitError):
+                        installer.trusted_package(changed)
 
     def test_real_predecessors_upgrade_repeat_and_rollback_from_versioned_fixtures(self):
         cases = (
