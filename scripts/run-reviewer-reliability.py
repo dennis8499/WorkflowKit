@@ -29,6 +29,36 @@ EXPECTED_VERSIONS = {
     'baseline': {'merge': '0.21.1', 'workflowkit': '1.8.0', 'gitlab_workspace': '0.48.0'},
     'candidate': {'merge': '0.22.0', 'workflowkit': '1.9.0', 'gitlab_workspace': '0.49.0'},
 }
+IDENTITY_SCHEMA = 'ReviewerReliabilityIdentity/v1'
+COMPONENTS = {'merge_reviewer': 'native', 'workflow_kit': 'kit-source', 'gitlab_workspace': 'gws'}
+
+
+def identity_digest(value):
+    return sha(json.dumps(value, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+
+
+def acceptance_identity(value, variant):
+    """Explicit new acceptance pairs do not rewrite the historical version matrix."""
+    if (not isinstance(value, dict) or set(value) != {'schema', 'pair_id', 'variants'}
+            or value.get('schema') != IDENTITY_SCHEMA or not isinstance(value.get('pair_id'), str)
+            or not re.fullmatch(r'[a-z0-9][a-z0-9._-]{0,127}', value['pair_id'])
+            or not isinstance(value.get('variants'), dict)
+            or set(value['variants']) != {'baseline', 'candidate'} or variant not in value['variants']):
+        raise ValueError('Unsupported explicit Reviewer acceptance identity.')
+    for row in value['variants'].values():
+        if (not isinstance(row, dict) or set(row) != {'source_revisions', 'versions', 'payload_sha256'}
+                or not isinstance(row['source_revisions'], dict) or set(row['source_revisions']) != set(COMPONENTS)
+                or not isinstance(row['payload_sha256'], dict) or set(row['payload_sha256']) != set(COMPONENTS)
+                or not isinstance(row['versions'], dict)
+                or set(row['versions']) != {'merge', 'workflowkit', 'gitlab_workspace'}):
+            raise ValueError('Acceptance identity must pin versions, commits and payloads of all three components.')
+        if (any(not isinstance(v, str) or not re.fullmatch(r'[a-f0-9]{40}|[a-f0-9]{64}', v)
+                for v in row['source_revisions'].values())
+                or any(not isinstance(v, str) or not re.fullmatch(r'[a-f0-9]{64}', v)
+                       for v in row['payload_sha256'].values())
+                or any(not isinstance(v, str) or not v.strip() for v in row['versions'].values())):
+            raise ValueError('Acceptance identity contains an invalid component identity.')
+    return value['variants'][variant]
 
 
 def sha(data):
@@ -107,8 +137,14 @@ def freeze(args):
         versions = {'merge': (PARENT / 'MergeReviewer/skills/merge-reviewer/VERSION').read_text(encoding='utf-8').strip(),
                     'workflowkit': (ROOT / 'VERSION').read_text(encoding='utf-8').strip(),
                     'gitlab_workspace': json.loads((PARENT / 'GitlabWorkSpace/package.json').read_text(encoding='utf-8'))['version']}
-    if args.variant not in EXPECTED_VERSIONS or versions != EXPECTED_VERSIONS[args.variant]:
+    identity_path = getattr(args, 'identity_manifest', None)
+    identity = json.loads(Path(identity_path).read_text(encoding='utf-8')) if identity_path else None
+    expected = acceptance_identity(identity, args.variant) if identity is not None else None
+    expected_versions = expected['versions'] if expected else EXPECTED_VERSIONS.get(args.variant)
+    if versions != expected_versions:
         raise ValueError(f'Frozen source versions do not match the {args.variant!r} acceptance pair: {versions!r}.')
+    if expected and revisions != expected['source_revisions']:
+        raise ValueError('Frozen source commits differ from the explicit acceptance identity.')
     target.mkdir(parents=True)
     for name, (repository, _, paths, destination) in repositories.items():
         if working:
@@ -120,6 +156,14 @@ def freeze(args):
                     output.parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(source, output)
         else:
             archive(repository, revisions[name], paths, destination)
+
+    # Pin pre-transpilation bytes separately; generated JS remains covered by the
+    # full engine ledger without changing the identities of the source payloads.
+    source_payload_files = {name: source_rows(target / relative) for name, relative in COMPONENTS.items()}
+    if expected:
+        if {name: identity_digest(rows) for name, rows in source_payload_files.items()} != expected['payload_sha256']:
+            raise ValueError('Frozen source payload differs from the explicit acceptance identity.')
+        save(target / 'identity-manifest.json', identity)
 
     # Transpile the frozen TypeScript with the local compiler used by the workspace.
     compiler = PARENT / 'GitlabWorkSpace/node_modules/typescript'
@@ -140,6 +184,9 @@ def freeze(args):
               'skill_files': rows, 'engine_files': engine_files(target),
               'kit_version': versions['workflowkit'],
               'gitlab_workspace_version': versions['gitlab_workspace']}
+    if expected:
+        result.update(acceptance_pair=identity['pair_id'], identity_manifest_sha256=identity_digest(identity),
+                      source_payload_files=source_payload_files)
     save(target / 'engine.json', result)
     return {'engine': str(target), 'variant': args.variant, 'skill_sha256': result['skill_sha256']}
 
@@ -174,7 +221,34 @@ def load_engine(engine):
             or actual_workspace != metadata.get('gitlab_workspace_version')):
         raise ValueError('Frozen engine versions do not match their archived source files.')
     actual_versions = {'merge': actual_merge, 'workflowkit': actual_kit, 'gitlab_workspace': actual_workspace}
-    if actual_versions != EXPECTED_VERSIONS[variant]:
+    identity_path = engine / 'identity-manifest.json'
+    if identity_path.exists():
+        identity = json.loads(identity_path.read_text(encoding='utf-8'))
+        expected = acceptance_identity(identity, variant)
+        if (metadata.get('acceptance_pair') != identity['pair_id']
+                or metadata.get('identity_manifest_sha256') != identity_digest(identity)
+                or metadata['source_revisions'] != expected['source_revisions']):
+            raise ValueError('Frozen engine differs from its explicit acceptance identity.')
+        ledgers = metadata.get('source_payload_files')
+        if not isinstance(ledgers, dict) or set(ledgers) != set(COMPONENTS):
+            raise ValueError('Explicit acceptance engine is missing source payload ledgers.')
+        for name, relative in COMPONENTS.items():
+            ledger = ledgers[name]
+            if (not isinstance(ledger, list) or not ledger or any(not isinstance(row, list) or len(row) != 2
+                    or not isinstance(row[0], str) or not row[0] or Path(row[0]).is_absolute()
+                    or '\\' in row[0] or ':' in row[0] or '..' in Path(row[0]).parts
+                    or not isinstance(row[1], str) or not re.fullmatch(r'[a-f0-9]{64}', row[1]) for row in ledger)
+                    or len({row[0] for row in ledger}) != len(ledger)):
+                raise ValueError('Invalid explicit acceptance source payload ledger.')
+            current = [[path, sha((engine / relative / path).read_bytes())] for path, _ in ledger]
+            if current != ledger or identity_digest(current) != expected['payload_sha256'][name]:
+                raise ValueError('Explicit acceptance source payload changed.')
+        expected_versions = expected['versions']
+    else:
+        if metadata.get('acceptance_pair') or metadata.get('identity_manifest_sha256'):
+            raise ValueError('Explicit acceptance engine is missing its identity manifest.')
+        expected_versions = EXPECTED_VERSIONS[variant]
+    if actual_versions != expected_versions:
         raise ValueError('Frozen engine versions do not match the selected acceptance pair.')
     return metadata
 
@@ -251,6 +325,12 @@ def run_trial(args, fixture, trial, executable, metadata):
                                             'error': built_process.stderr, 'exit_code': built_process.returncode})
         raise ValueError('Product prompt preparation failed; see setup-error.json.')
     built = json.loads(built_process.stdout)
+    if built.get('effort') != args.effort:
+        save(directory / 'setup-error.json', {'status': 'setup-failed', 'model_calls': 0,
+                                            'code': 'inconsistent-model-effort',
+                                            'requested_effort': args.effort,
+                                            'product_effort': built.get('effort')})
+        raise ValueError('Product prompt and CLI effort differ; choose a common supported effort before running a model.')
     guard = (f'\n\nExecution context: isolated native review. The host has fixed {args.model} / {args.effort}; keep these settings and do not route this request. '
              'You are the executing reviewer: complete native capture, semantic review, draft, check and finish in this turn. '
              'Use real installed Skill helper tools; do not spawn another reviewer. All branches are local; remain offline. '
@@ -379,13 +459,16 @@ def main():
     frozen.add_argument('--merge-ref', required=True)
     frozen.add_argument('--workflowkit-ref', required=True)
     frozen.add_argument('--gitlab-workspace-ref', required=True)
+    frozen.add_argument('--identity-manifest', type=Path,
+                        help='Explicit version/commit/payload pair for a new acceptance run; omitting preserves the historical matrix.')
     run = sub.add_parser('run')
     run.add_argument('--manifest', type=Path, required=True)
     run.add_argument('--engine', type=Path, required=True)
     run.add_argument('--output', type=Path, required=True)
     run.add_argument('--case', action='append')
     run.add_argument('--trial', action='append', type=int)
-    run.add_argument('--parallel', type=int, default=2, choices=(1, 2, 3))
+    run.add_argument('--parallel', type=int, default=1, choices=(1, 2, 3),
+                     help='Use 1 for formal paired timing; higher values are throughput-only diagnostics.')
     run.add_argument('--model', default='gpt-6-luna')
     run.add_argument('--effort', default='xhigh')
     run.add_argument('--timeout', type=int, default=900)

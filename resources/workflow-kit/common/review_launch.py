@@ -11,10 +11,11 @@ import shutil
 import stat
 import subprocess
 import sys
+import time
 
 
 SHA = re.compile(r"[a-f0-9]{64}")
-ACTIONS = ("start", "status", "view", "check", "finish", "cancel", "preflight")
+ACTIONS = ("start", "status", "view", "check", "finish", "cancel", "preflight", "schema")
 VIEW_OPTIONS = {"--artifact", "--artifact-scope", "--pointer", "--offset", "--page-size",
                 "--string-offset", "--requests-file"}
 SKIP = {"__pycache__", ".pytest_cache", ".git"}
@@ -105,7 +106,8 @@ def verify_binding(binding: dict, runner: Path) -> Path:
     return script
 
 
-def load_request(path: str, expected: str, runner: Path) -> tuple[dict, Path]:
+def load_request(path: str, expected: str, runner: Path, *, timings: dict | None = None) -> tuple[dict, Path]:
+    started = time.perf_counter()
     source = plain(path, file=True)
     with source.open("rb") as stream:
         raw = stream.read(256 * 1024 + 1)
@@ -138,7 +140,13 @@ def load_request(path: str, expected: str, runner: Path) -> tuple[dict, Path]:
     for key in ("refresh", "no_fetch"):
         if key in value and not isinstance(value[key], bool):
             raise ValueError(f"Review launch {key} must be boolean.")
-    return value, verify_binding(value.get("binding"), runner)
+    if timings is not None:
+        timings["request_seconds"] = time.perf_counter() - started
+    started = time.perf_counter()
+    script = verify_binding(value.get("binding"), runner)
+    if timings is not None:
+        timings["binding_seconds"] = time.perf_counter() - started
+    return value, script
 
 
 def readonly_environment() -> dict[str, str]:
@@ -176,21 +184,43 @@ def view_arguments(arguments: list[str]) -> list[str]:
     return arguments
 
 
+def schema_arguments(arguments: list[str]) -> list[str]:
+    """Schema inspection has no session overrides or executable command input."""
+    if arguments and (len(arguments) != 2 or arguments[0] != "--operation"
+                      or not re.fullmatch(r"[a-z][a-z0-9-]{0,63}", arguments[1])):
+        raise ValueError("Schema accepts only --operation with an operation identifier.")
+    return arguments
+
+
 def launch(argv: list[str], runner: Path, prepare_runtime, child_environment) -> int:
+    started = time.perf_counter()
+    timings = {}
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--review-request", required=True)
     parser.add_argument("--expected-request-sha256", required=True)
     parser.add_argument("--action", choices=ACTIONS, required=True)
     options, extra = (argv[:argv.index("--")], argv[argv.index("--") + 1:]) if "--" in argv else (argv, [])
     args = parser.parse_args(options)
-    request, script = load_request(args.review_request, args.expected_request_sha256, runner)
+    request, script = load_request(args.review_request, args.expected_request_sha256, runner, timings=timings)
     command = [sys.executable, "-X", "utf8", "-B", str(script)]
+    phase_started = time.perf_counter()
     caps = capabilities(command)
+    timings["capabilities_seconds"] = time.perf_counter() - phase_started
     require_features(caps, ("launch_preflight", "read_only_inspection"))
     if "compact" not in caps.get("draft_formats", []):
         raise ValueError("Installed Reviewer does not support compact drafts.")
-    if extra and args.action != "view":
-        raise ValueError("Only view accepts additional arguments; review identity is fixed.")
+    if extra and args.action not in ("view", "schema"):
+        raise ValueError("Only view or schema accepts documented inspection arguments; review identity is fixed.")
+    if args.action == "schema":
+        require_features(caps, ("operation_schema",))
+        schema_arguments(extra)
+
+    def completed(code):
+        timings["total_seconds"] = time.perf_counter() - started
+        print(json.dumps({"schema": "ReviewLaunchMetrics/v1", "action": args.action,
+                          "returncode": code, "timings": timings}, separators=(",", ":")),
+              file=sys.stderr, flush=True)
+        return code
     identity = ["--runtime-root", request["runtime_root"], "--request-id", request["request_id"]]
     initial = identity + ["--workspace", request["workspace"], "--project", request["project"],
                           "--base", request["base"], "--head", request["head"], "--draft-format", request["draft_format"]]
@@ -204,12 +234,14 @@ def launch(argv: list[str], runner: Path, prepare_runtime, child_environment) ->
     # Existing sessions validate their saved input digest in native start. Live
     # preflight must not turn a recoverable fixed snapshot into a fresh capture.
     if args.action == "start" and not job.exists():
+        phase_started = time.perf_counter()
         inspected = subprocess.run(command + ["preflight"] + initial, env=readonly_environment(),
                                    capture_output=True, text=True, encoding="utf-8", check=False)
+        timings["preflight_seconds"] = time.perf_counter() - phase_started
         if inspected.returncode:
             sys.stdout.write(inspected.stdout)
             sys.stderr.write(inspected.stderr)
-            return inspected.returncode
+            return completed(inspected.returncode)
         outcome = json.loads(inspected.stdout)
         if outcome.get("schema") != "MergeReviewPreflight/v1" or outcome.get("valid") is not True:
             raise ValueError("Native preflight did not validate the fixed launch inputs.")
@@ -218,13 +250,18 @@ def launch(argv: list[str], runner: Path, prepare_runtime, child_environment) ->
         arguments += ["--summary"]
     elif args.action == "view":
         arguments += ["--read-only"] + view_arguments(extra)
+    elif args.action == "schema":
+        arguments = schema_arguments(extra)
     command += [args.action] + arguments
-    if args.action in ("status", "view", "preflight"):
+    if args.action in ("status", "view", "preflight", "schema"):
         environment = readonly_environment()
     else:
         temporary, cache = prepare_runtime(runner.parent.parent.parent, None, command)
         environment = child_environment(temporary, cache, command)
-    return subprocess.run(command, env=environment, check=False).returncode
+    phase_started = time.perf_counter()
+    result = subprocess.run(command, env=environment, check=False)
+    timings["child_seconds"] = time.perf_counter() - phase_started
+    return completed(result.returncode)
 
 
 def trusted_readonly(command: list[str], runner: Path) -> list[str]:
@@ -283,6 +320,12 @@ def trusted_readonly(command: list[str], runner: Path) -> list[str]:
         options = helper_args[1:]
         if action == "--help" and not options:
             return command
+        if action in set(ACTIONS) | {"step", "capabilities", "cleanup"} and options == ["--help"]:
+            return command
+        if action == "schema":
+            require_features(caps, ("operation_schema",))
+            schema_arguments(options)
+            return command
         if action == "preflight":
             allowed = {"--workspace", "--project", "--base", "--head", "--workspace-file",
                        "--runtime-root", "--request-id", "--auth-scope", "--draft-format", "--git-timeout",
@@ -292,7 +335,7 @@ def trusted_readonly(command: list[str], runner: Path) -> list[str]:
         elif action == "view" and options.count("--read-only") == 1:
             allowed = VIEW_OPTIONS | {"--runtime-root", "--request-id", "--workspace", "--read-only"}
         else:
-            raise ValueError("Read-only runner accepts capabilities, --help, preflight, status --summary, or view --read-only.")
+            raise ValueError("Read-only runner accepts capabilities, command --help, schema, preflight, status --summary, or view --read-only.")
         seen = set()
         offset = 0
         while offset < len(options):

@@ -1,6 +1,8 @@
 # WorkflowKit
 
-WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.3、MergeReviewer 0.22.0、ReleaseReviewer 0.12.1、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills，另提供五個輕量 BMAD 入口。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
+WorkflowKit 1.11.0 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.3、MergeReviewer 0.23.0、ReleaseReviewer 0.12.1、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills，另提供五個輕量 BMAD 入口。支援獨立 Git Repository 與含直接子 Repo 的 Group；套件版號與 GitLab Workspace Extension 分開管理。
+
+1.11.0 加入固定綁定的純讀 schema、啟動器分段計時與明確驗收身份；審查續讀仍由單一 Agent 判斷及確認保存。詳見 [1.11.0 發行說明](docs/releases/v1.11.0.md)。模型品質與耗時的驗證範圍，以對應版本的實跑收據為準。
 
 1.10.0 加入 BMAD 五入口、三個常用操作與按階段載入，支援 source-first 需求探索及 GitLab Workspace 的固定來源、獨立任務與人工確認交付流程。Build Auto 須明確選用並通過實際 sandbox 能力檢查；既有 external BMAD 與個人內容保持受保護。詳見 [1.10.0 發行說明](docs/releases/v1.10.0.md)與[整合驗證紀錄](docs/validation/workflow-integration-20261114.md)。
 
@@ -16,7 +18,7 @@ WorkflowKit 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM
 
 需要 Python 3.11+。安裝器不需要 Node.js 或網路；若環境沒有 `uv`，安裝仍會完成並提示你在執行 BMAD 工作流程前備妥它。
 
-下載 `gitlab-workspace-kit-1.10.0.zip`，解壓後執行：
+下載正式附件 `gitlab-workspace-kit-1.11.0.zip`，解壓後執行：
 
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyProject
@@ -27,7 +29,7 @@ python -X utf8 -B install.py --target C:\projects\MyProject
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyGroup --profile group
 python -X utf8 -B install.py --target C:\projects\MyRepo --profile repository
-python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.10.0
+python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.11.0
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易路徑>
 ```
 

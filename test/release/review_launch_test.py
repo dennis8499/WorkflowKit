@@ -25,7 +25,11 @@ args=sys.argv[1:]
 action=args[0]
 if action=='capabilities':
  print(json.dumps({'schema':'MergeReviewCapabilities/v1','draft_formats':['v3','compact'],
- 'features':{'launch_preflight':True,'read_only_inspection':True}}));sys.exit(0)
+ 'features':{'launch_preflight':True,'read_only_inspection':True,'operation_schema':True}}));sys.exit(0)
+if '--help' in args:
+ print('fixture help: '+action);sys.exit(0)
+if action=='schema':
+ print(json.dumps({'schema':'MergeReviewOperationSchema/v1','args':args}));sys.exit(0)
 def value(key):
  return args[args.index(key)+1]
 root=Path(value('--runtime-root'))
@@ -168,6 +172,55 @@ class ReviewLaunchTests(unittest.TestCase):
             self.assertEqual(2, result.returncode, flag)
         self.assertEqual(2, self.invoke("start", "--", "--project", str(self.project)).returncode)
 
+    def test_bound_schema_matches_native_without_runtime_or_writes(self):
+        before = self.files()
+        inspected = self.invoke("schema", "--", "--operation", "read")
+        native = subprocess.run([sys.executable, "-X", "utf8", "-B", str(self.script),
+            "schema", "--operation", "read"], capture_output=True, text=True, encoding="utf-8", check=False)
+        self.assertEqual(0, inspected.returncode, inspected.stderr)
+        self.assertEqual(native.stdout, inspected.stdout)
+        self.assertEqual(["schema", "--operation", "read"], json.loads(inspected.stdout)["args"])
+        self.assertFalse(self.runtime.exists())
+        self.assertEqual(before, self.files())
+
+    def test_schema_rejects_identity_override_and_missing_capability(self):
+        for extra in (("--runtime-root", str(self.runtime)), ("--operation", "read", "--operation", "author"),
+                      ("--operation", "read;finish"), ("--operation", "--help")):
+            with self.subTest(extra=extra):
+                result = self.invoke("schema", "--", *extra)
+                self.assertEqual(2, result.returncode)
+                self.assertFalse(self.runtime.exists())
+        self.script.write_text(HELPER.replace("'operation_schema':True", "'operation_schema':False"))
+        self.request["binding"] = self.binding()
+        self.save()
+        result = self.invoke("schema", "--", "--operation", "read")
+        self.assertEqual(2, result.returncode)
+        self.assertIn("lacks the required", result.stderr)
+
+    def test_action_timings_are_structured_stderr_without_protocol_contamination(self):
+        result = self.invoke("status")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("status", json.loads(result.stdout)["action"])
+        metrics = json.loads(result.stderr)
+        self.assertEqual("ReviewLaunchMetrics/v1", metrics["schema"])
+        self.assertEqual(("status", 0), (metrics["action"], metrics["returncode"]))
+        required = {"request_seconds", "binding_seconds", "capabilities_seconds", "child_seconds", "total_seconds"}
+        self.assertEqual(required, set(metrics["timings"]))
+        self.assertTrue(all(value >= 0 for value in metrics["timings"].values()))
+        self.assertGreaterEqual(metrics["timings"]["total_seconds"], metrics["timings"]["child_seconds"])
+        self.assertNotIn(str(self.install), result.stderr)
+
+    def test_paging_file_path_is_passed_as_one_literal_argument(self):
+        requests = self.base / "續讀 狀態.json"
+        requests.write_text('{"schema":"MergeReviewPaging/v1","pending":[]}', encoding="utf-8")
+        before = self.files()
+        result = self.invoke("view", "--", "--requests-file", str(requests))
+        self.assertEqual(0, result.returncode, result.stderr)
+        args = json.loads(result.stdout)["args"]
+        self.assertEqual(str(requests), args[args.index("--requests-file") + 1])
+        self.assertEqual(1, args.count("--read-only"))
+        self.assertEqual(before, self.files())
+
     def test_missing_native_feature_fails_without_scratch(self):
         self.script.write_text(HELPER.replace("'launch_preflight':True", "'launch_preflight':False"))
         self.request["binding"] = self.binding()
@@ -219,6 +272,20 @@ class ReviewLaunchTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         for action in ("start", "step", "finish", "cancel", "check"):
             self.assertEqual(2, self.raw(action).returncode, action)
+        self.assertEqual(before, self.files())
+
+    def test_raw_readonly_schema_and_exact_subcommand_help(self):
+        before = self.files()
+        schema = self.raw("schema", "--operation", "author")
+        self.assertEqual(0, schema.returncode, schema.stderr)
+        self.assertEqual(["schema", "--operation", "author"], json.loads(schema.stdout)["args"])
+        for action in ("view", "step", "finish", "cleanup"):
+            with self.subTest(action=action):
+                result = self.raw(action, "--help")
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertEqual("fixture help: " + action, result.stdout.strip())
+                self.assertEqual(2, self.raw(action, "--help", "--request-id", "a" * 32).returncode)
+        self.assertEqual(2, self.raw("schema", "--operation", "author", "--runtime-root", str(self.runtime)).returncode)
         self.assertEqual(before, self.files())
 
     def test_raw_readonly_rejects_unmanaged_imports_and_legacy_capabilities(self):

@@ -4,9 +4,11 @@ from __future__ import annotations
 import copy
 import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
 import subprocess
+import tarfile
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -282,6 +284,88 @@ class EngineFreezeTests(unittest.TestCase):
             (candidate_engine / "gws/src/codex/launch.ts").write_text("tampered\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "payload changed"):
                 RUNNER.load_engine(candidate_engine)
+
+    def test_explicit_identity_accepts_new_versions_and_pins_source_payloads(self):
+        with tempfile.TemporaryDirectory(prefix="reviewer-explicit-pair-") as directory:
+            parent = Path(directory)
+            fixture_files = {
+                "merge_reviewer": {"skills/merge-reviewer/VERSION": "0.23.0\n",
+                    "skills/merge-reviewer/scripts/review_session.py": "# explicit helper\n"},
+                "workflow_kit": {"VERSION": "1.10.0\n",
+                    "resources/workflow-kit/common/profile.md": "explicit workflow\n"},
+                "gitlab_workspace": {"package.json": '{"name":"gitlab-workspace","version":"0.51.0"}\n',
+                    "src/codex/launch.ts": "export const identity = 'explicit';\n"},
+            }
+            paths = {"merge_reviewer": parent / "MergeReviewer", "workflow_kit": parent / "WorkflowKit",
+                     "gitlab_workspace": parent / "GitlabWorkSpace"}
+            revisions = {name: self.repository(paths[name], files) for name, files in fixture_files.items()}
+            payloads = {}
+            for name, files in fixture_files.items():
+                rows = []
+                archived = subprocess.run(["git", "-C", str(paths[name]), "archive", revisions[name]],
+                                          check=True, capture_output=True).stdout
+                with tarfile.open(fileobj=io.BytesIO(archived)) as bundle:
+                    for path in sorted(files):
+                        rows.append([path, hashlib.sha256(bundle.extractfile(path).read()).hexdigest()])
+                payloads[name] = hashlib.sha256(json.dumps(rows, ensure_ascii=False,
+                    separators=(",", ":")).encode("utf-8")).hexdigest()
+            entry = {"source_revisions": revisions,
+                     "versions": {"merge": "0.23.0", "workflowkit": "1.10.0", "gitlab_workspace": "0.51.0"},
+                     "payload_sha256": payloads}
+            identity = {"schema": "ReviewerReliabilityIdentity/v1", "pair_id": "paging-20261115",
+                        "variants": {"baseline": copy.deepcopy(entry), "candidate": copy.deepcopy(entry)}}
+            identity_path = parent / "pair.json"
+            identity_path.write_text(json.dumps(identity), encoding="utf-8")
+            args = SimpleNamespace(variant="candidate", output=parent / "engine", identity_manifest=identity_path,
+                merge_ref=revisions["merge_reviewer"], workflowkit_ref=revisions["workflow_kit"],
+                gitlab_workspace_ref=revisions["gitlab_workspace"])
+            with mock.patch.object(RUNNER, "ROOT", paths["workflow_kit"]), \
+                 mock.patch.object(RUNNER, "PARENT", parent), \
+                 mock.patch.object(RUNNER, "transpile_typescript", side_effect=lambda source, _compiler:
+                    [(path.with_suffix(".js")).write_text("// generated JS\n", encoding="utf-8")
+                     for path in source.rglob("*.ts")]):
+                RUNNER.freeze(args)
+                metadata = RUNNER.load_engine(args.output)
+                self.assertEqual("paging-20261115", metadata["acceptance_pair"])
+                self.assertEqual(revisions, metadata["source_revisions"])
+                self.assertTrue((args.output / "identity-manifest.json").is_file())
+                self.assertNotIn("src/codex/launch.js", [row[0] for row in metadata["source_payload_files"]["gitlab_workspace"]])
+                self.assertIn("gws/src/codex/launch.js", [row[0] for row in metadata["engine_files"]])
+                wrong = copy.deepcopy(identity)
+                wrong["variants"]["candidate"]["source_revisions"]["merge_reviewer"] = "0" * 40
+                identity_path.write_text(json.dumps(wrong), encoding="utf-8")
+                args.output = parent / "wrong-commit"
+                with self.assertRaisesRegex(ValueError, "source commits differ"):
+                    RUNNER.freeze(args)
+                self.assertFalse(args.output.exists())
+                wrong = copy.deepcopy(identity)
+                wrong["variants"]["candidate"]["payload_sha256"]["workflow_kit"] = "0" * 64
+                identity_path.write_text(json.dumps(wrong), encoding="utf-8")
+                args.output = parent / "wrong-payload"
+                with self.assertRaisesRegex(ValueError, "source payload differs"):
+                    RUNNER.freeze(args)
+                self.assertFalse((args.output / "engine.json").exists())
+            engine = parent / "engine"
+            metadata["source_payload_files"]["merge_reviewer"] = []
+            (engine / "engine.json").write_text(json.dumps(metadata), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "source payload ledger"):
+                RUNNER.load_engine(engine)
+
+    def test_explicit_identity_requires_complete_valid_component_pins(self):
+        entry = {"source_revisions": {name: "a" * 40 for name in RUNNER.COMPONENTS},
+                 "versions": {"merge": "0.23.0", "workflowkit": "1.10.0", "gitlab_workspace": "0.51.0"},
+                 "payload_sha256": {name: "b" * 64 for name in RUNNER.COMPONENTS}}
+        good = {"schema": "ReviewerReliabilityIdentity/v1", "pair_id": "paging-test",
+                "variants": {"baseline": copy.deepcopy(entry), "candidate": copy.deepcopy(entry)}}
+        changes = [("missing_payload", lambda value: value["variants"]["candidate"]["payload_sha256"].pop("workflow_kit")),
+                   ("bad_commit", lambda value: value["variants"]["baseline"]["source_revisions"].update(merge_reviewer="HEAD")),
+                   ("bad_payload", lambda value: value["variants"]["candidate"]["payload_sha256"].update(workflow_kit="not-a-sha")),
+                   ("unknown_variant", lambda value: value["variants"].update(other=copy.deepcopy(entry)))]
+        for name, mutate in changes:
+            value = copy.deepcopy(good)
+            mutate(value)
+            with self.subTest(case=name), self.assertRaises(ValueError):
+                RUNNER.acceptance_identity(value, "candidate")
 
 
 if __name__ == "__main__":

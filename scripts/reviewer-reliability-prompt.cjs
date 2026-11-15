@@ -4,6 +4,8 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 (async () => {
   const input = JSON.parse(await fs.readFile(process.argv[2], 'utf8'));
+  // Match the frozen product form, rather than silently fixing only the CLI.
+  const effort = ['low', 'medium', 'high', 'xhigh', 'max'].includes(input.effort) ? input.effort : 'xhigh';
   const { readInstalledReviewerBinding } = require(path.join(input.engine, 'gws/src/workspace/installedReviewer.js'));
   const guide = require(path.join(input.engine, 'gws/src/webview/skillsGuideData.js'));
   const binding = await readInstalledReviewerBinding(input.workspace, 'merge-reviewer');
@@ -21,8 +23,6 @@ const { execFileSync } = require('node:child_process');
   const card = guide.getSkillGuideCard('merge-reviewer', 'merge-repo');
   const prompt = guide.buildSkillGuideContext(card, context) + '\n\n' + guide.buildSkillGuidePrompt(card,
     { 'merge-repo.repo': input.project, 'merge-repo.base': input.base, 'merge-repo.head': input.head,
-      // The legacy form uses "auto" for inheritance when routing is disabled.
-      // Both executions still receive the host's explicit identical model/effort.
-      'merge-repo.effort': input.variant === 'baseline' ? 'auto' : 'xhigh' }, context);
-  process.stdout.write(JSON.stringify({ prompt, binding, capabilities }));
+      'merge-repo.effort': effort }, context);
+  process.stdout.write(JSON.stringify({ prompt, binding, capabilities, effort }));
 })().catch(error => { process.stderr.write(error.stack + '\n'); process.exitCode = 1; });
