@@ -296,11 +296,11 @@
       "version": "6.12.4"
     },
     "codebase-wiki": {
-      "archiveSha256": "9c249d2123811d949e18e30edb7b4cb0d2b7c825e82c2f4a062586a75bfa6685",
-      "commit": "73292f71b14935d1748dddb00b28161dcaa4358b",
-      "dirty": true,
-      "entryRoot": "codebase-llm-wiki-codex-0.7.3",
-      "filename": "codebase-llm-wiki-codex-0.7.3.zip",
+      "archiveSha256": "410bc0cb240f6a64da6c7f78c574512d92cefa3409071e951f7655869b43dcd4",
+      "commit": "43ad18f8926d4c51a7fb6fdbb4f0806e448f6c97",
+      "dirty": false,
+      "entryRoot": "codebase-llm-wiki-codex-0.7.4",
+      "filename": "codebase-llm-wiki-codex-0.7.4.zip",
       "files": {
         ".agents/skills/codebase-wiki/SKILL.md": "2c5155b723eeafe95ebff7df62588ca17b3c194c46aebf7b66896cde3e9f1b2a",
         ".agents/skills/codebase-wiki/VERSION": "967d9afb101346667166f2e76e81910bc190488d7d41d50ca0072e9d92f00e32",
@@ -611,13 +611,13 @@
         "AGENTS.md": "114651f7bbea36880b9530cdee8a73e8484928a400b840db0a10175f7d13b206",
         "Codex.md": "d22e0889e18572bb4b5cc1c3e2b8fad375e6d4d3ffed23b8247a3e43c01b5447",
         "LICENSE": "7be3f03eb9f3cfb406d92a04a472b43f033d6be38b818ecc4a3723f9aef0e14c",
-        "README.md": "7efc08be2788def356df36289948120001bba983e2f5f8bdb2293518ea55f318",
-        "VERSION": "9c788a838dc1f6bfd80fa39757a95f94260071c35011c9a05301da1c73507657"
+        "README.md": "8608789c25a7664cdb79cbf5a425213f851892b658f5d7611ab81a6cf186bdfd",
+        "VERSION": "786aebf3f673c87c5f643e65953ffd9b336284b41b28d54c7aeee806fcdd8ea4"
       },
       "repository": "code-base-llm-wiki",
-      "sourceKind": "local-snapshot",
-      "treeSha256": "a04cb461e7d7c936bc07568d6c8228df0f71a1d5a24799d8c9fa0e2b12e0a4a7",
-      "version": "0.7.3"
+      "sourceKind": "official-release",
+      "treeSha256": "fc973ee91fcd85302e9b2753c13933c3d3f694df8fdc5dc8ab1fc2685d41c8b4",
+      "version": "0.7.4"
     },
     "commit-reviewer": {
       "archiveSha256": "debe3c7a6900c4c3aed68eba4064575cdc2f63db17d610b94d6de7afb94746d5",
@@ -640,9 +640,9 @@
       "version": "0.1.0"
     },
     "merge-reviewer": {
-      "archiveSha256": "be4b41298af51296b34705a7639282d3590a19bae078e926301170f0e3e218f5",
-      "commit": "b9963266432aff75602ae64b385a4dff15cea405",
-      "dirty": true,
+      "archiveSha256": "f4f46736418d5e0cef424c22fe6d927e46652a1ed1cb876a068f6bcf9e24070e",
+      "commit": "5a255fc9f35643eb4164fc893826cec42737ccbe",
+      "dirty": false,
       "entryRoot": "merge-reviewer",
       "filename": "merge-reviewer-0.23.0.zip",
       "files": {
@@ -658,7 +658,7 @@
         "references/review-rules.md": "db76edd3e4d070480b49df4abcca2ce2ea35d2a2a6e30954e80ce3d2f0f99f6c",
         "references/runtime-controls.md": "30f75be67a109ba442f7acde746c9c804bbca9c70f197677c50e28680dd26276",
         "references/session-workflow.md": "a71f63efe048425403b2b76aead04b5eef708eee6146b9057d2e2d520298f9cf",
-        "references/usage.md": "fece0aae32d9ea8f536bf68b5a0e70ede13702d5199f520e63d627c5e5d70f8a",
+        "references/usage.md": "3e495215274b94e662da53e5533c8b05d5b8aeddf8a77fd869338618357683da",
         "references/workspace-review.md": "aec7632ff1daf96974c113e31d2ec755c89ab9dcc9fbb8d462493bcb2240e308",
         "scripts/contract_boundary.py": "59d3f170643adee7e65fe89f6a835ea2c2387a842204109a74624f070dc6d088",
         "scripts/git_network_lease.py": "1555269f41f711d443b8d107b960824c4836c140624bc461470d07f7a05fda1b",
@@ -684,19 +684,19 @@
         "scripts/workspace_report.py": "919e64f3b36558200bcb75f4995b4a7c94928168c5b8e0b069b126144f96c2e6"
       },
       "repository": "MergeReviewer",
-      "sourceKind": "local-snapshot",
-      "treeSha256": "ab10b3dcd334aa0c05b379d6625ddb7fdc326cd49a4c91d33286a1dc3bc3348f",
+      "sourceKind": "official-release",
+      "treeSha256": "cf0eba68c928f13c577a2c7427f19231ea0e897664005a377ba21790082b63ec",
       "version": "0.23.0"
     },
     "release-reviewer": {
-      "archiveSha256": "4801734b71a4a842d53113c95241835215dec53880bce342cf6b6ce0fb224c5a",
-      "commit": "2964efd74c6e9352581fa73d66733cd0de323975",
-      "dirty": true,
+      "archiveSha256": "08a292b8d854ed29f26df26d255498a130c47c4e687e18eb41cdfd693bb2b95c",
+      "commit": "7500e638a4ce28bdaa5ba0833b385d61d391d100",
+      "dirty": false,
       "entryRoot": "release-reviewer",
-      "filename": "release-reviewer-0.12.1.zip",
+      "filename": "release-reviewer-0.12.2.zip",
       "files": {
         "SKILL.md": "748718f37d2da68932b9a0ac110f29946f907b80a27c55861c8a073d9c35be88",
-        "VERSION": "f6ee69bf1c4b27a242266ccb5aeb4aa8c8306345b9ebe4ff7335b8c940452b81",
+        "VERSION": "f482d06e4ee83158e42999dcf951d5909861dad7e03317deb2b1e2ddd5c46274",
         "agents/openai.yaml": "54dcc5409d56c8505df85a9dc63767c5001170acdfd07d42de3a0781786bb105",
         "references/evidence-workflow.md": "59c2c59a3c4d971f00181caa2c8edd7b077d5978db528c3359c60b0704745783",
         "references/fast-session.md": "320775060cd7cd19f7794821418a4b92c7fc1b72be48cf333aff0753ba8d9a36",
@@ -726,11 +726,11 @@
         "scripts/review_session.py": "64b90cc1e7fafc5535e21a61dcb3707eac6d1552bacc3e35d6c9718f824e9dfd",
         "scripts/review_worklist.py": "f11a87fb7cf7bd4e19ec3c09b03cabdf9c9f843bbe713494d5f9ef564e923fae"
       },
-      "payloadSha256": "8198e8d1f812283e77b43efcf3f31f2f767c9844c0a22fccc5fa68008c6d5ab0",
+      "payloadSha256": "5fc5fe627f23288c1f700a2e2d3d0256ce37c79d93d464a9bbe1a1b23ec8e6a7",
       "repository": "ReleaseReviewer",
-      "sourceKind": "local-snapshot",
-      "treeSha256": "4b7e4e49199b61e4cab699bc54e9fceb8dab68baaba794c5c7a51d2214e95941",
-      "version": "0.12.1"
+      "sourceKind": "official-release",
+      "treeSha256": "cf5e6b01ccb6077635bf1e7194ea8b7052fb85c1186cc6345f13ad94562f0e37",
+      "version": "0.12.2"
     }
   },
   "workspaceFiles": {
@@ -761,6 +761,6 @@
     "resources/workflow-kit/skills/wk-plan/SKILL.md": "d1d432d31449217eb2e18c979f59dae152cba6752aecff130bcc5f7f994641c5",
     "resources/workflow-kit/skills/wk-project/SKILL.md": "b069bbbfd017156d3373ff898cbd853dff40189ac4a464150f8e2a18013587ce",
     "resources/workflow-kit/skills/wk-verify/SKILL.md": "d0e5933fbc2a19a97043440e471c2eaf2a3e43f87159e1bf385769707ba5f396",
-    "resources/workflow-kit/trusted-predecessors.json": "c12c69d8531f6b51dbb814e5bec5b5f95783237a1f8e4115088d31a2e16d36ab"
+    "resources/workflow-kit/trusted-predecessors.json": "aa34ee254db33c67ac5187c98afe0d882eaeae729e643a4a63a116a08bcf2438"
   }
 }

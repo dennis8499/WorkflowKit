@@ -1,0 +1,13 @@
+{
+  "candidate": "6f35c0b44a26ced95742f18796cfaeccc9f4b015",
+  "dependencies": {
+    "MergeReviewer": "5a255fc9f35643eb4164fc893826cec42737ccbe",
+    "ReleaseReviewer": "7500e638a4ce28bdaa5ba0833b385d61d391d100",
+    "code-base-llm-wiki": "43ad18f8926d4c51a7fb6fdbb4f0806e448f6c97"
+  },
+  "previousTag": "v1.10.0",
+  "repository": "WorkflowKit",
+  "runId": "20261115T003403Z-3f089c80",
+  "schema": "workspace-release/v1",
+  "targetVersion": "1.11.0"
+}
