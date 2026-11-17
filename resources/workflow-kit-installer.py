@@ -51669,16 +51669,6 @@ def _copy_extracted_payload(payload: dict[str, bytes], destination: Path) -> Non
         target.write_bytes(content)
 
 
-def _copy_verified_skill(source: Path, target: Path, root: Path) -> None:
-    assert_safe(root, target.relative_to(root).as_posix(), allow_missing=True)
-    if source.exists():
-        if source.is_symlink() or not source.is_dir():
-            fail(f"Wiki installer 的 Skill 輸出不是一般資料夾：{source.name}")
-        if target.exists():
-            shutil.rmtree(target)
-        copy_safe_tree(source, target)
-
-
 def _atomic_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
@@ -51956,14 +51946,6 @@ def _mkdir_safe(root: Path, relative: str) -> Path:
     target = assert_safe(root, relative, allow_missing=True)
     target.mkdir(parents=True, exist_ok=True)
     return target
-
-
-def _copy_candidate(path: Path, data: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("xb") as stream:
-        stream.write(data)
-        stream.flush()
-        os.fsync(stream.fileno())
 
 
 def _action_hash(path: Path) -> str:
