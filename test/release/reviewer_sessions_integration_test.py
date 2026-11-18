@@ -83,6 +83,11 @@ with patch.object(Path, "open", denied):
 
     def test_bound_launch_uses_real_native_preflight_resume_and_readonly_inspection(self):
         tool = 'merge-reviewer'
+        evidence = self.repo / 'long-evidence.txt'
+        evidence.write_text(''.join(f'evidence row {line:03d} {"x" * 70}\n' for line in range(1, 331)),
+                            encoding='utf-8')
+        self.git('add', evidence.name)
+        self.git('commit', '-qm', 'add paged evidence')
         skill = self.group / '.agents/skills' / tool
         script = skill / 'scripts/review_session.py'
         runner = self.group / '.agents/gitlab-workspace-kit/run.py'
@@ -113,7 +118,10 @@ with patch.object(Path, "open", denied):
             process = subprocess.run([sys.executable, '-X', 'utf8', '-B', str(runner), '--review-request', str(path),
                 '--expected-request-sha256', request_hash, '--action', action, *map(str, extra)],
                 cwd=self.repo, env=self.environment, capture_output=True, text=True, encoding='utf-8', timeout=90)
-            self.assertEqual(code, process.returncode, process.stderr or process.stdout)
+            expected_codes = (code,) if isinstance(code, int) else code
+            self.assertIn(process.returncode, expected_codes, process.stdout + process.stderr)
+            metrics = json.loads(process.stderr.splitlines()[-1])
+            self.assertEqual('verified-manifest', metrics['capabilities_source'])
             return json.loads(process.stdout)
 
         def snapshot():
@@ -121,6 +129,9 @@ with patch.object(Path, "open", denied):
 
         before = snapshot()
         self.assertTrue(invoke('preflight')['valid'])
+        schema = invoke('schema', '--', '--operation', 'author')
+        self.assertEqual('MergeReviewOperationSchema/v1', schema['schema'])
+        self.assertEqual('author', schema['operations']['author']['example'][0]['op'])
         self.assertEqual(before, snapshot())
         self.assertFalse(runtime.exists())
         started = invoke('start')
@@ -138,6 +149,22 @@ with patch.object(Path, "open", denied):
         viewed = invoke('view', '--', '--artifact', stepped['operations'][0]['artifact'])
         self.assertTrue(viewed)
         self.assertEqual(before, snapshot())
+
+        request_file.write_text(json.dumps([{'id': 'bound-large-read', 'op': 'read', 'repo': started['selected_repo'],
+                                            'source': 'head', 'path': evidence.name}]), encoding='utf-8')
+        projected = self.cli(tool, 'step', '--runtime-root', runtime, '--request-id', identifier,
+                             '--requests-file', request_file)
+        seed = Path(projected['paging_requests_file'])
+        self.assertEqual([], json.loads(seed.read_bytes())['acknowledged'])
+        before = snapshot()
+        pages = invoke('view', '--', '--requests-file', seed, code=(0, 3))
+        self.assertEqual('MergeReviewPagingBatch/v1', pages['schema'])
+        self.assertEqual(0, pages['blocked_count'])
+        self.assertEqual(0, pages['git_commands'])
+        self.assertEqual('bound-large-read', pages['results'][0]['result']['items'][0]['id'])
+        self.assertTrue(pages['paging_delta']['acknowledged'])
+        self.assertEqual(before, snapshot())
+
         self.assertFalse(invoke('check', code=3)['expected_outcome']['review_complete'])
         invoke('cancel')
 
