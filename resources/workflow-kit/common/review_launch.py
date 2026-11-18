@@ -164,6 +164,30 @@ def capabilities(command: list[str]) -> dict:
     return value
 
 
+def installed_capabilities(script: Path) -> dict | None:
+    """Read only an already authenticated payload, never a mutable runtime cache."""
+    path = script.parent.parent / "capabilities.json"
+    if not path.exists():
+        return None  # Historical installations keep their subprocess discovery.
+    value = read_object(path)
+    if (set(value) != {"schema", "protocol_version", "draft_formats", "features"}
+            or value.get("schema") != "MergeReviewCapabilities/v1"
+            or type(value.get("protocol_version")) is not int or value["protocol_version"] != 1
+            or not isinstance(value.get("draft_formats"), list)
+            or not all(isinstance(item, str) for item in value["draft_formats"])
+            or not isinstance(value.get("features"), dict)
+            or value["features"].get("capability_manifest") is not True):
+        raise ValueError("Installed Reviewer capability manifest is invalid.")
+    digest = hashlib.sha256()
+    for helper in sorted(script.parent.glob("*.py"), key=lambda item: item.name):
+        helper = plain(helper, file=True)
+        digest.update(helper.name.encode("utf-8") + b"\0" + hashlib.sha256(helper.read_bytes()).digest())
+    return {**value, "skill_version": plain(script.parent.parent / "VERSION", file=True).read_text(encoding="utf-8").strip(),
+            "helper_sha256": digest.hexdigest(), "python_version": sys.version.split()[0],
+            "python_executable": str(Path(sys.executable).resolve()),
+            "capabilities_sha256": sha(path.read_bytes())}
+
+
 def require_features(caps: dict, names: tuple[str, ...]) -> None:
     features = caps.get("features")
     if not isinstance(features, dict) or any(features.get(name) is not True for name in names):
@@ -204,7 +228,10 @@ def launch(argv: list[str], runner: Path, prepare_runtime, child_environment) ->
     request, script = load_request(args.review_request, args.expected_request_sha256, runner, timings=timings)
     command = [sys.executable, "-X", "utf8", "-B", str(script)]
     phase_started = time.perf_counter()
-    caps = capabilities(command)
+    caps = installed_capabilities(script)
+    capabilities_source = "verified-manifest" if caps is not None else "subprocess"
+    if caps is None:
+        caps = capabilities(command)
     timings["capabilities_seconds"] = time.perf_counter() - phase_started
     require_features(caps, ("launch_preflight", "read_only_inspection"))
     if "compact" not in caps.get("draft_formats", []):
@@ -218,7 +245,8 @@ def launch(argv: list[str], runner: Path, prepare_runtime, child_environment) ->
     def completed(code):
         timings["total_seconds"] = time.perf_counter() - started
         print(json.dumps({"schema": "ReviewLaunchMetrics/v1", "action": args.action,
-                          "returncode": code, "timings": timings}, separators=(",", ":")),
+                          "returncode": code, "timings": timings,
+                          "capabilities_source": capabilities_source}, separators=(",", ":")),
               file=sys.stderr, flush=True)
         return code
     identity = ["--runtime-root", request["runtime_root"], "--request-id", request["request_id"]]
@@ -312,7 +340,9 @@ def trusted_readonly(command: list[str], runner: Path) -> list[str]:
         if not helper_args:
             raise ValueError("Read-only runner requires an inspection command.")
         action = helper_args[0]
-        caps = capabilities(command[:index] + [str(script)])
+        caps = installed_capabilities(script)
+        if caps is None:
+            caps = capabilities(command[:index] + [str(script)])
         require_features(caps, ("read_only_inspection",))
         if action == "capabilities" and (len(helper_args) == 1 or
                 len(helper_args) == 3 and helper_args[1] == "--workspace" and helper_args[2]):

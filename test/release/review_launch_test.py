@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 COMMON = ROOT / "resources/workflow-kit/common"
@@ -327,6 +328,64 @@ class ReviewLaunchTests(unittest.TestCase):
                                  "raise SystemExit(37)", "--review-request", "child-owned-argument"],
                                 capture_output=True, timeout=30)
         self.assertEqual(37, result.returncode)
+
+    def install_capability_manifest(self, **features):
+        value = {"schema": "MergeReviewCapabilities/v1", "protocol_version": 1,
+                 "draft_formats": ["v3", "compact"], "features": {"capability_manifest": True,
+                    "launch_preflight": True, "read_only_inspection": True, "operation_schema": True, **features}}
+        (self.skill / "capabilities.json").write_text(json.dumps(value), encoding="utf-8")
+        self.request["binding"] = self.binding()
+        self.save()
+        self.marker()
+        return value
+
+    def test_verified_manifest_avoids_capability_subprocess_and_pins_python_and_payload(self):
+        declared = self.install_capability_manifest()
+        with mock.patch.object(launch.subprocess, "run", side_effect=AssertionError("extra capability process")):
+            caps = launch.installed_capabilities(self.script)
+        self.assertEqual(declared["features"], caps["features"])
+        self.assertEqual(sys.version.split()[0], caps["python_version"])
+        self.assertEqual(str(Path(sys.executable).resolve()), caps["python_executable"])
+        self.assertEqual("0.21.0", caps["skill_version"])
+        self.assertEqual(launch.sha((self.skill / "capabilities.json").read_bytes()), caps["capabilities_sha256"])
+        before = self.files()
+        result = self.invoke("status")
+        self.assertEqual(0, result.returncode, result.stderr)
+        metric = next(json.loads(line) for line in result.stderr.splitlines() if 'ReviewLaunchMetrics/v1' in line)
+        self.assertEqual("verified-manifest", metric["capabilities_source"])
+        self.assertEqual(before, self.files())
+
+    def test_manifest_changes_are_rejected_by_original_binding_and_new_unsupported_features_still_fail(self):
+        self.install_capability_manifest()
+        path = self.skill / "capabilities.json"
+        value = json.loads(path.read_text())
+        value["features"]["read_only_inspection"] = False
+        path.write_text(json.dumps(value))
+        denied = self.invoke("status")
+        self.assertEqual(2, denied.returncode)
+        self.assertIn("payload changed", denied.stderr)
+        self.request["binding"] = self.binding()
+        self.save()
+        self.marker()
+        before = self.files()
+        denied = self.invoke("status")
+        self.assertEqual(2, denied.returncode)
+        self.assertIn("lacks the required", denied.stderr)
+        self.assertEqual(before, self.files())
+
+    def test_malformed_manifest_cannot_supply_runtime_identity_or_trigger_writes(self):
+        self.install_capability_manifest()
+        path = self.skill / "capabilities.json"
+        value = json.loads(path.read_text())
+        value["helper_sha256"] = "0" * 64
+        path.write_text(json.dumps(value))
+        self.request["binding"] = self.binding()
+        self.save()
+        before = self.files()
+        denied = self.invoke("start")
+        self.assertEqual(2, denied.returncode)
+        self.assertIn("capability manifest is invalid", denied.stderr)
+        self.assertEqual(before, self.files())
 
 
 if __name__ == "__main__":

@@ -20,6 +20,13 @@ capturing evidence. Existing jobs enter native start's saved-input validation;
 they do not repeat live preflight or capture. New drafts use supported compact
 format; recovery preserves the native saved draft. `status` returns its summary.
 
+After payload authentication, installations with `capabilities.json` reuse that
+immutable declaration instead of starting an extra capability-query process.
+The launcher derives helper, manifest and Python identities from the verified
+files and its current interpreter. No runtime capability cache is trusted or
+written. Older packages retain subprocess discovery; feature gates and the
+complete request/payload checks still apply on every bound invocation.
+
 Keep the request file unchanged. A hash mismatch or changed installed binding
 requires the host to recreate the bound request. A diagnostic about the executed
 path does not prove the user's original input was wrong; compare it with the
