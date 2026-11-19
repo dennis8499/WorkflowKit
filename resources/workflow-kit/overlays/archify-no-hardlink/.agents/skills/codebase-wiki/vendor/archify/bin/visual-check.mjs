@@ -1912,11 +1912,16 @@ export class ChromeVisualBrowser {
   }
 
   async finishClose() {
-    this.cdp.failAll(new Error('visual-check finished'));
+    const finished = new Error('visual-check finished');
+    const exited = () => this.child.exitCode !== null || this.child.signalCode !== null;
+    this.cdp.failAll(finished);
     try {
-      if (this.child.exitCode === null && this.child.signalCode === null) {
-        const exited = () => this.child.exitCode !== null || this.child.signalCode !== null;
-        const signalAndWait = (signal) => new Promise((resolve, reject) => {
+      if (!exited()) {
+        const waitForExit = (requestExit) => new Promise((resolve, reject) => {
+          if (exited()) {
+            resolve(true);
+            return;
+          }
           let timer;
           const finish = () => {
             clearTimeout(timer);
@@ -1929,14 +1934,21 @@ export class ChromeVisualBrowser {
             resolve(exited());
           }, this.shutdownTimeoutMs);
           try {
-            this.child.kill(signal);
+            requestExit();
           } catch (error) {
             clearTimeout(timer);
             this.child.removeListener('exit', finish);
             reject(error);
           }
         });
-        if (!await signalAndWait('SIGTERM') && !await signalAndWait('SIGKILL')) {
+        // Chromium can release its own profile handles before Node resorts to a
+        // signal. On Windows even SIGTERM terminates the browser abruptly.
+        const closedGracefully = this.cdp.receivedMessages > 0 && await waitForExit(() => {
+          // The pipe may close before the command replies. Wait for process exit.
+          void this.cdp.send('Browser.close', {}, undefined, this.shutdownTimeoutMs).catch(() => {});
+        });
+        if (!closedGracefully && !await waitForExit(() => this.child.kill('SIGTERM'))
+            && !await waitForExit(() => this.child.kill('SIGKILL'))) {
           const error = new Error(`Chrome did not exit; retained temporary profile "${this.#profile.path}".`);
           error.code = 'ARCHIFY_TEMP_CLEANUP';
           error.directory = this.#profile.path;
@@ -1944,6 +1956,7 @@ export class ChromeVisualBrowser {
         }
       }
     } finally {
+      this.cdp.failAll(finished);
       // `exit` only reports that Chrome's main process is gone. A helper may
       // still hold an inherited pipe open, so explicitly release every stream
       // this browser instance owns before its test cleanup hook resolves.

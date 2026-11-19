@@ -1,4 +1,4 @@
-"""Verify the Wiki overlay's Windows hard-link denial fallback and no-clobber move."""
+"""Verify the Wiki overlay's guarded file moves and browser shutdown."""
 from __future__ import annotations
 
 import os
@@ -18,6 +18,7 @@ ARCHIVE = ROOT / "resources/offline-tools/sources" / WIKI_SOURCE["filename"]
 OVERLAY = (ROOT / "resources/workflow-kit/overlays/archify-no-hardlink/.agents/skills/"
            "codebase-wiki/vendor/archify/renderers/shared/atomic-output.mjs")
 PREFIX = WIKI_SOURCE["entryRoot"] + "/.agents/skills/codebase-wiki/vendor/archify/renderers/shared/"
+ARCHIFY_PAYLOAD = "workflow-kit/payload/.agents/skills/codebase-wiki/vendor/archify/"
 
 
 class ArchifyAtomicOverlayTests(unittest.TestCase):
@@ -122,6 +123,75 @@ try {
             self.assertIn('"lateClaimPreserved":"late claimant"', result.stdout)
             self.assertIn('"candidatePreserved":true', result.stdout)
             self.assertIn('"recoveryPreserved":true', result.stdout)
+
+
+class ArchifyBrowserOverlayTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which("node"), "Release CI provides Node.js for Wiki visualization checks.")
+    def test_browser_shutdown_requests_graceful_exit_before_signals(self):
+        with tempfile.TemporaryDirectory(prefix="wk-browser-") as temporary:
+            base = Path(temporary)
+            with zipfile.ZipFile(harness.RELEASE_ZIP) as bundle:
+                for name in bundle.namelist():
+                    if name.startswith(ARCHIFY_PAYLOAD) and not name.endswith("/"):
+                        path = base / name.removeprefix(ARCHIFY_PAYLOAD)
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        path.write_bytes(bundle.read(name))
+
+            driver = r'''import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
+import { existsSync } from 'node:fs';
+import { PassThrough, Writable } from 'node:stream';
+import { pathToFileURL } from 'node:url';
+
+const { ChromeVisualBrowser } = await import(pathToFileURL(process.argv[1]));
+for (const handlesClose of [true, false]) {
+  const requests = [];
+  const child = Object.assign(new EventEmitter(), {
+    exitCode: null, signalCode: null, stderr: new PassThrough(),
+  });
+  const reader = new PassThrough();
+  const exit = () => {
+    child.exitCode = 0;
+    child.emit('exit', 0, null);
+  };
+  const responses = {
+    'Target.getTargets': { targetInfos: [{ type: 'page', targetId: 'page' }] },
+    'Target.attachToTarget': { sessionId: 'session' },
+  };
+  const writer = new Writable({
+    write(chunk, _encoding, callback) {
+      const { id, method } = JSON.parse(chunk.toString().slice(0, -1));
+      if (method === 'Browser.close') {
+        requests.push(method);
+        if (handlesClose) queueMicrotask(exit);
+      } else {
+        reader.write(JSON.stringify({ id, result: responses[method] || {} }) + '\0');
+      }
+      callback();
+    },
+  });
+  child.stdio = [null, null, child.stderr, writer, reader];
+  child.kill = (signal) => {
+    requests.push(signal);
+    if (handlesClose) return false;
+    queueMicrotask(exit);
+    return true;
+  };
+  const browser = new ChromeVisualBrowser('test-browser', {
+    spawnImpl: () => child, startupTimeoutMs: 1_000, shutdownTimeoutMs: 40,
+  });
+  await browser.sessionPromise;
+  await browser.close();
+  assert.deepEqual(requests, handlesClose ? ['Browser.close'] : ['Browser.close', 'SIGTERM']);
+  assert.equal(existsSync(browser.profileRoot), false, 'remove only the profile owned by the exited child');
+}
+'''
+            result = subprocess.run(
+                [shutil.which("node"), "--input-type=module", "-e", driver, str(base / "bin/visual-check.mjs")],
+                cwd=base, env={**os.environ, "TEMP": str(base), "TMP": str(base), "TMPDIR": str(base)},
+                capture_output=True, text=True, encoding="utf-8", timeout=30,
+            )
+            self.assertEqual(0, result.returncode, result.stderr or result.stdout)
 
 
 if __name__ == "__main__":

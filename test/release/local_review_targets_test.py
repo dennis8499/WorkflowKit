@@ -16,12 +16,14 @@ ROOT = Path(__file__).resolve().parents[2]
 ARCHIVE = ROOT / "resources/offline-tools/workflow-kit.tar.xz"
 VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 CURRENT_SOURCES = json.loads((ROOT / 'resources/offline-tools/source-snapshots.json').read_text(encoding='utf-8'))['sources']
+# Setup extracts the full pinned kit. The ordinary review commands have their own shorter budget.
+INSTALL_TIMEOUT_SECONDS = 180
 
 
 class LocalReviewTargetsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.package_stage = tempfile.TemporaryDirectory(prefix="installed-local-review-profiles-")
+        cls.package_stage = tempfile.TemporaryDirectory(prefix="wk-review-")
         cls.addClassCleanup(cls.package_stage.cleanup)
         cls.environment = {**os.environ, "PYTHONPATH": "", "PYTHONDONTWRITEBYTECODE": "1",
                            "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
@@ -36,7 +38,8 @@ class LocalReviewTargetsTests(unittest.TestCase):
             installed = subprocess.run([sys.executable, "-X", "utf8", "-B", str(ROOT / "resources/workflow-kit-installer.py"),
                 "install", str(ARCHIVE), str(destination), VERSION, "bundled", "--format", "tar.xz",
                 "--entry-root", "workflow-kit", "--archive-sha256", hashlib.sha256(ARCHIVE.read_bytes()).hexdigest(),
-                "--profile", profile], capture_output=True, text=True, encoding="utf-8", env=cls.environment, timeout=60)
+                "--profile", profile], capture_output=True, text=True, encoding="utf-8", env=cls.environment,
+                timeout=INSTALL_TIMEOUT_SECONDS)
             if installed.returncode:
                 raise AssertionError(installed.stdout + installed.stderr)
             metadata = json.loads(installed.stdout)

@@ -15,7 +15,7 @@
     ".agents/skills/codebase-wiki/vendor/archify/bin/open-artifact.mjs": "b0ab5f37c4f4556f76040dc862744afe9d4b65f319f35e1f9b505e0344b9c409",
     ".agents/skills/codebase-wiki/vendor/archify/bin/preview.mjs": "95bdc09c7ea2679f137bf1bf4248cdb401a54da979ff4a16d518caafeae0070d",
     ".agents/skills/codebase-wiki/vendor/archify/bin/recover-output.mjs": "b3f7db21b3fc5341326207c1259aa787730120f42179eff50e481b0c6ad1e2d4",
-    ".agents/skills/codebase-wiki/vendor/archify/bin/visual-check.mjs": "37e25a57912c122f6113304463b0636ce7f8f0510eaec038535e46b6842eec0c",
+    ".agents/skills/codebase-wiki/vendor/archify/bin/visual-check.mjs": "71e0bcc218ae3fa3f913e99494ee9cca5c44e90492a0c97a258692aba603718d",
     ".agents/skills/codebase-wiki/vendor/archify/brand-marks/README.md": "8b771a16322ce9ea47fdc00b9935e33adf0f3af608f2d735235443e15ef622e2",
     ".agents/skills/codebase-wiki/vendor/archify/brand-marks/catalog.json": "e1a6c555cbf8ea36fb8100a4a25824e7ab87bebe9871e450ba05b6dea3b036d6",
     ".agents/skills/codebase-wiki/vendor/archify/delta/architecture-delta.mjs": "80f25a93c1ae6f40ebd6c066a3cfbff468fc48f258755d3740f6347a45ebe7a8",
