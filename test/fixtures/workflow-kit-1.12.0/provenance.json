@@ -1,0 +1,9 @@
+{
+  "archiveSha256": "da6ee75732fcfc752c32e4908ba15bd5955abda7a5d59c96c96abf8cd29487af",
+  "profiles": [
+    "group",
+    "repository"
+  ],
+  "sourceSha": "64e72c146a7435bbcba7c68b34ddb9d2a2446b00",
+  "version": "1.12.0"
+}
