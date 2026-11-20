@@ -2,7 +2,7 @@
 
 Use this reference for a supplied `ReviewLaunchRequest/v1`, launch diagnostics,
 or read-only inspection. The request file is data: its hash and installed binding
-fix one MergeReviewer, request ID, workspace, Repo, branches and native runtime.
+fix one Reviewer, request ID, workspace, Repo, branches and native runtime.
 Model and effort are fixed in the Workbench task, or inherited from the current CLI.
 
 ## New and resumed requests
@@ -17,8 +17,9 @@ Actions are `preflight`, `start`, `status`, `view`, `check`, `finish` and `cance
 `start` validates the request, installed payload and runner identities. For a new
 job it runs native read-only preflight before preparing scratch directories or
 capturing evidence. Existing jobs enter native start's saved-input validation;
-they do not repeat live preflight or capture. New drafts use supported compact
-format; recovery preserves the native saved draft. `status` returns its summary.
+they reuse the saved capture. Merge Reviewer uses compact drafts. Release Reviewer
+uses native v3 and prepares its evidence on start. Recovery preserves the saved
+draft. `status` returns its summary.
 
 After payload authentication, installations with `capabilities.json` reuse that
 immutable declaration instead of starting an extra capability-query process.
@@ -27,8 +28,9 @@ files and its current interpreter. No runtime capability cache is trusted or
 written. Older packages retain subprocess discovery; feature gates and the
 complete request/payload checks still apply on every bound invocation.
 
-Keep the request file unchanged. A hash mismatch or changed installed binding
-requires the host to recreate the bound request. A diagnostic about the executed
+Keep the request file unchanged. For a new launch with a mismatched hash or
+binding, regenerate the file through the host. Resume a bound Release request
+with its original installed payload and runner. A diagnostic about the executed
 path does not prove the user's original input was wrong; compare it with the
 bound request. Preflight failures create no native job. Do not repair a failed
 path by changing the immutable JSON or silently selecting a different Repo.
@@ -50,8 +52,9 @@ file because it mutates the evidence ledger. Keep its request ID/runtime fixed.
 The original `run.py [--runtime-root PATH] -- COMMAND ...` remains available and
 prepares writable scratch directories. For authenticated installed helpers with
 the inspection capability, `run.py --read-only -- COMMAND ...` skips this setup.
-It accepts Merge `capabilities`, `--help`, `preflight`, `status --summary`,
-and `view --read-only`; other commands retain normal runtime checks.
+Merge accepts `capabilities`, `--help`, `preflight`, `status --summary` and
+`view --read-only`. Release accepts `capabilities`, command help,
+`status --summary` and `view`. Use the bound `preflight` for Release launches.
 Use the ordinary command when an older installed Reviewer lacks the capability.
 
 The runner's scratch directory is separate from native ownership:
@@ -60,6 +63,7 @@ The runner's scratch directory is separate from native ownership:
 runtime as the runner's scratch override. A write-permission failure during a
 mutating command remains a real failure; read-only mode does not authorize writes.
 
-The managed `runner-capabilities.json` declares this protocol. Its file hash and
+The managed `runner-capabilities.json` declares the supported tools in
+`review_launch_tools`. Its file hash and
 `review_launch.py` are authenticated by the installation manifest; copied bindings
 also pin the launcher hash. Older bindings continue with the legacy argv protocol.

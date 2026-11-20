@@ -123,6 +123,36 @@ class ReviewLaunchTests(unittest.TestCase):
         self.assertEqual(str(self.runtime.with_name("native-workflow-kit") / "tmp"), value["temp"])
         self.assertFalse((self.runtime / "tmp").exists())
 
+    def test_release_launch_uses_native_arguments_and_keeps_inspection_readonly(self):
+        original = self.skill
+        self.skill = original.with_name("release-reviewer")
+        shutil.copytree(original, self.skill)
+        self.script = self.skill / "scripts/review_session.py"
+        source = HELPER.replace("'schema':'MergeReviewCapabilities/v1'",
+                                "'schema':'ReviewCapabilities/v1','tool':'release-reviewer','prepare_evidence':True")
+        self.script.write_text(source.replace("MergeReviewPreflight/v1", "ReleaseReviewPreflight/v1"), encoding="utf-8")
+        binding = self.binding()
+        binding["tool"] = "release-reviewer"
+        binding["workflow_kit_runner"]["review_launch_tools"] = ["merge-reviewer", "release-reviewer"]
+        self.request.update(tool="release-reviewer", draft_format="v3", binding=binding)
+        self.save()
+        self.marker()
+        initial = self.invoke("start")
+        self.assertEqual(0, initial.returncode, initial.stderr)
+        args = json.loads(initial.stdout)["args"]
+        self.assertIn("--prepare-evidence", args)
+        self.assertNotIn("--draft-format", args)
+        before = self.files()
+        status = self.invoke()
+        self.assertEqual(0, status.returncode, status.stderr)
+        self.assertIn("--summary", json.loads(status.stdout)["args"])
+        for run in (self.invoke("view", "--", "--artifact", "b" * 64),
+                    self.raw("view", "--runtime-root", str(self.runtime), "--request-id",
+                             self.request["request_id"], "--artifact", "b" * 64)):
+            self.assertEqual(0, run.returncode, run.stderr)
+            self.assertNotIn("--read-only", json.loads(run.stdout)["args"])
+        self.assertEqual(before, self.files())
+
     def test_readonly_actions_create_no_files_and_preserve_mtimes(self):
         before = self.files()
         for action, extra in (("status", ()), ("preflight", ()),

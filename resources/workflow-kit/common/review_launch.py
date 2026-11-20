@@ -16,6 +16,7 @@ import time
 
 SHA = re.compile(r"[a-f0-9]{64}")
 ACTIONS = ("start", "status", "view", "check", "finish", "cancel", "preflight", "schema")
+TOOLS = {"merge-reviewer": "compact", "release-reviewer": "v3"}
 VIEW_OPTIONS = {"--artifact", "--artifact-scope", "--pointer", "--offset", "--page-size",
                 "--string-offset", "--requests-file"}
 SKIP = {"__pycache__", ".pytest_cache", ".git"}
@@ -78,14 +79,15 @@ def verify_managed_directory(directory: Path, install_root: Path, files: dict) -
 
 
 def verify_binding(binding: dict, runner: Path) -> Path:
-    if not isinstance(binding, dict) or binding.get("schema") != "InstalledReviewerBinding/v1" or binding.get("tool") != "merge-reviewer":
-        raise ValueError("Review launch needs an installed MergeReviewer binding.")
+    if not isinstance(binding, dict) or binding.get("schema") != "InstalledReviewerBinding/v1" or binding.get("tool") not in tuple(TOOLS):
+        raise ValueError("Review launch needs an installed Reviewer binding.")
+    tool = binding["tool"]
     script = plain(binding.get("script_path", ""), file=True)
     directory = script.parent.parent
-    if script.name != "review_session.py" or script.parent.name != "scripts" or directory.name != "merge-reviewer":
-        raise ValueError("Reviewer entrypoint is not the installed merge-reviewer helper.")
+    if script.name != "review_session.py" or script.parent.name != "scripts" or directory.name != tool:
+        raise ValueError("Reviewer entrypoint does not match the bound tool.")
     install_root = runner.parent.parent.parent
-    if directory != install_root / ".agents" / "skills" / "merge-reviewer":
+    if directory != install_root / ".agents" / "skills" / tool:
         raise ValueError("Reviewer and runner must belong to the same installation.")
     skill = plain(directory / "SKILL.md", file=True)
     version = plain(directory / "VERSION", file=True).read_text(encoding="utf-8").strip()
@@ -103,6 +105,10 @@ def verify_binding(binding: dict, runner: Path) -> Path:
             or wrapper.get("review_launch_sha256") != sha(plain(Path(__file__).absolute(), file=True).read_bytes())
             or wrapper.get("review_launch_request") != 1 or wrapper.get("read_only_inspection") is not True):
         raise ValueError("WorkflowKit runner binding changed or lacks review launch support.")
+    if tool == "release-reviewer":
+        supported = wrapper.get("review_launch_tools")
+        if not isinstance(supported, list) or tool not in supported:
+            raise ValueError("WorkflowKit runner binding lacks Release Reviewer launch support.")
     return script
 
 
@@ -120,7 +126,8 @@ def load_request(path: str, expected: str, runner: Path, *, timings: dict | None
                "workspace_file", "auth_scope", "binding", "draft_format", "refresh", "no_fetch"}
     if set(value) - allowed:
         raise ValueError("Review launch request contains unsupported fields.")
-    if value.get("schema") != "ReviewLaunchRequest/v1" or value.get("tool") != "merge-reviewer":
+    tool = value.get("tool")
+    if value.get("schema") != "ReviewLaunchRequest/v1" or not isinstance(tool, str) or tool not in TOOLS:
         raise ValueError("Unsupported review launch request schema or tool.")
     if not isinstance(value.get("request_id"), str) or not re.fullmatch(r"[a-f0-9]{32}", value["request_id"]):
         raise ValueError("Review launch request_id must be 32 lowercase hexadecimal characters.")
@@ -131,8 +138,8 @@ def load_request(path: str, expected: str, runner: Path, *, timings: dict | None
     for key in ("base", "head"):
         if not isinstance(value.get(key), str) or not value[key].strip() or "\0" in value[key]:
             raise ValueError(f"Review launch requires {key}.")
-    if value.get("draft_format") != "compact":
-        raise ValueError("New structured review launches require compact drafts.")
+    if value.get("draft_format") != TOOLS[tool] or tool == "release-reviewer" and "no_fetch" in value:
+        raise ValueError("Review launch options do not match the native Reviewer.")
     if "workspace_file" in value:
         plain(value["workspace_file"])
     if "auth_scope" in value and (not isinstance(value["auth_scope"], str) or not value["auth_scope"].strip()):
@@ -143,7 +150,10 @@ def load_request(path: str, expected: str, runner: Path, *, timings: dict | None
     if timings is not None:
         timings["request_seconds"] = time.perf_counter() - started
     started = time.perf_counter()
-    script = verify_binding(value.get("binding"), runner)
+    binding = value.get("binding")
+    if not isinstance(binding, dict) or binding.get("tool") != tool:
+        raise ValueError("Review launch tool must match its installed binding.")
+    script = verify_binding(binding, runner)
     if timings is not None:
         timings["binding_seconds"] = time.perf_counter() - started
     return value, script
@@ -153,13 +163,15 @@ def readonly_environment() -> dict[str, str]:
     return {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}
 
 
-def capabilities(command: list[str]) -> dict:
+def capabilities(command: list[str], tool: str = "merge-reviewer") -> dict:
     result = subprocess.run(command + ["capabilities"], env=readonly_environment(), capture_output=True,
                             text=True, encoding="utf-8", check=False, timeout=30)
     if result.returncode:
         raise ValueError("Installed Reviewer capabilities could not be read.")
     value = json.loads(result.stdout)
-    if not isinstance(value, dict) or value.get("schema") != "MergeReviewCapabilities/v1":
+    schema = "MergeReviewCapabilities/v1" if tool == "merge-reviewer" else "ReviewCapabilities/v1"
+    if (not isinstance(value, dict) or value.get("schema") != schema
+            or tool == "release-reviewer" and value.get("tool") != tool):
         raise ValueError("Installed Reviewer capabilities are not supported.")
     return value
 
@@ -226,16 +238,20 @@ def launch(argv: list[str], runner: Path, prepare_runtime, child_environment) ->
     options, extra = (argv[:argv.index("--")], argv[argv.index("--") + 1:]) if "--" in argv else (argv, [])
     args = parser.parse_args(options)
     request, script = load_request(args.review_request, args.expected_request_sha256, runner, timings=timings)
+    tool = request["tool"]
+    merge = tool == "merge-reviewer"
     command = [sys.executable, "-X", "utf8", "-B", str(script)]
     phase_started = time.perf_counter()
     caps = installed_capabilities(script)
     capabilities_source = "verified-manifest" if caps is not None else "subprocess"
     if caps is None:
-        caps = capabilities(command)
+        caps = capabilities(command, tool) if not merge else capabilities(command)
     timings["capabilities_seconds"] = time.perf_counter() - phase_started
     require_features(caps, ("launch_preflight", "read_only_inspection"))
-    if "compact" not in caps.get("draft_formats", []):
+    if merge and "compact" not in caps.get("draft_formats", []):
         raise ValueError("Installed Reviewer does not support compact drafts.")
+    if not merge and caps.get("prepare_evidence") is not True:
+        raise ValueError("Installed Release Reviewer lacks prepared capture support.")
     if extra and args.action not in ("view", "schema"):
         raise ValueError("Only view or schema accepts documented inspection arguments; review identity is fixed.")
     if args.action == "schema":
@@ -251,7 +267,9 @@ def launch(argv: list[str], runner: Path, prepare_runtime, child_environment) ->
         return code
     identity = ["--runtime-root", request["runtime_root"], "--request-id", request["request_id"]]
     initial = identity + ["--workspace", request["workspace"], "--project", request["project"],
-                          "--base", request["base"], "--head", request["head"], "--draft-format", request["draft_format"]]
+                          "--base", request["base"], "--head", request["head"]]
+    if merge:
+        initial += ["--draft-format", request["draft_format"]]
     for key in ("workspace_file", "auth_scope"):
         if key in request:
             initial += ["--" + key.replace("_", "-"), request[key]]
@@ -271,13 +289,19 @@ def launch(argv: list[str], runner: Path, prepare_runtime, child_environment) ->
             sys.stderr.write(inspected.stderr)
             return completed(inspected.returncode)
         outcome = json.loads(inspected.stdout)
-        if outcome.get("schema") != "MergeReviewPreflight/v1" or outcome.get("valid") is not True:
+        expected_schema = "MergeReviewPreflight/v1" if merge else "ReleaseReviewPreflight/v1"
+        if outcome.get("schema") != expected_schema or outcome.get("valid") is not True:
             raise ValueError("Native preflight did not validate the fixed launch inputs.")
     arguments = initial if args.action in ("start", "preflight") else identity
-    if args.action == "status":
+    if args.action == "start" and not merge:
+        arguments += ["--prepare-evidence"]
+    elif args.action == "status":
         arguments += ["--summary"]
     elif args.action == "view":
-        arguments += ["--read-only"] + view_arguments(extra)
+        options = view_arguments(extra)
+        if not merge and "--artifact-scope" in options[::2]:
+            raise ValueError("Release Reviewer views use the request's owned evidence context.")
+        arguments += (["--read-only"] if merge else []) + options
     elif args.action == "schema":
         arguments = schema_arguments(extra)
     command += [args.action] + arguments
@@ -333,13 +357,27 @@ def trusted_readonly(command: list[str], runner: Path) -> list[str]:
         if len(set(keys)) != 3 or set(keys) != {"--tool", "--runtime-root", "--request-id"}:
             raise ValueError("Read-only routing options do not match status.")
         return command
-    if script == install_root / ".agents" / "skills" / "merge-reviewer" / "scripts" / "review_session.py":
+    tool = script.parent.parent.name
+    if tool in TOOLS and script == install_root / ".agents" / "skills" / tool / "scripts" / "review_session.py":
         # Verify imported native code as well as the small CLI entrypoint.
         directory = script.parent.parent
         verify_managed_directory(directory, install_root, files)
         if not helper_args:
             raise ValueError("Read-only runner requires an inspection command.")
         action = helper_args[0]
+        if tool == "release-reviewer":
+            options = helper_args[1:]
+            if action in set(ACTIONS) | {"step", "capabilities", "cleanup"} and options == ["--help"]:
+                return command
+            if action == "capabilities":
+                allowed = {"--workspace", "--runtime-root", "--expected-payload-sha256"}
+            elif action == "status" and options.count("--summary") == 1:
+                allowed = {"--workspace", "--runtime-root", "--request-id", "--summary"}
+            elif action == "view":
+                allowed = VIEW_OPTIONS - {"--artifact-scope"} | {"--workspace", "--runtime-root", "--request-id"}
+            else:
+                raise ValueError("Read-only Release Reviewer accepts capabilities, status --summary, or view.")
+            return checked_inspection_options(command, options, allowed)
         caps = installed_capabilities(script)
         if caps is None:
             caps = capabilities(command[:index] + [str(script)])
@@ -366,15 +404,19 @@ def trusted_readonly(command: list[str], runner: Path) -> list[str]:
             allowed = VIEW_OPTIONS | {"--runtime-root", "--request-id", "--workspace", "--read-only"}
         else:
             raise ValueError("Read-only runner accepts capabilities, command --help, schema, preflight, status --summary, or view --read-only.")
-        seen = set()
-        offset = 0
-        while offset < len(options):
-            option = options[offset]
-            if option not in allowed or option in seen:
-                raise ValueError("Unsupported or duplicate read-only helper option.")
-            seen.add(option)
-            offset += 1 if option in ("--read-only", "--summary", "--no-fetch", "--refresh") else 2
-            if offset > len(options):
-                raise ValueError("Read-only helper option needs a value.")
-        return command
+        return checked_inspection_options(command, options, allowed)
     raise ValueError("This installed helper has no supported read-only inspection contract.")
+
+
+def checked_inspection_options(command, options, allowed):
+    seen = set()
+    offset = 0
+    while offset < len(options):
+        option = options[offset]
+        if option not in allowed or option in seen:
+            raise ValueError("Unsupported or duplicate read-only helper option.")
+        seen.add(option)
+        offset += 1 if option in ("--read-only", "--summary", "--no-fetch", "--refresh") else 2
+        if offset > len(options):
+            raise ValueError("Read-only helper option needs a value.")
+    return command
