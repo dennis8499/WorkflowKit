@@ -85,6 +85,36 @@ class TransactionTests(unittest.TestCase):
             )
         return self.predecessor_assets[version]
 
+    def test_interrupted_stage_publication_does_not_block_next_install(self):
+        interrupt = """
+import importlib.util, os, sys
+from pathlib import Path
+spec = importlib.util.spec_from_file_location('installer', sys.argv[1])
+installer = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(installer)
+write = installer._atomic_json
+def crash_before_owner(path, value):
+    if path.parent.name.endswith('-preparing') and path.name == 'owner.json':
+        os._exit(86)
+    return write(path, value)
+installer._atomic_json = crash_before_owner
+installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], 'bundled', 'workflow-kit', sys.argv[5])
+"""
+        archive_sha = hashlib.sha256(ARCHIVE.read_bytes()).hexdigest()
+        failed = subprocess.run(
+            [sys.executable, '-X', 'utf8', '-B', '-c', interrupt, str(ROOT / 'resources/workflow-kit-installer.py'),
+             str(ARCHIVE), str(self.group), harness.VERSION, archive_sha],
+            capture_output=True, text=True, encoding='utf-8', timeout=60, check=False,
+        )
+        self.assertEqual(86, failed.returncode, failed.stderr)
+        stages = self.group / '.gitlab-workspace/tool-installs'
+        self.assertEqual([], list(stages.glob('kit-*')))
+        self.assertEqual(1, len(list(stages.glob('.kit-*-preparing'))))
+        self.assertFalse((self.group / MARKER).exists())
+        completed, data = self.install(self.group)
+        self.assertEqual(0, completed.returncode, data)
+        self.assertEqual('installed', self.status(self.group)['status'])
+
     def test_1_2_and_1_3_predecessors_are_trusted_for_each_profile_and_bmad_mode(self):
         rows = [row for row in TRUST["packages"] if row["version"] in ("1.2.0", "1.2.1", "1.3.0", "1.3.3", "1.3.4", "1.3.5", "1.3.6")]
         self.assertEqual(28, len(rows))
@@ -184,6 +214,10 @@ class TransactionTests(unittest.TestCase):
             ("1.11.0", "group", "external"),
             ("1.11.0", "repository", "bundled"),
             ("1.11.0", "repository", "external"),
+            ("1.12.2", "group", "bundled"),
+            ("1.12.2", "group", "external"),
+            ("1.12.2", "repository", "bundled"),
+            ("1.12.2", "repository", "external"),
         )
         selected_version = os.environ.get("WORKFLOW_KIT_TEST_PREDECESSOR_VERSION")
         if selected_version:
@@ -229,11 +263,14 @@ class TransactionTests(unittest.TestCase):
                 source_wiki_version = {
                     "1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2", "1.3.5": "0.7.2",
                     "1.3.6": "0.7.2", "1.5.0": "0.7.2", "1.6.0": "0.7.2", "1.8.0": "0.7.2",
-                    "1.9.0": "0.7.2", "1.11.0": "0.7.4",
+                    "1.9.0": "0.7.2", "1.11.0": "0.7.4", "1.12.2": "0.7.5",
                 }.get(version, "0.6.4")
                 self.assertEqual(source_wiki_version, legacy_manifest["upstream"]["codebase-wiki"]["version"])
                 if version == "1.11.0":
                     self.assertEqual("0.23.0", legacy_manifest["upstream"]["merge-reviewer"]["version"])
+                if version == "1.12.2":
+                    self.assertEqual("0.24.2", legacy_manifest["upstream"]["merge-reviewer"]["version"])
+                    self.assertEqual("0.12.4", legacy_manifest["upstream"]["release-reviewer"]["version"])
                 custom = target / "_bmad/custom/user-choice.md"
                 if bmad_mode == "bundled":
                     custom.parent.mkdir(parents=True, exist_ok=True)

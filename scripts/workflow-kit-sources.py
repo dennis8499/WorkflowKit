@@ -33,8 +33,9 @@ def normalize_source_text(tool: str, name: str, data: bytes) -> bytes:
         or name == '.agents/skills/codebase-wiki/vendor/archify-manifest.json'
     ):
         return data
-    is_text = Path(name).suffix.lower() in ('.md', '.py', '.yaml', '.yml', '.json', '.txt', '.toml') or Path(name).name == 'VERSION'
-    return data.replace(b'\r\n', b'\n') if is_text else data
+    is_text = Path(name).suffix.lower() in ('.md', '.py', '.yaml', '.yml', '.json', '.txt', '.toml')
+    is_windows_lease = tool in ('merge-reviewer', 'release-reviewer') and Path(name).suffix.lower() in ('.cs', '.ps1')
+    return data.replace(b'\r\n', b'\n') if is_text or is_windows_lease or Path(name).name == 'VERSION' else data
 
 
 def archive_root(tool: str, version: str, pin: dict) -> str:

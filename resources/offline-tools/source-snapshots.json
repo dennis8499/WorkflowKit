@@ -640,14 +640,14 @@
       "version": "0.1.0"
     },
     "merge-reviewer": {
-      "archiveSha256": "ea40722229469fe5f760fb1f937c7e28b0b7917e623be788607c8e594d290ae1",
+      "archiveSha256": "626a14e74285c095a266fe03ae15f9987fa318ce55d707497209676ead066cab",
       "commit": "c3f81fc34b8155bfd4fa5f114392a48d571d3f2d",
-      "dirty": false,
+      "dirty": true,
       "entryRoot": "merge-reviewer",
-      "filename": "merge-reviewer-0.24.2.zip",
+      "filename": "merge-reviewer-0.24.3.zip",
       "files": {
         "SKILL.md": "212089481cca843dc364334d7aab2c4f0e32259d2d02ce873fdf13dceb4c6244",
-        "VERSION": "35cb6510464522cca5b330a32ba46dc546df65bc221aa9032befdd8c391091ff",
+        "VERSION": "b85c292d28415562c1969f65be506494ca680b601ee64c562d7ef7aafff4bb0a",
         "agents/openai.yaml": "b5ed995d59e34d9d8f555a00f1dd30fc6593dda071f16e0eb8e58e4c5f3495f5",
         "capabilities.json": "083e6646e8cd421dca2606eb4624cd00a6351131706192559b68c57e5611c095",
         "references/authoring.md": "eb6f9b5b8ed2e6de914d02a5f99a16005e04ffacf85b35482aa7ab9ccd125b51",
@@ -662,9 +662,10 @@
         "references/usage.md": "3e495215274b94e662da53e5533c8b05d5b8aeddf8a77fd869338618357683da",
         "references/workspace-review.md": "aec7632ff1daf96974c113e31d2ec755c89ab9dcc9fbb8d462493bcb2240e308",
         "scripts/contract_boundary.py": "59d3f170643adee7e65fe89f6a835ea2c2387a842204109a74624f070dc6d088",
-        "scripts/git_network_lease.py": "1555269f41f711d443b8d107b960824c4836c140624bc461470d07f7a05fda1b",
+        "scripts/git_network_lease.py": "ab587d39dde53c0066458bb5ca624812bed41159743e8831d965f5553e555a2f",
         "scripts/git_review_context.py": "69bc2cd4964128b7bcec2a284cfada19f88ffbea42824023aa5971072c7f2608",
         "scripts/merge_parent_coverage.py": "0bd1c7201909e90a7a53c078e6b908cc9a08deaa1628c9943b44ace8f7dc48c5",
+        "scripts/repair-workflow-lease-native.cs": "ca180515c08e6195ffdb94320b65621326dc8e1f1e9d08af1541548d7857c53f",
         "scripts/report_publication.py": "39f499d19b2113790fe612986356609d8b4343d5f8b55538fdb9119d30c764a7",
         "scripts/report_receipt.py": "10d15a894701290960efb5d6d572dec122845cc7bb08390ed28c2f516d6a4906",
         "scripts/review_author_operation.py": "6b3968b5ce9944808acf02211fa9042fc14a55776f10017ba2b7d8d8e96568d6",
@@ -683,22 +684,26 @@
         "scripts/review_validation.py": "c84a6576a5c8238fb306795976bfbc02e56a70773519b55f8eb1c031e409be3e",
         "scripts/review_views.py": "e89837ca9c9225aae88954df81229983b619bc10c1af71f5a60e9e96b47f4443",
         "scripts/review_workspace.py": "21ad46c8c5aab4c1ba84978db3857305bdbf0f013358a2fcd1d010c7f2e1b2c3",
+        "scripts/windows-lease-process.cs": "fc3ec2b804295150b825aa1ce1ef03799d5e1dda17ab8cd0d96d7a5031508ae7",
+        "scripts/windows-local-lease.cs": "270fa02f29dac27e48161bfac763cec326f98790f811bd31240b99e8bff1005a",
+        "scripts/windows-local-lease.ps1": "82bab331d3fc26ef537c59bc97d1670e193ab61f0f2c20eb40989e42878dcc0f",
+        "scripts/windows_local_lease.py": "f4e39a557531077cf51cc9ce7c78d7ded0a6d1097d9b20a31650771b932b5e35",
         "scripts/workspace_report.py": "da9551e5e44e0687820548aca9b57f1a0175088e23b89ac698624f8cbfb85bcc"
       },
       "repository": "MergeReviewer",
-      "sourceKind": "official-release",
-      "treeSha256": "5711f9bc179267290c8efb9ac25991958a0daa920de70ca78f911d9f7f845a10",
-      "version": "0.24.2"
+      "sourceKind": "local-snapshot",
+      "treeSha256": "83c79893fda947026850c879b10f5f19b79e9e793712e38d552d8fa0e0b9795a",
+      "version": "0.24.3"
     },
     "release-reviewer": {
-      "archiveSha256": "94c7943153ef8fb704fd9fe70524b1ea1de6d8645664f74812ca5b87621d78a5",
+      "archiveSha256": "e968a29c8b9ca64ba6a76612d3a0a6b208fbbcd548a7314ea55110ad3b4c7d57",
       "commit": "97c91cab92672dce2123c5c8c0b5cacda7e8c7fc",
-      "dirty": false,
+      "dirty": true,
       "entryRoot": "release-reviewer",
-      "filename": "release-reviewer-0.12.4.zip",
+      "filename": "release-reviewer-0.12.5.zip",
       "files": {
         "SKILL.md": "a1fc1ae1015d01cfb7bb6f057ce0074d3e0120f553d95a6fc604efbd8713d243",
-        "VERSION": "6539836172e0b3f4ec57cf655d124ed57a665d5a316601339186fe7548f15e4a",
+        "VERSION": "ac2d429cc47303f2c51a5f93744865940b97bd2d548baec0ef5c5939c15a5a9b",
         "agents/openai.yaml": "54dcc5409d56c8505df85a9dc63767c5001170acdfd07d42de3a0781786bb105",
         "references/evidence-workflow.md": "59c2c59a3c4d971f00181caa2c8edd7b077d5978db528c3359c60b0704745783",
         "references/fast-session.md": "826ec1a692da77070bc339bfe8fd999503d4897df73552b3f385a406dfbdc815",
@@ -714,12 +719,13 @@
         "scripts/coverage_policy.py": "cc036e79496c88e018befceb407205d75b7cb4bafda71911af2959842982b2d1",
         "scripts/evidence.py": "60ff9bffef0a97905a6be05f3613538f2391e2179943d0c853dbd0b55a6f4364",
         "scripts/frozen_evidence.py": "d17bfb13d9af2a3b9e7c7da99610deaaf800151b38698f2ad0973bddf6bbafbf",
-        "scripts/git_network_lease.py": "233582878f2ff4e5736d13d254f330f0b61a02b6cd9bcafcd0039c66507b61ca",
+        "scripts/git_network_lease.py": "afe89bb354ef00ea9d093551ba9964a7f85ed0ba2e223406b97897278edf96b8",
         "scripts/git_review_context.py": "b527a9c197ea889e3d1b3a2e543116427b7818b4f9b757f34d873aa32b39c41f",
         "scripts/git_support.py": "292223f547b11e199b9b1b13cfa6de39925f4d08e8d73ff8cd6a03444810a39d",
         "scripts/group_context.py": "0e8615cc5b32bccd742c687ec630e682882ad76cdc643d15fec83f500896a6b2",
         "scripts/merge_parent_coverage.py": "0bd1c7201909e90a7a53c078e6b908cc9a08deaa1628c9943b44ace8f7dc48c5",
         "scripts/release_report.py": "a270eadce177b455bec891857e1fd6e0acf5fb82771b9ff524d98a8b8d5a383d",
+        "scripts/repair-workflow-lease-native.cs": "ca180515c08e6195ffdb94320b65621326dc8e1f1e9d08af1541548d7857c53f",
         "scripts/resource_rules.py": "8d80d08184b6b275ec05ade7d5f490c8e9ae2b38490e0cbd6571738134575413",
         "scripts/review_coordinator.py": "f98082f3cd8324d5095271c8c44ae4551a30fb93de3b3c155f8054ad0da9983d",
         "scripts/review_flow.py": "6026fc03e8167265cda93c44522afdab267eb8766c53306aba6dba1e75260b95",
@@ -727,13 +733,17 @@
         "scripts/review_readonly.py": "c4c34062e04df454bcaac93a49694a9720180a353211657d253b0a023309fea8",
         "scripts/review_runtime.py": "fb8fcfcdec361518816ba8d76041ab31230a148ba6853bed82ec185833d93cbb",
         "scripts/review_session.py": "5e42b78e8a6d1b734ab50404d38c11dfe8dca6bf62f6d503eae9e5edc74c317d",
-        "scripts/review_worklist.py": "2d71e1e6eb4693dbdd120f7e78a9cd75edb0d989aac9b15c9ab56c31df8ff304"
+        "scripts/review_worklist.py": "2d71e1e6eb4693dbdd120f7e78a9cd75edb0d989aac9b15c9ab56c31df8ff304",
+        "scripts/windows-lease-process.cs": "fc3ec2b804295150b825aa1ce1ef03799d5e1dda17ab8cd0d96d7a5031508ae7",
+        "scripts/windows-local-lease.cs": "270fa02f29dac27e48161bfac763cec326f98790f811bd31240b99e8bff1005a",
+        "scripts/windows-local-lease.ps1": "82bab331d3fc26ef537c59bc97d1670e193ab61f0f2c20eb40989e42878dcc0f",
+        "scripts/windows_local_lease.py": "f4e39a557531077cf51cc9ce7c78d7ded0a6d1097d9b20a31650771b932b5e35"
       },
-      "payloadSha256": "e03173426f15bb96e59cd15694af4740433e803710e2550215701c0d1488687b",
+      "payloadSha256": "58490358b623573cf9e5e12d1a31034a8f9d2341f4e817563ba2b30611b8aa24",
       "repository": "ReleaseReviewer",
-      "sourceKind": "official-release",
-      "treeSha256": "4c3ec8c703e52b6b4ca76f1697ee8addc494dae8ae4641d4523fa012a1ba5405",
-      "version": "0.12.4"
+      "sourceKind": "local-snapshot",
+      "treeSha256": "b7e5a6e000cee325e10a8e23fe8c22cd82615d4d362fd0381f3ca720d5259aae",
+      "version": "0.12.5"
     }
   },
   "workspaceFiles": {
@@ -764,6 +774,6 @@
     "resources/workflow-kit/skills/wk-plan/SKILL.md": "d1d432d31449217eb2e18c979f59dae152cba6752aecff130bcc5f7f994641c5",
     "resources/workflow-kit/skills/wk-project/SKILL.md": "b069bbbfd017156d3373ff898cbd853dff40189ac4a464150f8e2a18013587ce",
     "resources/workflow-kit/skills/wk-verify/SKILL.md": "d0e5933fbc2a19a97043440e471c2eaf2a3e43f87159e1bf385769707ba5f396",
-    "resources/workflow-kit/trusted-predecessors.json": "cd6f0eacc06c7b6f6d06fcc6ebeea6534135a60166cd00602ce8962b5c16eebc"
+    "resources/workflow-kit/trusted-predecessors.json": "71bb416efbaab842f9a7c624b72953959717fa0cef69e2f20e7e7eed8950af1b"
   }
 }
