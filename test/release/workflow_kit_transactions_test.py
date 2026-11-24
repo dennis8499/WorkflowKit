@@ -219,6 +219,13 @@ installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], '
             ("1.12.2", "repository", "bundled"),
             ("1.12.2", "repository", "external"),
         )
+        if tuple(map(int, harness.VERSION.split("."))) >= (1, 12, 4):
+            cases += (
+                ("1.12.3", "group", "bundled"),
+                ("1.12.3", "group", "external"),
+                ("1.12.3", "repository", "bundled"),
+                ("1.12.3", "repository", "external"),
+            )
         selected_version = os.environ.get("WORKFLOW_KIT_TEST_PREDECESSOR_VERSION")
         if selected_version:
             cases = tuple(case for case in cases if case[0] == selected_version)
@@ -248,6 +255,8 @@ installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], '
                 report = target / "review-reports/previous/merge-review-prior.md"
                 report.write_text("Prior review report stays.\n", encoding="utf-8")
                 package, old_installer = self.assets_for_predecessor(version)
+                self.assertTrue(package.is_file(), f"Missing predecessor package: {package}")
+                self.assertTrue(old_installer.is_file(), f"Missing predecessor installer: {old_installer}")
                 archive_hash = hashlib.sha256(package.read_bytes()).hexdigest()
                 legacy = subprocess.run(
                     [sys.executable, "-X", "utf8", "-B", str(ROOT / "test/release/frozen_installer_runner.py"),
@@ -263,7 +272,7 @@ installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], '
                 source_wiki_version = {
                     "1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2", "1.3.5": "0.7.2",
                     "1.3.6": "0.7.2", "1.5.0": "0.7.2", "1.6.0": "0.7.2", "1.8.0": "0.7.2",
-                    "1.9.0": "0.7.2", "1.11.0": "0.7.4", "1.12.2": "0.7.5",
+                    "1.9.0": "0.7.2", "1.11.0": "0.7.4", "1.12.2": "0.7.5", "1.12.3": "0.7.5",
                 }.get(version, "0.6.4")
                 self.assertEqual(source_wiki_version, legacy_manifest["upstream"]["codebase-wiki"]["version"])
                 if version == "1.11.0":
@@ -271,6 +280,9 @@ installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], '
                 if version == "1.12.2":
                     self.assertEqual("0.24.2", legacy_manifest["upstream"]["merge-reviewer"]["version"])
                     self.assertEqual("0.12.4", legacy_manifest["upstream"]["release-reviewer"]["version"])
+                if version == "1.12.3":
+                    self.assertEqual("0.24.3", legacy_manifest["upstream"]["merge-reviewer"]["version"])
+                    self.assertEqual("0.12.5", legacy_manifest["upstream"]["release-reviewer"]["version"])
                 custom = target / "_bmad/custom/user-choice.md"
                 if bmad_mode == "bundled":
                     custom.parent.mkdir(parents=True, exist_ok=True)
