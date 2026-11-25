@@ -223,6 +223,48 @@ class PlanningTests(GitFixture):
         self.assertIn('## 1.0.0 更新\nWiki 0.7.3', text)
         self.assertIn('## 0.9.0 更新\nWiki 0.7.2', text)
 
+    def test_workflowkit_readme_updates_installation_and_preserves_release_history(self):
+        root = self.workspace / 'WorkflowKit'
+        readme = root / 'README.md'
+        version_file = root / 'VERSION'
+        history = (
+            '1.12.4 整合 MergeReviewer 0.25.0。詳見 [1.12.4 發行說明]'
+            '(https://github.com/test/WorkflowKit/blob/main/docs/releases/v1.12.4.md)。\n\n'
+        )
+        install = (
+            '## 安裝\n\n下載 `gitlab-workspace-kit-{archive}.zip`。'
+            '[WorkflowKit {release} 正式附件](https://github.com/test/WorkflowKit/releases/tag/v{release})\n\n'
+            '```powershell\n'
+            'python -X utf8 -B install.py status C:\\projects\\MyProject --expected-version {status}\n'
+            '```\n\n'
+        )
+        historical_section = '## 1.12.4 更新\n\nMergeReviewer 0.25.0\n'
+        expected = (
+            '# WorkflowKit\n\nWorkflowKit 1.12.5 內含 MergeReviewer 0.25.1。\n\n'
+            + history
+            + install.format(archive='1.12.5', release='1.12.5', status='1.12.5')
+            + historical_section
+        )
+        cases = (
+            ('aligned', '1.12.4', '1.12.4', '1.12.4', '1.12.4'),
+            ('stale_references', '1.12.4', '1.12.3', '1.12.3', '1.12.1'),
+            ('interrupted_bump', '1.12.5', '1.12.4', '1.12.4', '1.12.4'),
+        )
+        for case, version, archive, release_version, status in cases:
+            with self.subTest(case=case):
+                version_file.write_text(version + '\n', encoding='utf-8')
+                readme.write_text(
+                    '# WorkflowKit\n\nWorkflowKit 1.12.4 內含 MergeReviewer 0.25.0。\n\n'
+                    + history
+                    + install.format(archive=archive, release=release_version, status=status)
+                    + historical_section,
+                    encoding='utf-8',
+                )
+                release.bump_version(root, 'WorkflowKit', '1.12.5')
+                release.refresh_workspace_readme(root, [('MergeReviewer', '0.25.0', '0.25.1')], [])
+                self.assertEqual('1.12.5\n', version_file.read_text(encoding='utf-8'))
+                self.assertEqual(expected, readme.read_text(encoding='utf-8'))
+
 
 class JournalTests(unittest.TestCase):
     def setUp(self):

@@ -353,6 +353,38 @@ def asset_name(name, version):
     return SPECS[name]['tool'] + '-' + version + '.zip'
 
 
+def split_readme_summary(introduction):
+    title = re.match(r'# [^\n]*\n(?:[ \t]*\n)*', introduction)
+    start = title.end() if title else 0
+    paragraph_break = re.search(r'\n[ \t]*\n', introduction[start:])
+    end = start + paragraph_break.start() if paragraph_break else len(introduction)
+    return introduction[:end], introduction[end:]
+
+
+def update_workflowkit_readme(text, version):
+    version_number = r'\d+\.\d+\.\d+'
+    sections = re.split(r'(?m)(?=^## )', text)
+    summary, history = split_readme_summary(sections[0])
+    summary = re.sub(rf'(?m)^WorkflowKit {version_number}(?=\s|$)', f'WorkflowKit {version}', summary, count=1)
+    sections[0] = summary + history
+    for index, section in enumerate(sections[1:], 1):
+        if not section.startswith('## 安裝\n'):
+            continue
+        section = re.sub(rf'\bgitlab-workspace-kit-{version_number}\.zip\b', f'gitlab-workspace-kit-{version}.zip', section)
+        section = re.sub(
+            rf'\[WorkflowKit {version_number} 正式附件\]'
+            rf'\((https://github\.com/[^/\s)]+/WorkflowKit/releases/tag/v){version_number}\)',
+            rf'[WorkflowKit {version} 正式附件](\g<1>{version})',
+            section,
+        )
+        sections[index] = re.sub(
+            rf'(\binstall\.py[ \t]+status[ \t]+[^\n]*?[ \t]+--expected-version[ \t]+){version_number}(?=\s|$)',
+            rf'\g<1>{version}',
+            section,
+        )
+    return ''.join(sections)
+
+
 def bump_version(root, name, version):
     path = root / SPECS[name]['version']
     previous = json.loads(path.read_text(encoding='utf-8'))['version'] if name == 'GitlabWorkSpace' else path.read_text(encoding='utf-8').strip()
@@ -369,6 +401,9 @@ def bump_version(root, name, version):
     readme = root / 'README.md'
     if readme.is_file():
         text = readme.read_text(encoding='utf-8')
+        if name == 'WorkflowKit':
+            atomic_write(readme, update_workflowkit_readme(text, version).encode('utf-8'))
+            return
         first_section = re.search(r'^## ', text, re.MULTILINE)
         end = first_section.start() if first_section else len(text)
         # Update the current introductory version; preserve dated release history.
@@ -393,19 +428,23 @@ def refresh_workspace_readme(root, changes, predecessor_versions):
         return
     sections = re.split(r'(?m)(?=^## )', path.read_text(encoding='utf-8'))
     version_file = root / 'VERSION'
-    current_version = (version_file.read_text(encoding='utf-8').strip() if version_file.is_file()
+    standalone_kit = version_file.is_file()
+    current_version = (version_file.read_text(encoding='utf-8').strip() if standalone_kit
                        else json.loads((root / 'package.json').read_text(encoding='utf-8'))['version'])
     supported = '、'.join(sorted(set(predecessor_versions), key=version_tuple))
     for index, section in enumerate(sections):
         heading = re.match(r'^##\s+v?(\d+\.\d+\.\d+)\b', section)
         if heading and heading[1] != current_version:
             continue
+        history = ''
+        if standalone_kit and index == 0:
+            section, history = split_readme_summary(section)
         for alias, previous, version in changes:
             section = section.replace(alias + ' ' + previous, alias + ' ' + version)
         if supported:
             section = re.sub(r'(?m)^(\d+\.\d+\.\d+ 支援固定摘要驗證過的 )[^\n]*?( 升級與交易回復)',
                              lambda match: match[1] + supported + match[2], section)
-        sections[index] = section
+        sections[index] = section + history
     atomic_write(path, ''.join(sections).encode('utf-8'))
 
 

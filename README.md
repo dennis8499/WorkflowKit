@@ -2,7 +2,9 @@
 
 WorkflowKit 1.12.4 是可離線安裝的 Codex 工作流程套件，包含 Codebase LLM Wiki 0.7.5、MergeReviewer 0.25.0、ReleaseReviewer 0.12.5、Output Style，以及 BMAD Method v6.12.4 Core+BMM 的 29 個 Codex Skills，另提供五個輕量 BMAD 入口。支援獨立 Git Repository 與含直接子 Repo 的 Group。套件版號與 GitLab Workspace Extension 分開管理。
 
-1.12.4 改善 Windows 共用 Git 鎖與安裝暫存復原。安裝中止後，下一次安裝仍可辨識已發布的交易。詳見 [1.12.4 發行說明](docs/releases/v1.12.3.md)。
+1.12.4 整合 MergeReviewer 0.25.0，並驗證從 1.12.3 升級。詳見 [1.12.4 發行說明](https://github.com/dennis8499/WorkflowKit/blob/main/docs/releases/v1.12.4.md)。
+
+1.12.3 改善 Windows 共用 Git 鎖與安裝暫存復原。安裝中止後，下一次安裝仍可辨識已發布的交易。詳見 [1.12.3 發行說明](https://github.com/dennis8499/WorkflowKit/blob/v1.12.3/docs/releases/v1.12.3.md)。
 
 1.11.0 加入固定綁定的純讀 schema、啟動器分段計時與明確驗收身份；審查續讀仍由單一 Agent 判斷及確認保存。詳見 [1.11.0 發行說明](docs/releases/v1.11.0.md)。模型品質與耗時的驗證範圍，以對應版本的實跑收據為準。
 
@@ -20,7 +22,7 @@ WorkflowKit 1.12.4 是可離線安裝的 Codex 工作流程套件，包含 Codeb
 
 需要 Python 3.11+。安裝器不需要 Node.js 或網路；若環境沒有 `uv`，安裝仍會完成並提示你在執行 BMAD 工作流程前備妥它。
 
-下載並解壓正式附件 `gitlab-workspace-kit-1.12.4.zip`，在解壓後的 `workflow-kit/` 目錄執行下列指令。[WorkflowKit 1.12.3 正式附件](https://github.com/dennis8499/WorkflowKit/releases/tag/v1.12.3)
+下載並解壓正式附件 `gitlab-workspace-kit-1.12.4.zip`，在解壓後的 `workflow-kit/` 目錄執行下列指令。[WorkflowKit 1.12.4 正式附件](https://github.com/dennis8499/WorkflowKit/releases/tag/v1.12.4)
 
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyProject
@@ -31,7 +33,7 @@ python -X utf8 -B install.py --target C:\projects\MyProject
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyGroup --profile group
 python -X utf8 -B install.py --target C:\projects\MyRepo --profile repository
-python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.12.1
+python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.12.4
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易路徑>
 ```
 
