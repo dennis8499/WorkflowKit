@@ -1,0 +1,12 @@
+{
+  "candidate": "390d932f7f8700e0aca6585162a44615b76279f5",
+  "dependencies": {
+    "MergeReviewer": "2b1c628873a9548782c429e2d370736de16386ba",
+    "ReleaseReviewer": "9083b4a9dbdd1dd52a4c52bf66af8f7b63443be4"
+  },
+  "previousTag": "v1.12.4",
+  "repository": "WorkflowKit",
+  "runId": "20261126T085044Z-9f0182f7",
+  "schema": "workspace-release/v1",
+  "targetVersion": "1.12.8"
+}

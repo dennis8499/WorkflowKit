@@ -24,7 +24,7 @@ WorkflowKit 1.12.8 是可離線建置的 Codex 工作流程套件，包含 Codeb
 
 需要 Python 3.11+。安裝器不需要 Node.js 或網路；若環境沒有 `uv`，安裝仍會完成並提示你在執行 BMAD 工作流程前備妥它。
 
-下載並解壓正式附件 `gitlab-workspace-kit-1.12.4.zip`，在解壓後的 `workflow-kit/` 目錄執行下列指令。[WorkflowKit 1.12.4 正式附件](https://github.com/dennis8499/WorkflowKit/releases/tag/v1.12.4)
+下載並解壓正式附件 `gitlab-workspace-kit-1.12.8.zip`，在解壓後的 `workflow-kit/` 目錄執行下列指令。[WorkflowKit 1.12.8 正式附件](https://github.com/dennis8499/WorkflowKit/releases/tag/v1.12.8)
 
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyProject
@@ -35,7 +35,7 @@ python -X utf8 -B install.py --target C:\projects\MyProject
 ```powershell
 python -X utf8 -B install.py --target C:\projects\MyGroup --profile group
 python -X utf8 -B install.py --target C:\projects\MyRepo --profile repository
-python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.12.4
+python -X utf8 -B install.py status C:\projects\MyProject --expected-version 1.12.8
 python -X utf8 -B install.py rollback C:\projects\MyProject <交易路徑>
 ```
 

@@ -640,9 +640,9 @@
       "version": "0.1.0"
     },
     "merge-reviewer": {
-      "archiveSha256": "08d40182de6e948daafc70e2d21a6e6176094bac7c0aed3cb7c5c6c011d2b8aa",
-      "commit": "ad6a8489167eb11fbab6b0f167562517a32fd640",
-      "dirty": true,
+      "archiveSha256": "74279268e9883faaaefc7417256b53aa3eedf3e454ef13e46957ec411e4e7235",
+      "commit": "2b1c628873a9548782c429e2d370736de16386ba",
+      "dirty": false,
       "entryRoot": "merge-reviewer",
       "filename": "merge-reviewer-0.26.1.zip",
       "files": {
@@ -694,14 +694,14 @@
         "scripts/workspace_report.py": "5831244a608fbb14a9a4b0f4025776c1046b65632064478642c894675571a67e"
       },
       "repository": "MergeReviewer",
-      "sourceKind": "local-snapshot",
+      "sourceKind": "official-release",
       "treeSha256": "a9d7a6c8238a57b1b19ed6655c429c8b968d029dc85d30df487675152e0d3b11",
       "version": "0.26.1"
     },
     "release-reviewer": {
-      "archiveSha256": "f37f1a619604557879f132276a556b390db114f0bd312922088f748831a15be0",
-      "commit": "75ccc017da2cc22a31e34344cc57ab1b8a653eca",
-      "dirty": true,
+      "archiveSha256": "8cedb8ed7d55dd8a4a82b5c1a0ed9a2159cf16f171645908b1a256a021eab335",
+      "commit": "9083b4a9dbdd1dd52a4c52bf66af8f7b63443be4",
+      "dirty": false,
       "entryRoot": "release-reviewer",
       "filename": "release-reviewer-0.12.9.zip",
       "files": {
@@ -745,7 +745,7 @@
       },
       "payloadSha256": "acac0480656af616d03ec07d691c09140ba097e684176c8e27c343403f29a9a3",
       "repository": "ReleaseReviewer",
-      "sourceKind": "local-snapshot",
+      "sourceKind": "official-release",
       "treeSha256": "29e35572d50dda6db17f2d6bfde44917f2972e0dde2adc5389605cb552fc7c00",
       "version": "0.12.9"
     }
