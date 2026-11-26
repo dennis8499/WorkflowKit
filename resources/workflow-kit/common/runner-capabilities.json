@@ -2,5 +2,6 @@
   "schema": "WorkflowKitRunnerCapabilities/v1",
   "review_launch_request": 1,
   "read_only_inspection": true,
+  "read_only_manifest_sha256": true,
   "review_launch_tools": ["merge-reviewer", "release-reviewer"]
 }

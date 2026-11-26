@@ -60,7 +60,9 @@ class TransactionTests(unittest.TestCase):
 
     def assets_for_predecessor(self, version):
         if version != "1.3.4":
-            fixture = ROOT / f"test/fixtures/workflow-kit-{version}"
+            override = os.environ.get("WORKFLOW_KIT_TEST_PREDECESSOR_FIXTURE")
+            fixture = (Path(override) if override and version == os.environ.get("WORKFLOW_KIT_TEST_PREDECESSOR_VERSION")
+                       else ROOT / f"test/fixtures/workflow-kit-{version}")
             return fixture / f"gitlab-workspace-kit-{version}.zip", fixture / "installer.py"
 
         if version not in self.predecessor_assets:
@@ -226,7 +228,38 @@ installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], '
                 ("1.12.3", "repository", "bundled"),
                 ("1.12.3", "repository", "external"),
             )
+        if tuple(map(int, harness.VERSION.split("."))) >= (1, 12, 5):
+            cases += (
+                ("1.12.4", "group", "bundled"),
+                ("1.12.4", "group", "external"),
+                ("1.12.4", "repository", "bundled"),
+                ("1.12.4", "repository", "external"),
+            )
+        if tuple(map(int, harness.VERSION.split("."))) >= (1, 12, 6):
+            cases += (
+                ("1.12.5", "group", "bundled"),
+                ("1.12.5", "group", "external"),
+                ("1.12.5", "repository", "bundled"),
+                ("1.12.5", "repository", "external"),
+            )
+        if tuple(map(int, harness.VERSION.split("."))) >= (1, 12, 7):
+            cases += (
+                ("1.12.6", "group", "bundled"),
+                ("1.12.6", "group", "external"),
+                ("1.12.6", "repository", "bundled"),
+                ("1.12.6", "repository", "external"),
+            )
+        if tuple(map(int, harness.VERSION.split("."))) >= (1, 12, 8):
+            cases += (
+                ("1.12.7", "group", "bundled"),
+                ("1.12.7", "group", "external"),
+                ("1.12.7", "repository", "bundled"),
+                ("1.12.7", "repository", "external"),
+            )
         selected_version = os.environ.get("WORKFLOW_KIT_TEST_PREDECESSOR_VERSION")
+        if selected_version == harness.VERSION and os.environ.get("WORKFLOW_KIT_TEST_PREDECESSOR_FIXTURE"):
+            cases += tuple((selected_version, profile, mode) for profile in ("group", "repository")
+                           for mode in ("bundled", "external"))
         if selected_version:
             cases = tuple(case for case in cases if case[0] == selected_version)
             self.assertTrue(cases, f"No real predecessor cases found for {selected_version}.")
@@ -235,6 +268,7 @@ installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], '
             self.assertIn(selected_profile, ("group", "repository"))
             cases = tuple(case for case in cases if case[1] == selected_profile)
             self.assertTrue(cases, f"No real predecessor cases found for {selected_profile}.")
+        release_zip_sha256 = hashlib.sha256(harness.RELEASE_ZIP.read_bytes()).hexdigest()
         for version, profile, bmad_mode in cases:
             with self.subTest(version=version, profile=profile, bmad_mode=bmad_mode):
                 target = self.create_group(self.root / f"{version}-{profile}-{bmad_mode}", wiki="# User Wiki\n")
@@ -272,7 +306,8 @@ installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], '
                 source_wiki_version = {
                     "1.3.0": "0.7.0", "1.3.3": "0.7.1", "1.3.4": "0.7.2", "1.3.5": "0.7.2",
                     "1.3.6": "0.7.2", "1.5.0": "0.7.2", "1.6.0": "0.7.2", "1.8.0": "0.7.2",
-                    "1.9.0": "0.7.2", "1.11.0": "0.7.4", "1.12.2": "0.7.5", "1.12.3": "0.7.5",
+                    "1.9.0": "0.7.2", "1.11.0": "0.7.4", "1.12.2": "0.7.5", "1.12.3": "0.7.5", "1.12.4": "0.7.5",
+                    "1.12.5": "0.7.5", "1.12.6": "0.7.5", "1.12.7": "0.7.5", "1.12.8": "0.7.5",
                 }.get(version, "0.6.4")
                 self.assertEqual(source_wiki_version, legacy_manifest["upstream"]["codebase-wiki"]["version"])
                 if version == "1.11.0":
@@ -283,11 +318,31 @@ installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], '
                 if version == "1.12.3":
                     self.assertEqual("0.24.3", legacy_manifest["upstream"]["merge-reviewer"]["version"])
                     self.assertEqual("0.12.5", legacy_manifest["upstream"]["release-reviewer"]["version"])
+                if version == "1.12.4":
+                    self.assertEqual("0.25.0", legacy_manifest["upstream"]["merge-reviewer"]["version"])
+                    self.assertEqual("0.12.5", legacy_manifest["upstream"]["release-reviewer"]["version"])
+                if version == "1.12.5":
+                    self.assertEqual("0.26.1", legacy_manifest["upstream"]["merge-reviewer"]["version"])
+                    self.assertEqual("0.12.6", legacy_manifest["upstream"]["release-reviewer"]["version"])
+                if version == "1.12.6":
+                    self.assertEqual("0.26.1", legacy_manifest["upstream"]["merge-reviewer"]["version"])
+                    self.assertEqual("0.12.7", legacy_manifest["upstream"]["release-reviewer"]["version"])
+                if version == "1.12.7":
+                    self.assertEqual("0.26.1", legacy_manifest["upstream"]["merge-reviewer"]["version"])
+                    self.assertEqual("0.12.8", legacy_manifest["upstream"]["release-reviewer"]["version"])
+                if version == harness.VERSION:
+                    current_payload = installer.PROFILE_MANIFESTS[profile]
+                    if bmad_mode == "external":
+                        current_payload = current_payload["variants"]["external"]
+                    same_payload = legacy_manifest["payloadSha256"] == current_payload["payloadSha256"]
+                    before_status = self.status(target, expected_version=version)
+                    self.assertEqual("installed" if same_payload else "update-available", before_status["status"])
+                    self.assertEqual("verified", before_status["integrity"])
                 custom = target / "_bmad/custom/user-choice.md"
                 if bmad_mode == "bundled":
                     custom.parent.mkdir(parents=True, exist_ok=True)
                     custom.write_text("User BMAD custom content stays.\n", encoding="utf-8")
-                if version in ('1.8.0', '1.9.0'):
+                if version in ('1.8.0', '1.9.0', '1.12.4', '1.12.5', '1.12.6', '1.12.7', harness.VERSION):
                     for name in ('routing/merge-reviewer/prior.json', 'sessions/prior/draft.json', 'jobs/prior.json'):
                         path = target / '.review-runtime' / name
                         path.parent.mkdir(parents=True, exist_ok=True)
@@ -303,12 +358,15 @@ installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], '
                     self.assertNotEqual(0, failed.returncode, failure)
                     self.assertEqual(previous, self.snapshot(target))
 
-                upgraded, data = self.install(target, profile=profile)
+                upgraded, data = self.install(target, archive=harness.RELEASE_ZIP, archive_format="zip", profile=profile)
                 self.assertEqual(0, upgraded.returncode, upgraded.stderr or upgraded.stdout)
                 self.assertEqual(harness.VERSION, data["version"])
                 self.assertEqual(bmad_mode, data["bmadMode"])
                 status = self.status(target)
                 self.assertEqual("installed", status.get("status"), status)
+                installed_marker = (target / MARKER).read_bytes()
+                self.assertEqual(hashlib.sha256(installed_marker).hexdigest(), status["installedManifestSha256"])
+                self.assertEqual(release_zip_sha256, json.loads(installed_marker)["archiveSha256"])
                 self.assertEqual(harness.CURRENT_SOURCES["codebase-wiki"]["version"], status["upstreamVersions"]["codebase-wiki"])
                 self.assertEqual(harness.CURRENT_SOURCES["merge-reviewer"]["version"],
                                  status["upstreamVersions"]["merge-reviewer"])
@@ -332,7 +390,7 @@ installer.install(Path(sys.argv[2]), 'tar.xz', Path(sys.argv[3]), sys.argv[4], '
                                      (target / "_bmad/custom/external.md").read_text(encoding="utf-8"))
 
                 after_upgrade = self.snapshot(target)
-                repeated, repeated_data = self.install(target, profile=profile)
+                repeated, repeated_data = self.install(target, archive=harness.RELEASE_ZIP, archive_format="zip", profile=profile)
                 self.assertEqual(0, repeated.returncode, repeated.stderr or repeated.stdout)
                 self.assertFalse(repeated_data["applied"])
                 self.assertEqual("unchanged", repeated_data["status"])

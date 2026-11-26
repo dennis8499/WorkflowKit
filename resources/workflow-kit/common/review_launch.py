@@ -316,7 +316,7 @@ def launch(argv: list[str], runner: Path, prepare_runtime, child_environment) ->
     return completed(result.returncode)
 
 
-def trusted_readonly(command: list[str], runner: Path) -> list[str]:
+def trusted_readonly(command: list[str], runner: Path, marker: dict) -> list[str]:
     """Allow only installed Python inspection helpers with authenticated files."""
     # Preserve Python launcher flags, but reject -c/-m and any foreign executable.
     executable = shutil.which(command[0]) if command else None
@@ -337,7 +337,6 @@ def trusted_readonly(command: list[str], runner: Path) -> list[str]:
         script = Path.cwd() / script
     script = plain(script, file=True)
     install_root = runner.parent.parent.parent
-    marker = read_object(install_root / ".gitlab-workspace" / "tool-manifests" / "workflow-kit.json", maximum=16 * 1024 * 1024)
     files = marker.get("files", {})
     if not isinstance(files, dict):
         raise ValueError("Installed manifest requires a managed file map.")

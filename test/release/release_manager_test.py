@@ -653,6 +653,7 @@ import json
 from pathlib import Path
 VERSION = '1.0.1'
 IDENTITY = 'verified-kit'
+TRUSTED_PREDECESSORS = {'packages': []}
 def inspect_status(root, version):
     return {'version': version, 'identity': IDENTITY}
 def install_payload():
@@ -664,6 +665,8 @@ def install_payload():
                                 capture_output=True, text=True, check=True)
         self.assertEqual({'version': '1.0.1', 'identity': 'verified-kit'}, json.loads(result.stdout))
         self.assertNotIn('install_payload', helper.read_text(encoding='utf-8'))
+        self.assertEqual({'schema': 'WorkflowKitStatusSupport/v1', 'version': '1.0.1', 'versions': ['1.0.1']},
+                         json.loads(helper.with_suffix('.json').read_bytes()))
         self.assertEqual('', release.git(runner.tree('GitlabWorkSpace'), 'status', '--porcelain'))
         self.assertFalse((self.workspace / 'GitlabWorkSpace/resources/workflow-kit-status.py').exists())
 
@@ -850,6 +853,33 @@ def install_payload():
                               '.agents/gitlab-workspace-kit/references/guide.md': 'f'}, item['extensionFiles'])
         with self.assertRaisesRegex(release.ReleaseError, 'conflicts'):
             release.freeze_predecessor(root, '1.0.0', 'a' * 40, files, b'changed installer')
+
+    def test_predecessor_freeze_keeps_distinct_same_version_candidate_and_formal_identities(self):
+        root = self.workspace / 'WorkflowKit'
+        trusted_path = root / 'resources/workflow-kit/trusted-predecessors.json'
+        trusted_path.parent.mkdir(parents=True, exist_ok=True)
+        candidate = {'version': '1.0.0', 'profile': 'group', 'bmadMode': 'external',
+                     'payloadSha256': 'c' * 64, 'upstream': {}, 'overlays': {}}
+        trusted_path.write_bytes(release.encoded({'packages': [candidate]}))
+        fields = {'agentBlockSha256': 'a' * 64, 'capabilities': [], 'payloadSha256': 'b' * 64,
+                  'profileHashes': {}, 'skills': [], 'overlays': {}, 'files': {}}
+        bundled = {**fields, 'payloadSha256': 'd' * 64, 'variants': {'external': fields}}
+        manifest = {'version': '1.0.0', 'upstream': {}, 'wikiInstalledVersionSha256': 'a' * 64,
+                    'profiles': dict.fromkeys(('group', 'repository'), bundled)}
+        files = {'gitlab-workspace-kit-1.0.0.zip': zip_bytes({'workflow-kit/manifest.json': release.encoded(manifest)})}
+        release.freeze_predecessor(root, '1.0.0', 'a' * 40, files, b'installer')
+        release.freeze_predecessor(root, '1.0.0', 'a' * 40, files, b'installer')
+        records = json.loads(trusted_path.read_bytes())['packages']
+        self.assertEqual(5, len(records))
+        self.assertEqual(candidate, records[0])
+        self.assertEqual({(profile, mode) for profile in ('group', 'repository') for mode in ('bundled', 'external')},
+                         {(row['profile'], row['bmadMode']) for row in records[1:]})
+        exact = next(row for row in records[1:] if row['profile'] == 'group' and row['bmadMode'] == 'external')
+        self.assertEqual('b' * 64, exact['payloadSha256'])
+        exact['capabilities'] = ['different']
+        trusted_path.write_bytes(release.encoded({'packages': records}))
+        with self.assertRaisesRegex(release.ReleaseError, 'trusted predecessor conflicts'):
+            release.freeze_predecessor(root, '1.0.0', 'a' * 40, files, b'installer')
 
 
 if __name__ == '__main__':

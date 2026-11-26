@@ -104,8 +104,9 @@ class ReviewLaunchTests(unittest.TestCase):
             "--review-request", str(self.request_path), "--expected-request-sha256", expected or self.request_sha,
             "--action", action, *extra], capture_output=True, text=True, encoding="utf-8", check=False, timeout=30)
 
-    def raw(self, *arguments):
-        return subprocess.run([sys.executable, "-X", "utf8", "-B", str(self.runner), "--read-only", "--",
+    def raw(self, *arguments, manifest_sha=None):
+        proof = ["--expected-install-manifest-sha256", manifest_sha] if manifest_sha else []
+        return subprocess.run([sys.executable, "-X", "utf8", "-B", str(self.runner), "--read-only", *proof, "--",
             sys.executable, "-X", "utf8", "-B", str(self.script), *arguments], capture_output=True,
             text=True, encoding="utf-8", check=False, timeout=30)
 
@@ -326,6 +327,35 @@ class ReviewLaunchTests(unittest.TestCase):
         self.script.write_text(HELPER.replace("'read_only_inspection':True", "'read_only_inspection':False"))
         self.marker()
         self.assertEqual(2, self.raw("capabilities").returncode)
+
+    def test_attested_readonly_probe_rejects_replaced_marker_before_import(self):
+        marker = self.install / ".gitlab-workspace/tool-manifests/workflow-kit.json"
+        proof = launch.sha(marker.read_bytes())
+        authentic = self.raw("capabilities", manifest_sha=proof)
+        self.assertEqual(0, authentic.returncode, authentic.stderr)
+        self.assertEqual("MergeReviewCapabilities/v1", json.loads(authentic.stdout)["schema"])
+
+        launcher = self.runner.parent / "review_launch.py"
+        launcher.write_text("raise RuntimeError('replacement launcher imported')\n", encoding="utf-8")
+        self.marker()
+        replaced = self.raw("capabilities", manifest_sha=proof)
+        self.assertEqual(2, replaced.returncode, replaced.stderr)
+        self.assertEqual("launch.invalid-request", json.loads(replaced.stderr)["code"])
+        self.assertIn("differs from the verified status", replaced.stderr)
+        self.assertNotIn("replacement launcher imported", replaced.stderr)
+        self.assertEqual("", replaced.stdout)
+
+    def test_readonly_launcher_uses_the_single_authenticated_marker_snapshot(self):
+        marker = self.install / ".gitlab-workspace/tool-manifests/workflow-kit.json"
+        launcher = self.runner.parent / "review_launch.py"
+        with launcher.open("a", encoding="utf-8") as content:
+            content.write(f"\nPath({str(marker)!r}).write_text('{{}}', encoding='utf-8')\n")
+        self.marker()
+        proof = launch.sha(marker.read_bytes())
+        result = self.raw("capabilities", manifest_sha=proof)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("MergeReviewCapabilities/v1", json.loads(result.stdout)["schema"])
+        self.assertEqual("{}", marker.read_text(encoding="utf-8"))
 
     def test_unrecognized_request_fields_and_nonboolean_flags_are_rejected(self):
         for key, value in (("model", "other"), ("no_fetch", "false"), ("refresh", 1)):

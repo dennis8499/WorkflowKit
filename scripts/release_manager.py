@@ -530,9 +530,8 @@ def freeze_predecessor(root, version, source_sha, files, installer):
                 record.update(legacy_bmad)
             else:
                 record['bmadFiles'] = {}
-            old = next((item for item in trusted['packages']
-                        if item.get('version') == version and item.get('profile') == profile
-                        and item.get('bmadMode') == mode), None)
+            old = next((item for item in trusted['packages'] if item.get('profile', 'group') == profile
+                        and all(item.get(key) == record[key] for key in ('version', 'payloadSha256', 'upstream', 'overlays'))), None)
             if old and old != record:
                 raise ReleaseError('Existing trusted predecessor conflicts with official manifest')
             if not old:

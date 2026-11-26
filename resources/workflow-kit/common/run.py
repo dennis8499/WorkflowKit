@@ -145,13 +145,14 @@ def child_environment(temporary: Path, cache: Path, command: list[str]) -> dict[
     return environment
 
 
-def _review_launcher(arguments: list[str], *, request: bool):
+def _review_launcher(arguments: list[str], *, request: bool, manifest_sha: str | None = None):
     """Authenticate the sibling module before importing any of its code."""
     runner = Path(__file__).resolve()
     module_path = runner.with_name("review_launch.py")
     _check_plain_parents(module_path)
     if not module_path.is_file():
         raise ValueError("WorkflowKit review launcher is missing; check the installation.")
+    marker = None
     if request:
         def option(name):
             if arguments.count(name) != 1 or arguments.index(name) + 1 >= len(arguments):
@@ -178,21 +179,28 @@ def _review_launcher(arguments: list[str], *, request: bool):
         root = runner.parent.parent.parent
         marker_path = root / ".gitlab-workspace" / "tool-manifests" / "workflow-kit.json"
         _check_plain_parents(marker_path)
-        if not marker_path.is_file() or marker_path.stat().st_size > 16 * 1024 * 1024:
+        if not marker_path.is_file():
             raise ValueError("Read-only runner requires a verified installation manifest.")
-        files = json.loads(marker_path.read_text(encoding="utf-8"))["files"]
+        limit = 16 * 1024 * 1024
+        with marker_path.open("rb") as stream:
+            raw = stream.read(limit + 1)
+        if len(raw) > limit or manifest_sha is not None and hashlib.sha256(raw).hexdigest() != manifest_sha:
+            raise ValueError("WorkflowKit installation manifest differs from the verified status.")
+        marker = json.loads(raw.decode("utf-8"))
+        files = marker.get("files") if isinstance(marker, dict) else None
         if not isinstance(files, dict):
             raise ValueError("Installed manifest requires a managed file map.")
         if files.get(".agents/gitlab-workspace-kit/run.py") != hashlib.sha256(runner.read_bytes()).hexdigest():
             raise ValueError("WorkflowKit runner differs from its installed manifest.")
         expected = files.get(".agents/gitlab-workspace-kit/review_launch.py")
-    if expected != hashlib.sha256(module_path.read_bytes()).hexdigest():
+    module_bytes = module_path.read_bytes()
+    if expected != hashlib.sha256(module_bytes).hexdigest():
         raise ValueError("WorkflowKit review launcher changed; recreate the launch request.")
     spec = importlib.util.spec_from_file_location("workflowkit_review_launch", module_path)
     module = importlib.util.module_from_spec(spec)
     sys.dont_write_bytecode = True
-    spec.loader.exec_module(module)
-    return module, runner
+    exec(compile(module_bytes, str(module_path), "exec"), module.__dict__)
+    return module, runner, marker
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -200,14 +208,20 @@ def main(argv: list[str] | None = None) -> int:
     options = arguments[:arguments.index("--")] if "--" in arguments else arguments
     if "--review-request" in options or arguments[:1] == ["--read-only"]:
         try:
-            structured = "--review-request" in options
-            module, runner = _review_launcher(arguments, request=structured)
-            if structured:
+            if "--review-request" in options:
+                module, runner, _ = _review_launcher(arguments, request=True)
                 return module.launch(arguments, runner, runtime_paths, child_environment)
-            requested, command = _split_arguments(arguments[1:])
+            inspection = arguments[1:]
+            manifest_sha = None
+            if inspection[:1] == ["--expected-install-manifest-sha256"]:
+                if len(inspection) < 2:
+                    raise ValueError("An installation manifest SHA-256 is required.")
+                manifest_sha, inspection = inspection[1], inspection[2:]
+            requested, command = _split_arguments(inspection)
             if requested is not None:
                 raise ValueError("Read-only inspection does not accept a scratch runtime override.")
-            command = module.trusted_readonly(command, runner)
+            module, runner, marker = _review_launcher(arguments, request=False, manifest_sha=manifest_sha)
+            command = module.trusted_readonly(command, runner, marker)
             return subprocess.run(command, env=module.readonly_environment(), check=False).returncode
         except (OSError, ValueError, KeyError, TypeError, subprocess.TimeoutExpired) as error:
             sys.stderr.write(json.dumps({"schema": "ReviewLaunchError/v1", "code": "launch.invalid-request",

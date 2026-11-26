@@ -1,0 +1,10 @@
+{
+  "archiveSha256": "f49c07200d856369dab9028daf4fbcbc20b8c55c4187126b29f45d094d6a3f2a",
+  "installerSha256": "ea8700fd834fcd3e1c4b23153bca33a54c7eaf38faefe03c4f9c83f8be02c2dd",
+  "profiles": [
+    "group",
+    "repository"
+  ],
+  "sourceKind": "local-candidate",
+  "version": "1.12.7"
+}
